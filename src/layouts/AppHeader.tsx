@@ -1,3 +1,4 @@
+
 import { Bell, User, LogOut, Settings } from 'lucide-react';
 import {
   DropdownMenu,
@@ -12,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { BranchSelector } from '@/components/BranchSelector';
 import { useAuth } from '@/hooks/useAuth';
 
 export const AppHeader = () => {
@@ -37,6 +39,11 @@ export const AppHeader = () => {
       <div className="flex h-full items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+          
+          {/* Branch Selector for Admin Users */}
+          {authState.user.role === 'admin' && (
+            <BranchSelector />
+          )}
           
           <div className="hidden md:block">
             <h1 className="text-lg font-semibold text-foreground">
