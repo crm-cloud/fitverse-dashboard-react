@@ -1,0 +1,131 @@
+import { useState, useEffect, createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
+import { User, AuthState, LoginCredentials, UserRole } from '@/types/auth';
+
+// Mock users for different roles
+const mockUsers: Record<UserRole, User> = {
+  admin: {
+    id: '1',
+    email: 'admin@gymfit.com',
+    name: 'Sarah Johnson',
+    role: 'admin',
+    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612c2be?w=150&h=150&fit=crop&crop=face',
+    department: 'Management',
+    phone: '+1 (555) 123-4567',
+    joinDate: '2023-01-15'
+  },
+  team: {
+    id: '2',
+    email: 'trainer@gymfit.com',
+    name: 'Mike Rodriguez',
+    role: 'team',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    department: 'Personal Training',
+    phone: '+1 (555) 234-5678',
+    joinDate: '2023-03-20'
+  },
+  member: {
+    id: '3',
+    email: 'member@gymfit.com',
+    name: 'Emily Chen',
+    role: 'member',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+    phone: '+1 (555) 345-6789',
+    joinDate: '2023-06-10'
+  }
+};
+
+const AuthContext = createContext<{
+  authState: AuthState;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
+}>({
+  authState: { user: null, isAuthenticated: false, isLoading: true },
+  login: async () => {},
+  logout: () => {}
+});
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    isAuthenticated: false,
+    isLoading: true
+  });
+
+  useEffect(() => {
+    // Check for stored auth data on app load
+    const storedUser = localStorage.getItem('gymfit_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        setAuthState({
+          user,
+          isAuthenticated: true,
+          isLoading: false
+        });
+      } catch (error) {
+        localStorage.removeItem('gymfit_user');
+        setAuthState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false
+        });
+      }
+    } else {
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false
+      });
+    }
+  }, []);
+
+  const login = async (credentials: LoginCredentials): Promise<void> => {
+    setAuthState(prev => ({ ...prev, isLoading: true }));
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Mock authentication - in real app, this would be an API call
+    const user = mockUsers[credentials.role];
+    
+    if (user && credentials.email === user.email) {
+      localStorage.setItem('gymfit_user', JSON.stringify(user));
+      setAuthState({
+        user,
+        isAuthenticated: true,
+        isLoading: false
+      });
+    } else {
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false
+      });
+      throw new Error('Invalid credentials');
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('gymfit_user');
+    setAuthState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false
+    });
+  };
+
+  return (
+    <AuthContext.Provider value={{ authState, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
