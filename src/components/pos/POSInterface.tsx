@@ -22,7 +22,7 @@ export const POSInterface = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedMember, setSelectedMember] = useState<string>('');
+  const [selectedMember, setSelectedMember] = useState<string>('walk-in');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [notes, setNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -77,7 +77,7 @@ export const POSInterface = () => {
 
   const clearCart = () => {
     setCart([]);
-    setSelectedMember('');
+    setSelectedMember('walk-in');
     setNotes('');
   };
 
@@ -104,7 +104,7 @@ export const POSInterface = () => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     const { subtotal, tax, total } = calculateTotals();
-    const selectedMemberData = mockMembers.find(m => m.id === selectedMember);
+    const selectedMemberData = selectedMember !== 'walk-in' ? mockMembers.find(m => m.id === selectedMember) : null;
     
     const newOrder: Order = {
       id: `pos-${Date.now()}`,
@@ -113,7 +113,7 @@ export const POSInterface = () => {
       subtotal,
       tax,
       total,
-      customerId: selectedMember || undefined,
+      customerId: selectedMember !== 'walk-in' ? selectedMember : undefined,
       customerName: selectedMemberData?.fullName || 'Walk-in Customer',
       customerEmail: selectedMemberData?.email,
       paymentMethod,
@@ -208,7 +208,7 @@ export const POSInterface = () => {
                   <SelectValue placeholder="Walk-in Customer" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Walk-in Customer</SelectItem>
+                  <SelectItem value="walk-in">Walk-in Customer</SelectItem>
                   {mockMembers.map(member => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.fullName} - {member.email}
