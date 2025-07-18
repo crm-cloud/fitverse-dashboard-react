@@ -634,7 +634,7 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No trainer assigned</SelectItem>
+                        <SelectItem value="unassigned">No trainer assigned</SelectItem>
                         {mockTrainers.map((trainer) => (
                           <SelectItem key={trainer.id} value={trainer.id}>
                             {trainer.name}
