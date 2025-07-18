@@ -1,4 +1,3 @@
-
 export type Permission = 
   // User Management
   | 'users.view' | 'users.create' | 'users.edit' | 'users.delete' | 'users.export'
@@ -21,7 +20,13 @@ export type Permission =
   // Branch Management
   | 'branches.view' | 'branches.create' | 'branches.edit' | 'branches.delete'
   // Notifications
-  | 'notifications.view' | 'notifications.send';
+  | 'notifications.view' | 'notifications.send'
+  // Lead Management
+  | 'leads.view' | 'leads.create' | 'leads.edit' | 'leads.delete' | 'leads.assign' | 'leads.export'
+  // Referral Management
+  | 'referrals.view' | 'referrals.create' | 'referrals.edit' | 'referrals.process' | 'referrals.export'
+  // Task Management
+  | 'tasks.view' | 'tasks.create' | 'tasks.edit' | 'tasks.delete' | 'tasks.assign';
 
 export interface RoleDefinition {
   id: string;

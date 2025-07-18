@@ -22,7 +22,10 @@ const mockRoles: Record<string, RoleDefinition> = {
       'analytics.view', 'reports.view', 'reports.export',
       'settings.view', 'settings.edit', 'system.backup', 'system.restore',
       'branches.view', 'branches.create', 'branches.edit', 'branches.delete',
-      'notifications.view', 'notifications.send'
+      'notifications.view', 'notifications.send',
+      'leads.view', 'leads.create', 'leads.edit', 'leads.delete', 'leads.assign', 'leads.export',
+      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process', 'referrals.export',
+      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -44,7 +47,10 @@ const mockRoles: Record<string, RoleDefinition> = {
       'analytics.view', 'reports.view', 'reports.export',
       'settings.view', 'settings.edit',
       'branches.view',
-      'notifications.view', 'notifications.send'
+      'notifications.view', 'notifications.send',
+      'leads.view', 'leads.create', 'leads.edit', 'leads.assign', 'leads.export',
+      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process', 'referrals.export',
+      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -64,7 +70,10 @@ const mockRoles: Record<string, RoleDefinition> = {
       'billing.view', 'billing.edit',
       'analytics.view', 'reports.view',
       'branches.view',
-      'notifications.view', 'notifications.send'
+      'notifications.view', 'notifications.send',
+      'leads.view', 'leads.edit', 'leads.assign', 'leads.export',
+      'referrals.view', 'referrals.edit', 'referrals.process',
+      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -79,7 +88,9 @@ const mockRoles: Record<string, RoleDefinition> = {
       'members.view',
       'classes.view', 'classes.edit', 'classes.schedule',
       'equipment.view',
-      'notifications.view'
+      'notifications.view',
+      'leads.view', 'leads.edit',
+      'tasks.view', 'tasks.edit'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -93,7 +104,8 @@ const mockRoles: Record<string, RoleDefinition> = {
     permissions: [
       'classes.view',
       'equipment.view',
-      'billing.view'
+      'billing.view',
+      'referrals.view', 'referrals.create'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')

@@ -53,6 +53,8 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Overview' },
     { title: 'User Management', url: '/users', icon: UserCog, group: 'Administration' },
     { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
+    { title: 'Leads', url: '/leads', icon: Users, group: 'Sales' },
+    { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales' },
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
     { title: 'Team', url: '/team', icon: UserCheck, group: 'Management' },
     { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Management' },
@@ -64,6 +66,8 @@ const navigationItems: Record<UserRole, Array<{
   ],
   manager: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'Leads', url: '/leads', icon: Users, group: 'Sales' },
+    { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales' },
     { title: 'Team Management', url: '/team', icon: UserCheck, group: 'Management' },
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
     { title: 'Products', url: '/products', icon: Package, group: 'Store' },
@@ -75,6 +79,7 @@ const navigationItems: Record<UserRole, Array<{
   ],
   staff: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'Leads', url: '/leads', icon: Users, group: 'Daily Tasks' },
     { title: 'Members', url: '/members', icon: Users, group: 'Daily Tasks' },
     { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Daily Tasks' },
     { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
@@ -83,6 +88,7 @@ const navigationItems: Record<UserRole, Array<{
   ],
   trainer: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'My Leads', url: '/leads', icon: Users, group: 'Training' },
     { title: 'My Classes', url: '/my-classes', icon: Calendar, group: 'Classes' },
     { title: 'Members', url: '/members', icon: Users, group: 'Training' },
     { title: 'Schedule', url: '/schedule', icon: Calendar, group: 'Planning' },
@@ -94,6 +100,7 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Classes', url: '/member/classes', icon: Calendar, group: 'Fitness' },
     { title: 'Store', url: '/store', icon: Store, group: 'Shopping' },
     { title: 'Goals', url: '/goals', icon: Trophy, group: 'Fitness' },
+    { title: 'Refer Friends', url: '/referrals', icon: Trophy, group: 'Rewards' },
     { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account' },
     { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support' },
   ]

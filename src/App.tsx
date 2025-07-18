@@ -28,6 +28,7 @@ import TeamManagement from "./pages/TeamManagement";
 import { MemberStore } from "./pages/store/MemberStore";
 import { POSInterface } from "./components/pos/POSInterface";
 import { ProductManagement } from "./pages/products/ProductManagement";
+import { LeadListPage } from "./pages/leads/list";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,16 @@ const App = () => (
                         <ProtectedRoute allowedRoles={['admin']}>
                           <DashboardLayout>
                             <RoleManagement />
+                          </DashboardLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/leads" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff', 'trainer']}>
+                          <DashboardLayout>
+                            <LeadListPage />
                           </DashboardLayout>
                         </ProtectedRoute>
                       } 
