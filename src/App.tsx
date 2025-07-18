@@ -19,6 +19,8 @@ import PublicHome from "./pages/public/PublicHome";
 import { MemberListPage } from "./pages/members/list";
 import { MemberCreatePage } from "./pages/members/create";
 import { MemberProfilePage } from "./pages/members/[id]/profile";
+import { MembershipPlansPage } from "./pages/membership/plans";
+import { MemberDashboardPage } from "./pages/membership/dashboard";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +97,26 @@ const App = () => (
                       <ProtectedRoute allowedRoles={['admin', 'team']}>
                         <DashboardLayout>
                           <MemberCreatePage />
+                        </DashboardLayout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/membership/plans" 
+                    element={
+                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                        <DashboardLayout>
+                          <MembershipPlansPage />
+                        </DashboardLayout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/membership/dashboard" 
+                    element={
+                      <ProtectedRoute>
+                        <DashboardLayout>
+                          <MemberDashboardPage />
                         </DashboardLayout>
                       </ProtectedRoute>
                     } 

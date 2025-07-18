@@ -1,11 +1,18 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
-import { Phone, Mail, MapPin, Calendar, User, Activity, AlertTriangle } from 'lucide-react';
+import { Phone, Mail, MapPin, Calendar, User, Activity, AlertTriangle, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { Member, MembershipStatus } from '@/types/member';
+import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
+import { MemberBillingCard } from '@/components/membership/MemberBillingCard';
+import { MembershipFormData } from '@/types/membership';
+import { useToast } from '@/hooks/use-toast';
+import { useRBAC } from '@/hooks/useRBAC';
 
 interface MemberProfileCardProps {
   member: Member;
@@ -57,14 +64,36 @@ const formatGovernmentId = (type: string, number: string) => {
 };
 
 export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
+  const [assignMembershipOpen, setAssignMembershipOpen] = useState(false);
+  const { toast } = useToast();
+  const { hasPermission } = useRBAC();
+
+  const handleAssignMembership = (data: MembershipFormData) => {
+    console.log('Assigning membership:', { member: member.id, data });
+    toast({
+      title: 'Membership Assigned',
+      description: `Membership has been successfully assigned to ${member.fullName}.`,
+    });
+    setAssignMembershipOpen(false);
+  };
   return (
     <div className="space-y-6">
       {/* Membership Warning */}
       {member.membershipStatus === 'not-assigned' && (
         <Alert className="border-yellow-200 bg-yellow-50">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800">
-            Membership not assigned. Please activate a membership to track this member's progress.
+          <AlertDescription className="text-yellow-800 flex justify-between items-center">
+            <span>Membership not assigned. Please activate a membership to track this member's progress.</span>
+            {hasPermission('members.edit') && (
+              <Button 
+                size="sm" 
+                onClick={() => setAssignMembershipOpen(true)}
+                className="ml-4"
+              >
+                <CreditCard className="h-4 w-4 mr-1" />
+                Assign Membership
+              </Button>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -169,7 +198,19 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
             <Separator />
             
             <div>
-              <h4 className="font-medium mb-2">Membership Status</h4>
+              <h4 className="font-medium mb-2 flex items-center justify-between">
+                Membership Status
+                {hasPermission('members.edit') && member.membershipStatus === 'not-assigned' && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setAssignMembershipOpen(true)}
+                  >
+                    <CreditCard className="h-4 w-4 mr-1" />
+                    Assign
+                  </Button>
+                )}
+              </h4>
               <div className="space-y-2">
                 {getMembershipStatusBadge(member.membershipStatus)}
                 {member.membershipPlan && (
@@ -242,6 +283,17 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Billing Section */}
+      <MemberBillingCard memberId={member.id} />
+
+      {/* Assign Membership Drawer */}
+      <AssignMembershipDrawer
+        open={assignMembershipOpen}
+        onClose={() => setAssignMembershipOpen(false)}
+        memberName={member.fullName}
+        onSubmit={handleAssignMembership}
+      />
     </div>
   );
 };
