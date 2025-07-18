@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Phone, Mail, MapPin, Calendar, User, Activity, AlertTriangle, CreditCard } from 'lucide-react';
+import { Phone, Mail, MapPin, Calendar, User, Activity, AlertTriangle, CreditCard, Plus, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Member, MembershipStatus } from '@/types/member';
 import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
 import { MemberBillingCard } from '@/components/membership/MemberBillingCard';
 import { MembershipFormData } from '@/types/membership';
 import { useToast } from '@/hooks/use-toast';
 import { useRBAC } from '@/hooks/useRBAC';
+import { MeasurementRecorderDrawer } from './MeasurementRecorderDrawer';
+import { ProgressCharts } from './ProgressCharts';
+import { MeasurementHistory } from '@/types/member-progress';
+import { mockMeasurementHistory, mockAttendanceRecords, mockProgressSummary } from '@/mock/member-progress';
 
 interface MemberProfileCardProps {
   member: Member;
@@ -65,8 +70,14 @@ const formatGovernmentId = (type: string, number: string) => {
 
 export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
   const [assignMembershipOpen, setAssignMembershipOpen] = useState(false);
+  const [measurements, setMeasurements] = useState<MeasurementHistory[]>(
+    mockMeasurementHistory.filter(m => m.memberId === member.id)
+  );
   const { toast } = useToast();
   const { hasPermission } = useRBAC();
+
+  const progressSummary = mockProgressSummary[member.id];
+  const attendanceRecords = mockAttendanceRecords.filter(a => a.memberId === member.id);
 
   const handleAssignMembership = (data: MembershipFormData) => {
     console.log('Assigning membership:', { member: member.id, data });
@@ -76,6 +87,14 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
     });
     setAssignMembershipOpen(false);
   };
+
+  const handleSaveMeasurement = (measurement: MeasurementHistory) => {
+    setMeasurements(prev => [...prev, measurement]);
+    console.log('Saving measurement:', measurement);
+  };
+
+  const latestMeasurement = measurements[measurements.length - 1];
+
   return (
     <div className="space-y-6">
       {/* Membership Warning */}
@@ -101,7 +120,21 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
       {/* Basic Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Member Information</CardTitle>
+          <CardTitle className="flex justify-between items-center">
+            Member Information
+            {hasPermission('members.edit') && (
+              <MeasurementRecorderDrawer
+                memberId={member.id}
+                memberName={member.fullName}
+                onSave={handleSaveMeasurement}
+              >
+                <Button size="sm" variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Record Measurements
+                </Button>
+              </MeasurementRecorderDrawer>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-start space-x-4">
@@ -144,148 +177,259 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Contact & Address */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact & Address</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2 flex items-center">
-                <MapPin className="h-4 w-4 mr-2" />
-                Address
-              </h4>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>{member.address.street}</p>
-                <p>{member.address.city}, {member.address.state} - {member.address.pincode}</p>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h4 className="font-medium mb-2">Government ID</h4>
-              <p className="text-sm text-muted-foreground">
-                {formatGovernmentId(member.governmentId.type, member.governmentId.number)}
-              </p>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h4 className="font-medium mb-2">Emergency Contact</h4>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>{member.emergencyContact.name} ({member.emergencyContact.relationship})</p>
-                <p>{member.emergencyContact.phone}</p>
-                {member.emergencyContact.email && <p>{member.emergencyContact.email}</p>}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="details" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="progress">Progress</TabsTrigger>
+          <TabsTrigger value="measurements">Measurements</TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
+        </TabsList>
 
-        {/* Gym Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Gym Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2">Branch</h4>
-              <p className="text-sm">{member.branchName}</p>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h4 className="font-medium mb-2 flex items-center justify-between">
-                Membership Status
-                {hasPermission('members.edit') && member.membershipStatus === 'not-assigned' && (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => setAssignMembershipOpen(true)}
-                  >
-                    <CreditCard className="h-4 w-4 mr-1" />
-                    Assign
-                  </Button>
-                )}
-              </h4>
-              <div className="space-y-2">
-                {getMembershipStatusBadge(member.membershipStatus)}
-                {member.membershipPlan && (
-                  <p className="text-sm text-muted-foreground">Plan: {member.membershipPlan}</p>
-                )}
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h4 className="font-medium mb-2">Assigned Trainer</h4>
-              <p className="text-sm">
-                {member.trainerName || <span className="text-muted-foreground">No trainer assigned</span>}
-              </p>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h4 className="font-medium mb-2">Joined Date</h4>
-              <p className="text-sm">{format(member.joinedDate, 'MMMM dd, yyyy')}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="details" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Contact & Address */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact & Address</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2 flex items-center">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Address
+                  </h4>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>{member.address.street}</p>
+                    <p>{member.address.city}, {member.address.state} - {member.address.pincode}</p>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-2">Government ID</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {formatGovernmentId(member.governmentId.type, member.governmentId.number)}
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-2">Emergency Contact</h4>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>{member.emergencyContact.name} ({member.emergencyContact.relationship})</p>
+                    <p>{member.emergencyContact.phone}</p>
+                    {member.emergencyContact.email && <p>{member.emergencyContact.email}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-      {/* Physical Measurements */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Activity className="h-5 w-5 mr-2" />
-            Physical Measurements
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="text-center">
-              <p className="text-2xl font-semibold">{member.measurements.height} cm</p>
-              <p className="text-sm text-muted-foreground">Height</p>
-            </div>
-            
-            <div className="text-center">
-              <p className="text-2xl font-semibold">{member.measurements.weight} kg</p>
-              <p className="text-sm text-muted-foreground">Weight</p>
-            </div>
-            
-            <div className="text-center">
-              <p className="text-2xl font-semibold">
-                {member.measurements.bmi ? member.measurements.bmi.toFixed(1) : 'N/A'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                BMI ({getBMICategory(member.measurements.bmi)})
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <p className="text-2xl font-semibold">
-                {member.measurements.fatPercentage ? `${member.measurements.fatPercentage}%` : 'N/A'}
-              </p>
-              <p className="text-sm text-muted-foreground">Body Fat</p>
-            </div>
-            
-            <div className="text-center">
-              <p className="text-2xl font-semibold">
-                {member.measurements.musclePercentage ? `${member.measurements.musclePercentage}%` : 'N/A'}
-              </p>
-              <p className="text-sm text-muted-foreground">Muscle Mass</p>
-            </div>
+            {/* Gym Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Gym Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2">Branch</h4>
+                  <p className="text-sm">{member.branchName}</p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-2 flex items-center justify-between">
+                    Membership Status
+                    {hasPermission('members.edit') && member.membershipStatus === 'not-assigned' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setAssignMembershipOpen(true)}
+                      >
+                        <CreditCard className="h-4 w-4 mr-1" />
+                        Assign
+                      </Button>
+                    )}
+                  </h4>
+                  <div className="space-y-2">
+                    {getMembershipStatusBadge(member.membershipStatus)}
+                    {member.membershipPlan && (
+                      <p className="text-sm text-muted-foreground">Plan: {member.membershipPlan}</p>
+                    )}
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-2">Assigned Trainer</h4>
+                  <p className="text-sm">
+                    {member.trainerName || <span className="text-muted-foreground">No trainer assigned</span>}
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-2">Joined Date</h4>
+                  <p className="text-sm">{format(member.joinedDate, 'MMMM dd, yyyy')}</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Billing Section */}
-      <MemberBillingCard memberId={member.id} />
+          {/* Physical Measurements */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2" />
+                Current Measurements
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-semibold">
+                    {latestMeasurement?.weight || member.measurements.weight} kg
+                  </p>
+                  <p className="text-sm text-muted-foreground">Weight</p>
+                  {progressSummary?.weightChange && (
+                    <p className="text-xs text-green-600 flex items-center justify-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      {progressSummary.weightChange > 0 ? '+' : ''}{progressSummary.weightChange}kg
+                    </p>
+                  )}
+                </div>
+                
+                <div className="text-center">
+                  <p className="text-2xl font-semibold">{member.measurements.height} cm</p>
+                  <p className="text-sm text-muted-foreground">Height</p>
+                </div>
+                
+                <div className="text-center">
+                  <p className="text-2xl font-semibold">
+                    {latestMeasurement?.bmi?.toFixed(1) || member.measurements.bmi?.toFixed(1) || 'N/A'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    BMI ({getBMICategory(latestMeasurement?.bmi || member.measurements.bmi)})
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <p className="text-2xl font-semibold">
+                    {latestMeasurement?.bodyFat || member.measurements.fatPercentage || 'N/A'}%
+                  </p>
+                  <p className="text-sm text-muted-foreground">Body Fat</p>
+                </div>
+                
+                <div className="text-center">
+                  <p className="text-2xl font-semibold">
+                    {latestMeasurement?.muscleMass || member.measurements.musclePercentage || 'N/A'}%
+                  </p>
+                  <p className="text-sm text-muted-foreground">Muscle Mass</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="progress">
+          <ProgressCharts
+            memberId={member.id}
+            measurements={measurements}
+            attendance={attendanceRecords}
+          />
+        </TabsContent>
+
+        <TabsContent value="measurements">
+          <Card>
+            <CardHeader>
+              <CardTitle>Measurement History</CardTitle>
+              <CardDescription>Track changes in body composition over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {measurements.length > 0 ? (
+                <div className="space-y-4">
+                  {measurements
+                    .sort((a, b) => b.date.getTime() - a.date.getTime())
+                    .map((measurement) => (
+                    <div key={measurement.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="font-medium">{format(measurement.date, 'MMMM dd, yyyy')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Recorded by {measurement.recordedByName}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Weight</p>
+                          <p className="font-semibold">{measurement.weight} kg</p>
+                        </div>
+                        {measurement.bodyFat && (
+                          <div>
+                            <p className="text-sm text-muted-foreground">Body Fat</p>
+                            <p className="font-semibold">{measurement.bodyFat}%</p>
+                          </div>
+                        )}
+                        {measurement.muscleMass && (
+                          <div>
+                            <p className="text-sm text-muted-foreground">Muscle Mass</p>
+                            <p className="font-semibold">{measurement.muscleMass}%</p>
+                          </div>
+                        )}
+                        {measurement.bmi && (
+                          <div>
+                            <p className="text-sm text-muted-foreground">BMI</p>
+                            <p className="font-semibold">{measurement.bmi}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {measurement.notes && (
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Notes</p>
+                          <p className="text-sm">{measurement.notes}</p>
+                        </div>
+                      )}
+                      
+                      {measurement.images && measurement.images.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-sm text-muted-foreground mb-2">Progress Photos</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {measurement.images.map((image, index) => (
+                              <img
+                                key={index}
+                                src={image}
+                                alt={`Progress photo ${index + 1}`}
+                                className="w-full h-24 object-cover rounded"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No measurements recorded yet</p>
+                  <p className="text-sm">Start tracking progress by recording measurements</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="billing">
+          <MemberBillingCard memberId={member.id} />
+        </TabsContent>
+      </Tabs>
 
       {/* Assign Membership Drawer */}
       <AssignMembershipDrawer
