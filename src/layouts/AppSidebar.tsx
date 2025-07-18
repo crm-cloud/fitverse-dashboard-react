@@ -36,6 +36,15 @@ const navigationItems: Record<UserRole, Array<{
   icon: any;
   group: string;
 }>> = {
+  'super-admin': [
+    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'System Health', url: '/system-health', icon: BarChart3, group: 'Overview' },
+    { title: 'User Management', url: '/users', icon: UserCog, group: 'Administration' },
+    { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
+    { title: 'Branch Management', url: '/branches', icon: Settings, group: 'Administration' },
+    { title: 'System Backup', url: '/backup', icon: HelpCircle, group: 'System' },
+    { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Insights' },
+  ],
   admin: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Overview' },
@@ -48,18 +57,33 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Services' },
     { title: 'Settings', url: '/settings', icon: Settings, group: 'System' },
   ],
-  team: [
+  manager: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'Team Management', url: '/team', icon: UserCheck, group: 'Management' },
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
-    { title: 'Team', url: '/team', icon: UserCheck, group: 'Management' },
+    { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations' },
+    { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations' },
+    { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Analytics' },
+    { title: 'Schedule', url: '/schedule', icon: Calendar, group: 'Planning' },
+  ],
+  staff: [
+    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'Members', url: '/members', icon: Users, group: 'Daily Tasks' },
+    { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Daily Tasks' },
+    { title: 'Classes', url: '/classes', icon: Calendar, group: 'Support' },
+    { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Reports' },
+  ],
+  trainer: [
+    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'My Classes', url: '/my-classes', icon: Calendar, group: 'Classes' },
-    { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Equipment' },
-    { title: 'Schedule', url: '/schedule', icon: Calendar, group: 'Schedule' },
+    { title: 'Members', url: '/members', icon: Users, group: 'Training' },
+    { title: 'Schedule', url: '/schedule', icon: Calendar, group: 'Planning' },
+    { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Resources' },
   ],
   member: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'My Workouts', url: '/workouts', icon: Dumbbell, group: 'Fitness' },
-    { title: 'Classes', url: '/classes', icon: Calendar, group: 'Fitness' },
+    { title: 'Classes', url: '/member/classes', icon: Calendar, group: 'Fitness' },
     { title: 'Goals', url: '/goals', icon: Trophy, group: 'Fitness' },
     { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account' },
     { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support' },

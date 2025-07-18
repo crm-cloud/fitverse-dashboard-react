@@ -4,6 +4,16 @@ import { User, AuthState, LoginCredentials, UserRole } from '@/types/auth';
 
 // Mock users for different roles
 const mockUsers: Record<UserRole, User> = {
+  'super-admin': {
+    id: '0',
+    email: 'superadmin@gymfit.com',
+    name: 'David Thompson',
+    role: 'super-admin',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    department: 'System Administration',
+    phone: '+1 (555) 000-0000',
+    joinDate: '2022-01-01'
+  },
   admin: {
     id: '1',
     email: 'admin@gymfit.com',
@@ -14,18 +24,38 @@ const mockUsers: Record<UserRole, User> = {
     phone: '+1 (555) 123-4567',
     joinDate: '2023-01-15'
   },
-  team: {
+  manager: {
     id: '2',
+    email: 'manager@gymfit.com',
+    name: 'Robert Kim',
+    role: 'manager',
+    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
+    department: 'Operations',
+    phone: '+1 (555) 111-2222',
+    joinDate: '2023-02-10'
+  },
+  staff: {
+    id: '3',
+    email: 'staff@gymfit.com',
+    name: 'Lisa Chen',
+    role: 'staff',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+    department: 'Front Desk',
+    phone: '+1 (555) 222-3333',
+    joinDate: '2023-04-15'
+  },
+  trainer: {
+    id: '4',
     email: 'trainer@gymfit.com',
     name: 'Mike Rodriguez',
-    role: 'team',
+    role: 'trainer',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
     department: 'Personal Training',
     phone: '+1 (555) 234-5678',
     joinDate: '2023-03-20'
   },
   member: {
-    id: '3',
+    id: '5',
     email: 'member@gymfit.com',
     name: 'Emily Chen',
     role: 'member',

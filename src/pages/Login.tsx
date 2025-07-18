@@ -10,6 +10,13 @@ import { UserRole } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 
 const roleConfig = {
+  'super-admin': {
+    icon: Shield,
+    color: 'bg-red-600',
+    title: 'Super Admin',
+    description: 'Full system administration access',
+    email: 'superadmin@gymfit.com'
+  },
   admin: {
     icon: Shield,
     color: 'bg-destructive',
@@ -17,10 +24,24 @@ const roleConfig = {
     description: 'Full system access and management',
     email: 'admin@gymfit.com'
   },
-  team: {
+  manager: {
+    icon: Users,
+    color: 'bg-blue-600',
+    title: 'Manager Portal',
+    description: 'Operational management and oversight',
+    email: 'manager@gymfit.com'
+  },
+  staff: {
+    icon: User,
+    color: 'bg-green-600',
+    title: 'Staff Portal',
+    description: 'Daily operations and member support',
+    email: 'staff@gymfit.com'
+  },
+  trainer: {
     icon: Users,
     color: 'bg-primary',
-    title: 'Staff Portal',
+    title: 'Trainer Portal',
     description: 'Manage classes and member interactions',
     email: 'trainer@gymfit.com'
   },
