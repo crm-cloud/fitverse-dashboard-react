@@ -21,6 +21,8 @@ import { MemberCreatePage } from "./pages/members/create";
 import { MemberProfilePage } from "./pages/members/[id]/profile";
 import { MembershipPlansPage } from "./pages/membership/plans";
 import { MemberDashboardPage } from "./pages/membership/dashboard";
+import { ClassListPage } from "./pages/classes/list";
+import { MemberClassesPage } from "./pages/member/classes";
 
 const queryClient = new QueryClient();
 
@@ -134,12 +136,19 @@ const App = () => (
                   <Route 
                     path="/classes" 
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'team']}>
                         <DashboardLayout>
-                          <div className="text-center py-20">
-                            <h1 className="text-2xl font-bold">Classes Page</h1>
-                            <p className="text-muted-foreground mt-2">Coming soon...</p>
-                          </div>
+                          <ClassListPage />
+                        </DashboardLayout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/member/classes" 
+                    element={
+                      <ProtectedRoute allowedRoles={['member']}>
+                        <DashboardLayout>
+                          <MemberClassesPage />
                         </DashboardLayout>
                       </ProtectedRoute>
                     } 
