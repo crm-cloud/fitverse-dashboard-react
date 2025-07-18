@@ -23,6 +23,7 @@ import { MembershipPlansPage } from "./pages/membership/plans";
 import { MemberDashboardPage } from "./pages/membership/dashboard";
 import { ClassListPage } from "./pages/classes/list";
 import { MemberClassesPage } from "./pages/member/classes";
+import TeamManagement from "./pages/TeamManagement";
 
 const queryClient = new QueryClient();
 
@@ -149,6 +150,16 @@ const App = () => (
                       <ProtectedRoute allowedRoles={['member']}>
                         <DashboardLayout>
                           <MemberClassesPage />
+                        </DashboardLayout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/team" 
+                    element={
+                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                        <DashboardLayout>
+                          <TeamManagement />
                         </DashboardLayout>
                       </ProtectedRoute>
                     } 
