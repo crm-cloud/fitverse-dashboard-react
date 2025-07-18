@@ -8,11 +8,9 @@ export const LocationsSection = () => {
   const { branches } = useBranches();
 
   const formatHours = (hours: any) => {
-    const today = new Date().toLocaleLowerCase().slice(0, 3) + 
-                  new Date().toLocaleLowerCase().slice(3, 6) + 
-                  new Date().toLocaleLowerCase().slice(6, 9);
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const todayKey = Object.keys(hours).find(key => 
-      key.toLowerCase().includes(today.slice(0, 3))
+      key.toLowerCase() === today
     ) || 'monday';
     
     const todayHours = hours[todayKey];
