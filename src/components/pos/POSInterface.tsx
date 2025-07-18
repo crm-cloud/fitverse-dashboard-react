@@ -114,7 +114,7 @@ export const POSInterface = () => {
       tax,
       total,
       customerId: selectedMember || undefined,
-      customerName: selectedMemberData ? `${selectedMemberData.firstName} ${selectedMemberData.lastName}` : 'Walk-in Customer',
+      customerName: selectedMemberData?.fullName || 'Walk-in Customer',
       customerEmail: selectedMemberData?.email,
       paymentMethod,
       paymentStatus: 'paid',
@@ -211,7 +211,7 @@ export const POSInterface = () => {
                   <SelectItem value="">Walk-in Customer</SelectItem>
                   {mockMembers.map(member => (
                     <SelectItem key={member.id} value={member.id}>
-                      {member.firstName} {member.lastName} - {member.email}
+                      {member.fullName} - {member.email}
                     </SelectItem>
                   ))}
                 </SelectContent>
