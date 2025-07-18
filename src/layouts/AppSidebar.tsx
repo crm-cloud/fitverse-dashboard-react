@@ -16,7 +16,8 @@ import {
   UserCog,
   Monitor,
   Package,
-  Store
+  Store,
+  Apple
 } from 'lucide-react';
 import {
   Sidebar,
@@ -58,6 +59,7 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
     { title: 'Team', url: '/team', icon: UserCheck, group: 'Management' },
     { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Management' },
+    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Fitness' },
     { title: 'Products', url: '/products', icon: Package, group: 'Store' },
     { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
     { title: 'Classes', url: '/classes', icon: Calendar, group: 'Services' },
@@ -70,6 +72,7 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales' },
     { title: 'Team Management', url: '/team', icon: UserCheck, group: 'Management' },
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
+    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Fitness' },
     { title: 'Products', url: '/products', icon: Package, group: 'Store' },
     { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
     { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations' },
@@ -82,6 +85,7 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Leads', url: '/leads', icon: Users, group: 'Daily Tasks' },
     { title: 'Members', url: '/members', icon: Users, group: 'Daily Tasks' },
     { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Daily Tasks' },
+    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Support' },
     { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
     { title: 'Classes', url: '/classes', icon: Calendar, group: 'Support' },
     { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Reports' },
@@ -89,6 +93,7 @@ const navigationItems: Record<UserRole, Array<{
   trainer: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'My Leads', url: '/leads', icon: Users, group: 'Training' },
+    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Training' },
     { title: 'My Classes', url: '/my-classes', icon: Calendar, group: 'Classes' },
     { title: 'Members', url: '/members', icon: Users, group: 'Training' },
     { title: 'Schedule', url: '/schedule', icon: Calendar, group: 'Planning' },
@@ -96,6 +101,7 @@ const navigationItems: Record<UserRole, Array<{
   ],
   member: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'My Plans', url: '/diet-workout', icon: Apple, group: 'Fitness' },
     { title: 'My Workouts', url: '/workouts', icon: Dumbbell, group: 'Fitness' },
     { title: 'Classes', url: '/member/classes', icon: Calendar, group: 'Fitness' },
     { title: 'Store', url: '/store', icon: Store, group: 'Shopping' },

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,6 +30,7 @@ import { MemberStore } from "./pages/store/MemberStore";
 import { POSInterface } from "./components/pos/POSInterface";
 import { ProductManagement } from "./pages/products/ProductManagement";
 import { LeadListPage } from "./pages/leads/list";
+import { DietWorkoutPlannerPage } from "./pages/diet-workout/planner";
 
 const queryClient = new QueryClient();
 
@@ -123,6 +125,16 @@ const App = () => (
                         <ProtectedRoute>
                           <DashboardLayout>
                             <MemberDashboardPage />
+                          </DashboardLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/diet-workout" 
+                      element={
+                        <ProtectedRoute>
+                          <DashboardLayout>
+                            <DietWorkoutPlannerPage />
                           </DashboardLayout>
                         </ProtectedRoute>
                       } 
