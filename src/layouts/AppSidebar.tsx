@@ -13,7 +13,10 @@ import {
   Trophy,
   HelpCircle,
   Shield,
-  UserCog
+  UserCog,
+  Monitor,
+  Package,
+  Store
 } from 'lucide-react';
 import {
   Sidebar,
@@ -53,6 +56,8 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
     { title: 'Team', url: '/team', icon: UserCheck, group: 'Management' },
     { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Management' },
+    { title: 'Products', url: '/products', icon: Package, group: 'Store' },
+    { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
     { title: 'Classes', url: '/classes', icon: Calendar, group: 'Services' },
     { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Services' },
     { title: 'Settings', url: '/settings', icon: Settings, group: 'System' },
@@ -61,6 +66,8 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'Team Management', url: '/team', icon: UserCheck, group: 'Management' },
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
+    { title: 'Products', url: '/products', icon: Package, group: 'Store' },
+    { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
     { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations' },
     { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations' },
     { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Analytics' },
@@ -70,6 +77,7 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'Members', url: '/members', icon: Users, group: 'Daily Tasks' },
     { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Daily Tasks' },
+    { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
     { title: 'Classes', url: '/classes', icon: Calendar, group: 'Support' },
     { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Reports' },
   ],
@@ -84,6 +92,7 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'My Workouts', url: '/workouts', icon: Dumbbell, group: 'Fitness' },
     { title: 'Classes', url: '/member/classes', icon: Calendar, group: 'Fitness' },
+    { title: 'Store', url: '/store', icon: Store, group: 'Shopping' },
     { title: 'Goals', url: '/goals', icon: Trophy, group: 'Fitness' },
     { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account' },
     { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support' },
