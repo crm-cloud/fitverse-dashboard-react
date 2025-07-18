@@ -34,6 +34,8 @@ export interface RoleDefinition {
   updatedAt: Date;
 }
 
+import { User } from './auth';
+
 export interface UserWithRoles extends User {
   roles: RoleDefinition[];
   isActive: boolean;

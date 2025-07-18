@@ -16,6 +16,9 @@ import RoleManagement from "./pages/RoleManagement";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import PublicHome from "./pages/public/PublicHome";
+import { MemberListPage } from "./pages/members/list";
+import { MemberCreatePage } from "./pages/members/create";
+import { MemberProfilePage } from "./pages/members/[id]/profile";
 
 const queryClient = new QueryClient();
 
@@ -81,10 +84,27 @@ const App = () => (
                     element={
                       <ProtectedRoute allowedRoles={['admin', 'team']}>
                         <DashboardLayout>
-                          <div className="text-center py-20">
-                            <h1 className="text-2xl font-bold">Members Page</h1>
-                            <p className="text-muted-foreground mt-2">Coming soon...</p>
-                          </div>
+                          <MemberListPage />
+                        </DashboardLayout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/members/create" 
+                    element={
+                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                        <DashboardLayout>
+                          <MemberCreatePage />
+                        </DashboardLayout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/members/:id/profile" 
+                    element={
+                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                        <DashboardLayout>
+                          <MemberProfilePage />
                         </DashboardLayout>
                       </ProtectedRoute>
                     } 

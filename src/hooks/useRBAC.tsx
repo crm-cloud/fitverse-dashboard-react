@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Permission, RoleDefinition, UserWithRoles, RBACContext, AuditLog } from '@/types/rbac';
+import { Permission, RoleDefinition, UserWithRoles, AuditLog, type RBACContext as RBACContextType } from '@/types/rbac';
 import { useAuth } from './useAuth';
 
 // Mock roles with comprehensive permissions
@@ -145,7 +145,7 @@ const mockUsersWithRoles: Record<string, UserWithRoles> = {
   }
 };
 
-const RBACContext = createContext<RBACContext | null>(null);
+const RBACContext = createContext<RBACContextType | null>(null);
 
 export const useRBAC = () => {
   const context = useContext(RBACContext);
@@ -217,7 +217,7 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     console.log('Audit Log:', log);
   };
 
-  const value: RBACContext = {
+  const value: RBACContextType = {
     currentUser,
     hasPermission,
     hasAnyPermission,
