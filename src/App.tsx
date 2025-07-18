@@ -87,7 +87,7 @@ const App = () => (
                   <Route 
                     path="/members" 
                     element={
-                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                       <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
                         <DashboardLayout>
                           <MemberListPage />
                         </DashboardLayout>
@@ -97,7 +97,7 @@ const App = () => (
                   <Route 
                     path="/members/create" 
                     element={
-                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                       <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
                         <DashboardLayout>
                           <MemberCreatePage />
                         </DashboardLayout>
@@ -107,7 +107,7 @@ const App = () => (
                   <Route 
                     path="/membership/plans" 
                     element={
-                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                       <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
                         <DashboardLayout>
                           <MembershipPlansPage />
                         </DashboardLayout>
@@ -127,7 +127,7 @@ const App = () => (
                   <Route 
                     path="/members/:id/profile" 
                     element={
-                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                       <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
                         <DashboardLayout>
                           <MemberProfilePage />
                         </DashboardLayout>
@@ -137,7 +137,7 @@ const App = () => (
                   <Route 
                     path="/classes" 
                     element={
-                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                       <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
                         <DashboardLayout>
                           <ClassListPage />
                         </DashboardLayout>
@@ -157,7 +157,7 @@ const App = () => (
                   <Route 
                     path="/team" 
                     element={
-                      <ProtectedRoute allowedRoles={['admin', 'team']}>
+                       <ProtectedRoute allowedRoles={['admin', 'manager']}>
                         <DashboardLayout>
                           <TeamManagement />
                         </DashboardLayout>

@@ -120,7 +120,7 @@ const mockUsersWithRoles: Record<string, UserWithRoles> = {
     id: '2',
     email: 'trainer@gymfit.com',
     name: 'Mike Rodriguez',
-    role: 'team',
+    role: 'trainer',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
     department: 'Personal Training',
     phone: '+1 (555) 234-5678',
