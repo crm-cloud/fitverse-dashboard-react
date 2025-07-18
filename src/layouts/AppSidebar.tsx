@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -10,7 +11,9 @@ import {
   Dumbbell,
   UserCheck,
   Trophy,
-  HelpCircle
+  HelpCircle,
+  Shield,
+  UserCog
 } from 'lucide-react';
 import {
   Sidebar,
@@ -36,6 +39,8 @@ const navigationItems: Record<UserRole, Array<{
   admin: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Overview' },
+    { title: 'User Management', url: '/users', icon: UserCog, group: 'Administration' },
+    { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
     { title: 'Staff', url: '/staff', icon: UserCheck, group: 'Management' },
     { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Management' },
