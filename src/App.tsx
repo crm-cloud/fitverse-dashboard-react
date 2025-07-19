@@ -48,6 +48,17 @@ import BranchManagement from "./pages/branches/BranchManagement";
 import Goals from "./pages/member/Goals";
 import Help from "./pages/member/Help";
 import CheckIns from "./pages/member/CheckIns";
+// New trainer pages
+import TrainerSchedulePage from "./pages/trainer/schedule";
+import TrainerClientsPage from "./pages/trainer/clients";
+import TrainerWorkoutsPage from "./pages/trainer/workouts";
+import TrainerProgressPage from "./pages/trainer/progress";
+import TrainerEarningsPage from "./pages/trainer/earnings";
+// New staff pages
+import StaffCheckinPage from "./pages/staff/checkin";
+import StaffSupportPage from "./pages/staff/support";
+import StaffTasksPage from "./pages/staff/tasks";
+import StaffMaintenancePage from "./pages/staff/maintenance";
 
 const queryClient = new QueryClient();
 
@@ -291,6 +302,100 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                             <DashboardLayout>
                               <ProductManagement />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Trainer-specific Routes */}
+                      <Route 
+                        path="/trainer/schedule" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <TrainerSchedulePage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/trainer/clients" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <TrainerClientsPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/trainer/workouts" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <TrainerWorkoutsPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/trainer/progress" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <TrainerProgressPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/trainer/earnings" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <TrainerEarningsPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Staff-specific Routes */}
+                      <Route 
+                        path="/staff/checkin" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <StaffCheckinPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/support" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <StaffSupportPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/tasks" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <StaffTasksPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/maintenance" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <StaffMaintenancePage />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 
