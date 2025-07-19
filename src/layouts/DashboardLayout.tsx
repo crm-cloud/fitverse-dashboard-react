@@ -1,10 +1,11 @@
-import { ReactNode } from 'react';
+
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
+import { MobileBottomNav } from '@/components/navigation/MobileBottomNav';
 
 interface DashboardLayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -14,13 +15,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           <AppHeader />
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6">
-              {children}
-            </div>
+          <main className="flex-1 p-6 pb-20 md:pb-6 overflow-auto">
+            {children}
           </main>
         </div>
       </div>
+      <MobileBottomNav />
     </SidebarProvider>
   );
 };

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +17,7 @@ import RoleManagement from "./pages/RoleManagement";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import PublicHome from "./pages/public/PublicHome";
+import ProfileSettings from "./pages/ProfileSettings";
 import { MemberListPage } from "./pages/members/list";
 import { MemberCreatePage } from "./pages/members/create";
 import { MemberProfilePage } from "./pages/members/[id]/profile";
@@ -55,6 +55,16 @@ const App = () => (
                         <ProtectedRoute>
                           <DashboardLayout>
                             <Dashboard />
+                          </DashboardLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/profile" 
+                      element={
+                        <ProtectedRoute>
+                          <DashboardLayout>
+                            <ProfileSettings />
                           </DashboardLayout>
                         </ProtectedRoute>
                       } 
