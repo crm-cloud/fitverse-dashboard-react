@@ -233,27 +233,25 @@ export const AppSidebar = () => {
     <>
       <Sheet open={state === "expanded"} onOpenChange={() => {}}>
         <SheetContent side="left" className="w-full sm:w-64 p-0">
+          <SheetHeader className="px-4 py-6">
+            <SheetTitle>
+              {isBranchesLoading ? (
+                <Skeleton className="h-6 w-32" />
+              ) : (
+                branches?.find((branch) => branch.id === authState.user?.branchId)
+                  ?.name || "Select Branch"
+              )}
+            </SheetTitle>
+            <SheetDescription>
+              {authState.isLoading ? (
+                <Skeleton className="h-4 w-24" />
+              ) : (
+                authState.user?.email
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          <Separator className="mx-4" />
           <div className="flex flex-col h-full">
-            <div className="px-4 py-6">
-              <SheetHeader className="px-4 py-2">
-                <SheetTitle>
-                  {isBranchesLoading ? (
-                    <Skeleton className="h-6 w-32" />
-                  ) : (
-                    branches?.find((branch) => branch.id === authState.user?.branchId)
-                      ?.name || "Select Branch"
-                  )}
-                </SheetTitle>
-                <SheetDescription>
-                  {authState.isLoading ? (
-                    <Skeleton className="h-4 w-24" />
-                  ) : (
-                    authState.user?.email
-                  )}
-                </SheetDescription>
-              </SheetHeader>
-              <Separator className="my-2" />
-            </div>
             <nav className="flex-1 px-4 py-2">
               <Accordion type="single" collapsible>
                 <AccordionItem value="dashboard">
@@ -414,19 +412,19 @@ export const AppSidebar = () => {
         }`}
       >
         <div className="flex items-center justify-center h-16 shrink-0">
-          <SheetHeader className="px-4 py-2">
-            <SheetTitle>
+          <div className="px-4 py-2 text-center">
+            <div className="font-semibold">
               {isBranchesLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : (
                 branches?.find((branch) => branch.id === authState.user?.branchId)
                   ?.name || "Select Branch"
               )}
-            </SheetTitle>
-            <SheetDescription>
+            </div>
+            <div className="text-sm text-muted-foreground">
               {authState.isLoading ? <Skeleton className="h-4 w-24" /> : authState.user?.email}
-            </SheetDescription>
-          </SheetHeader>
+            </div>
+          </div>
         </div>
         <Separator />
         <nav className="flex-1 px-2 py-4">
