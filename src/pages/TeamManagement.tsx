@@ -29,7 +29,7 @@ export default function TeamManagement() {
   });
 
   const isAdmin = authState.user?.role === 'admin';
-  const isManager = authState.user?.role === 'manager';
+  const isManager = authState.user?.role === 'team' && authState.user?.teamRole === 'manager';
 
   // Apply branch-based filtering
   const visibleMembers = useMemo(() => {

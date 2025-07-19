@@ -30,7 +30,9 @@ export type Permission =
   // Referral Management
   | 'referrals.view' | 'referrals.create' | 'referrals.edit' | 'referrals.process'
   // Feedback Management
-  | 'feedback.view' | 'feedback.create' | 'feedback.edit' | 'feedback.delete' | 'feedback.respond'
+  | 'feedback.view' | 'feedback.create' | 'feedback.edit' | 'feedback.delete' | 'feedback.respond' | 'feedback.export'
+  // Staff Management
+  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.delete'
   // Task Management
   | 'tasks.view' | 'tasks.create' | 'tasks.edit' | 'tasks.delete' | 'tasks.assign'
   // Diet & Workout
@@ -49,6 +51,8 @@ export interface RoleDefinition {
   createdAt: Date;
   updatedAt: Date;
 }
+
+import { User } from './auth';
 
 export interface UserWithRoles extends User {
   roles: RoleDefinition[];

@@ -226,7 +226,7 @@ export const useRBAC = () => {
   return context;
 };
 
-export cons RBACProvider = ({ children }: { children: ReactNode }) => {
+export const RBACProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
   const [currentUser, setCurrentUser] = useState<UserWithRoles | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);

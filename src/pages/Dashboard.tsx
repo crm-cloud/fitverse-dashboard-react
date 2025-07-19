@@ -18,12 +18,18 @@ export default function Dashboard() {
       return <SuperAdminDashboard />;
     case 'admin':
       return <AdminDashboard />;
-    case 'manager':
-      return <ManagerDashboard />;
-    case 'staff':
-      return <StaffDashboard />;
-    case 'trainer':
-      return <TrainerDashboard />;
+    case 'team':
+      // Check team role specialization
+      switch (authState.user.teamRole) {
+        case 'manager':
+          return <ManagerDashboard />;
+        case 'staff':
+          return <StaffDashboard />;
+        case 'trainer':
+          return <TrainerDashboard />;
+        default:
+          return <StaffDashboard />; // Default to staff dashboard for team members
+      }
     case 'member':
       const member = mockMembers.find(m => m.email === authState.user?.email);
       if (!member) {
