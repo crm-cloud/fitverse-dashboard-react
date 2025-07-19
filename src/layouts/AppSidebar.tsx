@@ -1,254 +1,586 @@
-
-import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useState } from "react";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Separator } from "@/components/ui/separator";
+import {
+  Settings,
   LayoutDashboard,
   Users,
   Calendar,
-  CreditCard,
-  Settings,
-  BarChart3,
-  Dumbbell,
-  UserCheck,
-  Trophy,
-  HelpCircle,
-  Shield,
-  UserCog,
-  Monitor,
-  Package,
-  Store,
-  Apple,
-  MessageSquare,
-  CheckSquare,
-  Building2,
-  MapPin,
-  Database,
-  Target,
-  Activity,
+  Coins,
+  BarChart,
   Mail,
-  Phone,
-  Clock,
-  User,
-  Coffee,
-  Clipboard
-} from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import { useAuth } from '@/hooks/useAuth';
-import { useRBAC } from '@/hooks/useRBAC';
-import { UserRole } from '@/types/auth';
-import { Badge } from '@/components/ui/badge';
+  MessageSquare,
+  Activity,
+  Database,
+  ShoppingBag,
+  ListChecks,
+  Brain,
+  Bell,
+  GitBranch,
+  MessageCircle,
+  HelpCircle,
+  UserCog,
+  ShieldAlert,
+  LucideIcon
+} from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useBranches } from "@/hooks/useBranches";
+import { ModeToggle } from "@/components/ModeToggle";
+import { useSidebar } from "@/components/ui/sidebar";
 
-// Enhanced navigation items with team role specificity
-const navigationItems = [
-  // Dashboard - All roles
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview', permission: null },
-  
-  // System Management - Super Admin only
-  { title: 'System Health', url: '/system-health', icon: BarChart3, group: 'System Management', permission: 'system.view' },
-  { title: 'Branch Management', url: '/branches', icon: Building2, group: 'System Management', permission: 'branches.view' },
-  { title: 'User Management', url: '/users', icon: UserCog, group: 'System Management', permission: 'users.view' },
-  { title: 'Role Management', url: '/roles', icon: Shield, group: 'System Management', permission: 'roles.view' },
-  { title: 'System Settings', url: '/system-settings', icon: Settings, group: 'System Management', permission: 'system.manage' },
-  { title: 'Email Settings', url: '/email-settings', icon: Mail, group: 'System Management', permission: 'system.manage' },
-  { title: 'SMS Settings', url: '/sms-settings', icon: Phone, group: 'System Management', permission: 'system.manage' },
-  { title: 'System Backup', url: '/backup', icon: Database, group: 'System Management', permission: 'system.backup' },
-  
-  // Analytics & Reports
-  { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Insights', permission: 'analytics.view' },
-  { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Insights', permission: 'reports.view' },
-  
-  // Operations
-  { title: 'Members', url: '/members', icon: Users, group: 'Operations', permission: 'members.view' },
-  { title: 'Trainers', url: '/trainers', icon: UserCheck, group: 'Operations', permission: 'team.view' },
-  { title: 'Team', url: '/team', icon: UserCheck, group: 'Operations', permission: 'team.view' },
-  { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations', permission: 'classes.view' },
-  { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations', permission: 'equipment.view' },
-  { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Operations', permission: null },
-  
-  // Trainer-specific items
-  { title: 'My Schedule', url: '/trainer/schedule', icon: Calendar, group: 'Training', permission: 'trainer.schedule.view', teamRole: 'trainer' },
-  { title: 'My Clients', url: '/trainer/clients', icon: Users, group: 'Training', permission: 'trainer.clients.view', teamRole: 'trainer' },
-  { title: 'Workout Plans', url: '/trainer/workouts', icon: Dumbbell, group: 'Training', permission: 'trainer.workouts.create', teamRole: 'trainer' },
-  { title: 'Progress Tracking', url: '/trainer/progress', icon: Activity, group: 'Training', permission: 'trainer.progress.track', teamRole: 'trainer' },
-  { title: 'Earnings', url: '/trainer/earnings', icon: CreditCard, group: 'Training', permission: 'trainer.earnings.view', teamRole: 'trainer' },
-  
-  // Staff-specific items
-  { title: 'Member Check-in', url: '/staff/checkin', icon: UserCheck, group: 'Front Desk', permission: 'staff.checkin.process', teamRole: 'staff' },
-  { title: 'Member Support', url: '/staff/support', icon: MessageSquare, group: 'Front Desk', permission: 'staff.support.handle', teamRole: 'staff' },
-  { title: 'Daily Tasks', url: '/staff/tasks', icon: CheckSquare, group: 'Front Desk', permission: 'tasks.view', teamRole: 'staff' },
-  { title: 'Maintenance Reports', url: '/staff/maintenance', icon: Clipboard, group: 'Front Desk', permission: 'staff.maintenance.report', teamRole: 'staff' },
-  
-  // Business
-  { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Business', permission: 'finance.view' },
-  { title: 'Leads', url: '/leads', icon: Users, group: 'Business', permission: 'leads.view' },
-  { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Business', permission: 'referrals.view' },
-  
-  // Store
-  { title: 'Products', url: '/products', icon: Package, group: 'Store', permission: 'products.view' },
-  { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store', permission: 'pos.view' },
-  { title: 'Store', url: '/store', icon: Store, group: 'Store', permission: 'products.view', memberOnly: true },
-  
-  // Services
-  { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Services', permission: 'diet-workout.view' },
-  { title: 'My Workouts', url: '/workouts', icon: Dumbbell, group: 'Fitness', permission: null, memberOnly: true },
-  { title: 'Goals & Progress', url: '/goals', icon: Target, group: 'Fitness', permission: null, memberOnly: true },
-  
-  // Member Classes
-  { title: 'My Classes', url: '/member/classes', icon: Calendar, group: 'Fitness', permission: null, memberOnly: true },
-  
-  // Management
-  { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management', permission: 'feedback.view' },
-  { title: 'Give Feedback', url: '/member/feedback', icon: MessageSquare, group: 'Support', permission: null, memberOnly: true },
-  { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management', permission: 'tasks.view' },
-  
-  // Membership Management
-  { title: 'Membership Plans', url: '/membership/plans', icon: CreditCard, group: 'Membership', permission: 'members.view' },
-  { title: 'My Membership', url: '/membership/dashboard', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },
-  
-  // Account & Member Settings
-  { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },
-  { title: 'Profile Settings', url: '/member/profile-settings', icon: User, group: 'Account', permission: null, memberOnly: true },
-  { title: 'Trainer Change', url: '/trainer-change-request', icon: UserCog, group: 'Account', permission: null, memberOnly: true },
-  { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support', permission: null, memberOnly: true },
-  { title: 'Settings', url: '/settings', icon: Settings, group: 'System', permission: 'settings.view' }
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+}
+
+const dashboardMenuItems = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard
+  }
 ];
 
-export function AppSidebar() {
-  const { state } = useSidebar();
+const memberMenuItems = [
+  {
+    title: "Member List",
+    url: "/members/list",
+    icon: Users
+  },
+  {
+    title: "Add New Member",
+    url: "/members/create",
+    icon: Users
+  }
+];
+
+const trainerMenuItems = [
+  {
+    title: "Trainer Management",
+    url: "/trainers/management",
+    icon: UserCog
+  }
+];
+
+const classMenuItems = [
+  {
+    title: "Class List",
+    url: "/classes/list",
+    icon: ListChecks
+  }
+];
+
+const financeMenuItems = [
+  {
+    title: "Finance Dashboard",
+    url: "/finance/dashboard",
+    icon: Coins
+  },
+  {
+    title: "Transactions",
+    url: "/finance/transactions",
+    icon: BarChart
+  }
+];
+
+const membershipMenuItems = [
+  {
+    title: "Membership Dashboard",
+    url: "/membership/dashboard",
+    icon: Calendar
+  },
+  {
+    title: "Membership Plans",
+    url: "/membership/plans",
+    icon: BarChart
+  }
+];
+
+const leadsMenuItems = [
+  {
+    title: "Lead List",
+    url: "/leads/list",
+    icon: Users
+  }
+];
+
+const systemMenuItems = [
+  {
+    title: "System Settings",
+    url: "/system/settings",
+    icon: Settings
+  },
+  {
+    title: "Email Settings",
+    url: "/system/email",
+    icon: Mail
+  },
+  {
+    title: "SMS Settings", 
+    url: "/system/sms",
+    icon: MessageSquare
+  },
+  {
+    title: "WhatsApp Settings",
+    url: "/system/whatsapp", 
+    icon: MessageCircle
+  },
+  {
+    title: "System Health",
+    url: "/system/health",
+    icon: Activity
+  },
+  {
+    title: "Backup & Restore",
+    url: "/system/backup",  
+    icon: Database
+  }
+];
+
+const storeMenuItems = [
+  {
+    title: "Member Store",
+    url: "/store/member",
+    icon: ShoppingBag
+  },
+  {
+    title: "Product Management",
+    url: "/store/products",
+    icon: ShoppingBag
+  }
+];
+
+const dietWorkoutMenuItems = [
+  {
+    title: "Diet & Workout Planner",
+    url: "/diet-workout/planner",
+    icon: Brain
+  }
+];
+
+const feedbackMenuItems = [
+  {
+    title: "Feedback Management",
+    url: "/feedback/management",
+    icon: Bell
+  }
+];
+
+const taskMenuItems = [
+  {
+    title: "Task Management",
+    url: "/tasks/management",
+    icon: ListChecks
+  }
+];
+
+const branchMenuItems = [
+  {
+    title: "Branch Management",
+    url: "/branches/management",
+    icon: GitBranch
+  }
+];
+
+export const AppSidebar = () => {
+  const { user, isLoading } = useAuth();
+  const { branches, isLoading: isBranchesLoading } = useBranches();
   const location = useLocation();
-  const { authState } = useAuth();
-  const { hasPermission } = useRBAC();
-  const currentPath = location.pathname;
-  
-  const collapsed = state === 'collapsed';
+  const [isExpanded, setIsExpanded] = useState(true);
+  const { isOpen, onOpen, onClose } = useSidebar();
 
-  if (!authState.user) return null;
+  const toggleSidebar = () => {
+    setIsExpanded(!isExpanded);
+  };
 
-  // Filter navigation items based on permissions, role, and team role
-  const filteredItems = navigationItems.filter(item => {
-    // Check if item is member-only and user is not a member
-    if (item.memberOnly && authState.user?.role !== 'member') {
-      return false;
-    }
-    
-    // Check if item is not for members and user is a member
-    if (!item.memberOnly && authState.user?.role === 'member' && item.permission) {
-      return false;
-    }
-    
-    // If user is member, only show member-only items or items without permissions
-    if (authState.user?.role === 'member' && !item.memberOnly && item.permission) {
-      return false;
-    }
-    
-    // Check team role specificity
-    if (item.teamRole && authState.user?.teamRole !== item.teamRole) {
-      return false;
-    }
-    
-    // Check permission if required for non-member users
-    if (item.permission && authState.user?.role !== 'member' && !hasPermission(item.permission as any)) {
-      return false;
-    }
-    
-    return true;
-  });
-
-  // Group filtered items
-  const groupedItems = filteredItems.reduce((groups, item) => {
-    if (!groups[item.group]) {
-      groups[item.group] = [];
-    }
-    groups[item.group].push(item);
-    return groups;
-  }, {} as Record<string, typeof filteredItems>);
-
-  const isActive = (path: string) => currentPath === path;
-
-  const getRoleDisplayName = (role: UserRole, teamRole?: string) => {
-    if (role === 'team' && teamRole) {
-      return `${teamRole.charAt(0).toUpperCase() + teamRole.slice(1)} Panel`;
-    }
-    return `${role.charAt(0).toUpperCase() + role.slice(1)} Panel`;
+  const renderMenuItems = (items: MenuItem[], category: string) => {
+    return items.map((item) => (
+      <li key={item.url}>
+        <NavLink
+          to={item.url}
+          className={({ isActive }) =>
+            `flex items-center text-sm font-medium py-2 px-4 rounded-md transition-colors hover:bg-secondary ${
+              isActive ? "bg-secondary text-foreground" : "text-muted-foreground"
+            }`
+          }
+        >
+          <item.icon className="w-4 h-4 mr-2" />
+          {item.title}
+        </NavLink>
+      </li>
+    ));
   };
 
   return (
-    <Sidebar className={collapsed ? 'w-14' : 'w-64'} collapsible="icon">
-      <SidebarContent className="px-0">
-        {/* Brand */}
-        <div className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Dumbbell className="w-4 h-4 text-white" />
-            </div>
-            {!collapsed && (
-              <div className="flex-1">
-                <h2 className="font-bold text-sidebar-foreground">GymFit Pro</h2>
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-sidebar-foreground/60">
-                    {getRoleDisplayName(authState.user.role, authState.user.teamRole)}
-                  </p>
-                  {authState.user.teamRole && (
-                    <Badge variant="secondary" className="text-xs px-1 py-0">
-                      {authState.user.teamRole}
-                    </Badge>
+    <>
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent side="left" className="w-full sm:w-64 p-0">
+          <div className="flex flex-col h-full">
+            <div className="px-4 py-6">
+              <SheetHeader className="px-4 py-2">
+                <SheetTitle>
+                  {isBranchesLoading ? (
+                    <Skeleton className="h-6 w-32" />
+                  ) : (
+                    branches?.find((branch) => branch.id === user?.branchId)
+                      ?.name || "Select Branch"
                   )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Branch Selector for non-global roles */}
-        {!collapsed && (authState.user.role === 'team' || authState.user.role === 'member') && (
-          <div className="px-4 py-2 border-b border-sidebar-border">
-            <div className="flex items-center gap-2 text-sm text-sidebar-foreground">
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{authState.user.branchName || 'No Branch'}</span>
+                </SheetTitle>
+                <SheetDescription>
+                  {isLoading ? (
+                    <Skeleton className="h-4 w-24" />
+                  ) : (
+                    user?.email
+                  )}
+                </SheetDescription>
+              </SheetHeader>
+              <Separator className="my-2" />
+            </div>
+            <nav className="flex-1 px-4 py-2">
+              <Accordion type="single" collapsible>
+                <AccordionItem value="dashboard">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(dashboardMenuItems, "dashboard")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="members">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <Users className="w-4 h-4 mr-2" />
+                    Members
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(memberMenuItems, "members")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="trainers">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <UserCog className="w-4 h-4 mr-2" />
+                    Trainers
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(trainerMenuItems, "trainers")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="classes">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <ListChecks className="w-4 h-4 mr-2" />
+                    Classes
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(classMenuItems, "classes")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="finance">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <Coins className="w-4 h-4 mr-2" />
+                    Finance
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(financeMenuItems, "finance")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="membership">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Membership
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(membershipMenuItems, "membership")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="leads">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <Users className="w-4 h-4 mr-2" />
+                    Leads
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(leadsMenuItems, "leads")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="store">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    Store
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(storeMenuItems, "store")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="diet-workout">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <Brain className="w-4 h-4 mr-2" />
+                    Diet & Workout
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(dietWorkoutMenuItems, "diet-workout")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="feedback">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <Bell className="w-4 h-4 mr-2" />
+                    Feedback
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(feedbackMenuItems, "feedback")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="tasks">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <ListChecks className="w-4 h-4 mr-2" />
+                    Tasks
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(taskMenuItems, "tasks")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="branches">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <GitBranch className="w-4 h-4 mr-2" />
+                    Branches
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(branchMenuItems, "branches")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="system">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <ShieldAlert className="w-4 h-4 mr-2" />
+                    System
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="mt-2 space-y-1">
+                      {renderMenuItems(systemMenuItems, "system")}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </nav>
+            <Separator />
+            <div className="p-4">
+              <ModeToggle />
             </div>
           </div>
-        )}
-
-        {/* Navigation */}
-        {Object.entries(groupedItems).map(([group, items]) => (
-          <SidebarGroup key={group}>
-            {!collapsed && <SidebarGroupLabel>{group}</SidebarGroupLabel>}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink 
-                        to={item.url} 
-                        className={({ isActive }) => 
-                          `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                            isActive 
-                              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
-                              : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-                          }`
-                        }
-                      >
-                        <item.icon className="w-5 h-5 shrink-0" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
-    </Sidebar>
+        </SheetContent>
+      </Sheet>
+      <div
+        className={`hidden md:flex flex-col w-64 border-r bg-background transition-all duration-300 ${
+          isExpanded ? "w-64" : "w-16"
+        }`}
+      >
+        <div className="flex items-center justify-center h-16 shrink-0">
+          <SheetHeader className="px-4 py-2">
+            <SheetTitle>
+              {isBranchesLoading ? (
+                <Skeleton className="h-6 w-32" />
+              ) : (
+                branches?.find((branch) => branch.id === user?.branchId)
+                  ?.name || "Select Branch"
+              )}
+            </SheetTitle>
+            <SheetDescription>
+              {isLoading ? <Skeleton className="h-4 w-24" /> : user?.email}
+            </SheetDescription>
+          </SheetHeader>
+        </div>
+        <Separator />
+        <nav className="flex-1 px-2 py-4">
+          <Accordion type="single" collapsible>
+            <AccordionItem value="dashboard">
+              <AccordionTrigger className="text-sm font-medium">
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Dashboard
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(dashboardMenuItems, "dashboard")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="members">
+              <AccordionTrigger className="text-sm font-medium">
+                <Users className="w-4 h-4 mr-2" />
+                Members
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(memberMenuItems, "members")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="trainers">
+              <AccordionTrigger className="text-sm font-medium">
+                <UserCog className="w-4 h-4 mr-2" />
+                Trainers
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(trainerMenuItems, "trainers")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="classes">
+              <AccordionTrigger className="text-sm font-medium">
+                <ListChecks className="w-4 h-4 mr-2" />
+                Classes
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(classMenuItems, "classes")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="finance">
+              <AccordionTrigger className="text-sm font-medium">
+                <Coins className="w-4 h-4 mr-2" />
+                Finance
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(financeMenuItems, "finance")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="membership">
+              <AccordionTrigger className="text-sm font-medium">
+                <Calendar className="w-4 h-4 mr-2" />
+                Membership
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(membershipMenuItems, "membership")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="leads">
+              <AccordionTrigger className="text-sm font-medium">
+                <Users className="w-4 h-4 mr-2" />
+                Leads
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(leadsMenuItems, "leads")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="store">
+              <AccordionTrigger className="text-sm font-medium">
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Store
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(storeMenuItems, "store")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="diet-workout">
+              <AccordionTrigger className="text-sm font-medium">
+                <Brain className="w-4 h-4 mr-2" />
+                Diet & Workout
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(dietWorkoutMenuItems, "diet-workout")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="feedback">
+              <AccordionTrigger className="text-sm font-medium">
+                <Bell className="w-4 h-4 mr-2" />
+                Feedback
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(feedbackMenuItems, "feedback")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="tasks">
+              <AccordionTrigger className="text-sm font-medium">
+                <ListChecks className="w-4 h-4 mr-2" />
+                Tasks
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(taskMenuItems, "tasks")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="branches">
+              <AccordionTrigger className="text-sm font-medium">
+                <GitBranch className="w-4 h-4 mr-2" />
+                Branches
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(branchMenuItems, "branches")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="system">
+              <AccordionTrigger className="text-sm font-medium">
+                <ShieldAlert className="w-4 h-4 mr-2" />
+                System
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="mt-2 space-y-1">
+                  {renderMenuItems(systemMenuItems, "system")}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </nav>
+        <Separator />
+        <div className="p-4">
+          <ModeToggle />
+        </div>
+      </div>
+    </>
   );
-}
+};
