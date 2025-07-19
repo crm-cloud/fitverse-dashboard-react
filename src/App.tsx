@@ -41,6 +41,7 @@ import { TrainerManagementPage } from "./pages/trainers/management";
 import SystemHealth from "./pages/system/SystemHealth";
 import SystemSettings from "./pages/system/SystemSettings";
 import EmailSettings from "./pages/system/EmailSettings";
+import SMSSettings from "./pages/system/SMSSettings";
 import SystemBackup from "./pages/system/SystemBackup";
 import BranchManagement from "./pages/branches/BranchManagement";
 // New member pages
@@ -119,21 +120,21 @@ const App = () => (
                         } 
                       />
                       <Route 
-                        path="/backup" 
+                        path="/sms-settings" 
                         element={
                           <ProtectedRoute allowedRoles={['super-admin']}>
                             <DashboardLayout>
-                              <SystemBackup />
+                              <SMSSettings />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 
                       />
                       <Route 
-                        path="/branches" 
+                        path="/backup" 
                         element={
-                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                          <ProtectedRoute allowedRoles={['super-admin']}>
                             <DashboardLayout>
-                              <BranchManagement />
+                              <SystemBackup />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 

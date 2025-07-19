@@ -32,7 +32,10 @@ const mockRoles: Record<string, RoleDefinition> = {
       'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
       'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
-      'notifications.view', 'notifications.send'
+      'notifications.view', 'notifications.send',
+      'sms.view', 'sms.send', 'sms.templates.view', 'sms.templates.create', 'sms.templates.edit', 'sms.templates.delete',
+      'sms.settings.view', 'sms.settings.edit', 'sms.providers.view', 'sms.providers.create', 'sms.providers.edit', 'sms.providers.delete',
+      'sms.logs.view', 'sms.logs.export', 'sms.analytics.view'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -61,7 +64,10 @@ const mockRoles: Record<string, RoleDefinition> = {
       'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
       'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
-      'notifications.view', 'notifications.send'
+      'notifications.view', 'notifications.send',
+      'sms.view', 'sms.send', 'sms.templates.view', 'sms.templates.create', 'sms.templates.edit', 'sms.templates.delete',
+      'sms.settings.view', 'sms.settings.edit', 'sms.providers.view', 'sms.providers.edit',
+      'sms.logs.view', 'sms.logs.export', 'sms.analytics.view'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -86,7 +92,8 @@ const mockRoles: Record<string, RoleDefinition> = {
       'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.respond',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign',
       'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
-      'notifications.view'
+      'notifications.view',
+      'sms.view', 'sms.send', 'sms.templates.view', 'sms.logs.view'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')

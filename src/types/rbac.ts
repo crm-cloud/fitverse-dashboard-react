@@ -1,4 +1,3 @@
-
 export type Permission = 
   // System Management (Super Admin only)
   | 'system.view' | 'system.manage' | 'system.backup' | 'system.restore'
@@ -38,7 +37,11 @@ export type Permission =
   // Diet & Workout
   | 'diet-workout.view' | 'diet-workout.create' | 'diet-workout.edit' | 'diet-workout.assign'
   // Notifications
-  | 'notifications.view' | 'notifications.send';
+  | 'notifications.view' | 'notifications.send'
+  // SMS Management
+  | 'sms.view' | 'sms.send' | 'sms.templates.view' | 'sms.templates.create' | 'sms.templates.edit' | 'sms.templates.delete'
+  | 'sms.settings.view' | 'sms.settings.edit' | 'sms.providers.view' | 'sms.providers.create' | 'sms.providers.edit' | 'sms.providers.delete'
+  | 'sms.logs.view' | 'sms.logs.export' | 'sms.analytics.view';
 
 export interface RoleDefinition {
   id: string;

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -24,7 +25,8 @@ import {
   Database,
   Target,
   Activity,
-  Mail
+  Mail,
+  Phone
 } from 'lucide-react';
 import {
   Sidebar,
@@ -54,6 +56,7 @@ const navigationItems = [
   { title: 'Role Management', url: '/roles', icon: Shield, group: 'System Management', permission: 'roles.view' },
   { title: 'System Settings', url: '/system-settings', icon: Settings, group: 'System Management', permission: 'system.manage' },
   { title: 'Email Settings', url: '/email-settings', icon: Mail, group: 'System Management', permission: 'system.manage' },
+  { title: 'SMS Settings', url: '/sms-settings', icon: Phone, group: 'System Management', permission: 'system.manage' },
   { title: 'System Backup', url: '/backup', icon: Database, group: 'System Management', permission: 'system.backup' },
   
   // Analytics & Reports
