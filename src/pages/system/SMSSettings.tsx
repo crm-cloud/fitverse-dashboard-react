@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -439,7 +438,7 @@ export default function SMSSettings() {
                 <Label>Opt-out Keywords</Label>
                 <div className="flex flex-wrap gap-2">
                   {settings.compliance.optOutKeywords.map(keyword => (
-                    <Badge key={keyword} variant="secondary">{keyword}</Badge>
+                    <Badge key={keyword} variant="outline">{keyword}</Badge>
                   ))}
                 </div>
               </div>
@@ -450,32 +449,77 @@ export default function SMSSettings() {
         <TabsContent value="analytics">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  SMS Usage
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">1,234</div>
-                <p className="text-xs text-muted-foreground">+12% from last month</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Sent Today</span>
+                    <span className="font-medium">42</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">This Week</span>
+                    <span className="font-medium">287</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">This Month</span>
+                    <span className="font-medium">1,234</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Delivery Rate</CardTitle>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Delivery Stats
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">98.5%</div>
-                <p className="text-xs text-muted-foreground">+0.5% from last month</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Success Rate</span>
+                    <span className="font-medium text-green-600">98.5%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Failed</span>
+                    <span className="font-medium">3</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Pending</span>
+                    <span className="font-medium">1</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  Rate Limits
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$45.67</div>
-                <p className="text-xs text-muted-foreground">+8% from last month</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Per Minute</span>
+                    <span className="font-medium">5/10</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Per Hour</span>
+                    <span className="font-medium">42/100</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Per Day</span>
+                    <span className="font-medium">287/1000</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
