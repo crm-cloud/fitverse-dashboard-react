@@ -5,15 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LeadFilters } from '@/components/leads/LeadFilters';
 import { LeadTable } from '@/components/leads/LeadTable';
+import { ConvertToMemberDialog } from '@/components/leads/ConvertToMemberDialog';
 import { PermissionGate } from '@/components/PermissionGate';
 import { useToast } from '@/hooks/use-toast';
 import { Lead, LeadFilters as LeadFiltersType } from '@/types/lead';
+import { MemberFormData } from '@/types/member';
 import { mockLeads, mockLeadStats } from '@/mock/leads';
+import { processLeadConversion } from '@/utils/leadConversion';
 
 export const LeadListPage = () => {
   const { toast } = useToast();
-  const [leads] = useState<Lead[]>(mockLeads);
+  const [leads, setLeads] = useState<Lead[]>(mockLeads);
   const [filters, setFilters] = useState<LeadFiltersType>({});
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
 
   // Filter leads based on current filters
   const filteredLeads = useMemo(() => {
@@ -68,12 +73,56 @@ export const LeadListPage = () => {
   };
 
   const handleConvertLead = (lead: Lead) => {
-    // Open convert to member dialog
-    console.log('Convert lead:', lead);
-    toast({
-      title: 'Convert Lead',
-      description: `Converting ${lead.firstName} ${lead.lastName} to member`,
-    });
+    setSelectedLead(lead);
+    setIsConvertDialogOpen(true);
+  };
+
+  const handleConversion = async (
+    memberData: MemberFormData,
+    membershipData: any,
+    notes?: string
+  ) => {
+    if (!selectedLead) return;
+
+    try {
+      // Process the conversion
+      const convertedBy = 'current-user@gym.com'; // This would come from auth context
+      const result = await processLeadConversion(
+        selectedLead,
+        memberData,
+        membershipData,
+        convertedBy,
+        notes
+      );
+
+      // Update the leads list to reflect the conversion
+      setLeads(prevLeads => 
+        prevLeads.map(lead => 
+          lead.id === selectedLead.id ? result.updatedLead : lead
+        )
+      );
+
+      toast({
+        title: 'Conversion Successful',
+        description: `${selectedLead.firstName} ${selectedLead.lastName} has been converted to a member successfully.`,
+      });
+
+      // Log the conversion details for debugging
+      console.log('Conversion completed:', {
+        member: result.member,
+        membership: result.membershipAssignment,
+        invoice: result.invoice,
+        conversionLog: result.conversionLog,
+      });
+
+    } catch (error) {
+      console.error('Conversion failed:', error);
+      toast({
+        title: 'Conversion Failed',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred during conversion.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleScheduleTask = (lead: Lead) => {
@@ -205,6 +254,14 @@ export const LeadListPage = () => {
           />
         </CardContent>
       </Card>
+
+      {/* Convert to Member Dialog */}
+      <ConvertToMemberDialog
+        lead={selectedLead}
+        open={isConvertDialogOpen}
+        onOpenChange={setIsConvertDialogOpen}
+        onConvert={handleConversion}
+      />
     </div>
   );
 };
