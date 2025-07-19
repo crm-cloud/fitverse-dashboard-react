@@ -19,16 +19,23 @@ export default function Dashboard() {
     case 'admin':
       return <AdminDashboard />;
     case 'team':
-      // Check team role specialization
+      // Enhanced team role handling
       switch (authState.user.teamRole) {
         case 'manager':
           return <ManagerDashboard />;
-        case 'staff':
-          return <StaffDashboard />;
         case 'trainer':
           return <TrainerDashboard />;
+        case 'staff':
+          return <StaffDashboard />;
         default:
-          return <StaffDashboard />; // Default to staff dashboard for team members
+          return (
+            <div className="text-center py-20">
+              <h1 className="text-2xl font-bold mb-2">Invalid Team Role</h1>
+              <p className="text-muted-foreground">
+                Please contact your administrator to assign a proper team role.
+              </p>
+            </div>
+          );
       }
     case 'member':
       const member = mockMembers.find(m => m.email === authState.user?.email);
@@ -46,6 +53,13 @@ export default function Dashboard() {
         memberAvatar={member.profilePhoto}
       />;
     default:
-      return <div>Invalid role</div>;
+      return (
+        <div className="text-center py-20">
+          <h1 className="text-2xl font-bold mb-2">Invalid Role</h1>
+          <p className="text-muted-foreground">
+            Please contact your administrator to assign a valid role.
+          </p>
+        </div>
+      );
   }
 }

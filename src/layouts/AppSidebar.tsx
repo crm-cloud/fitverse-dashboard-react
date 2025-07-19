@@ -26,7 +26,11 @@ import {
   Target,
   Activity,
   Mail,
-  Phone
+  Phone,
+  Clock,
+  User,
+  Coffee,
+  Clipboard
 } from 'lucide-react';
 import {
   Sidebar,
@@ -44,7 +48,7 @@ import { useRBAC } from '@/hooks/useRBAC';
 import { UserRole } from '@/types/auth';
 import { Badge } from '@/components/ui/badge';
 
-// Navigation items with permission requirements
+// Enhanced navigation items with team role specificity
 const navigationItems = [
   // Dashboard - All roles
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview', permission: null },
@@ -70,6 +74,19 @@ const navigationItems = [
   { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations', permission: 'classes.view' },
   { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations', permission: 'equipment.view' },
   { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Operations', permission: null },
+  
+  // Trainer-specific items
+  { title: 'My Schedule', url: '/trainer/schedule', icon: Calendar, group: 'Training', permission: 'trainer.schedule.view', teamRole: 'trainer' },
+  { title: 'My Clients', url: '/trainer/clients', icon: Users, group: 'Training', permission: 'trainer.clients.view', teamRole: 'trainer' },
+  { title: 'Workout Plans', url: '/trainer/workouts', icon: Dumbbell, group: 'Training', permission: 'trainer.workouts.create', teamRole: 'trainer' },
+  { title: 'Progress Tracking', url: '/trainer/progress', icon: Activity, group: 'Training', permission: 'trainer.progress.track', teamRole: 'trainer' },
+  { title: 'Earnings', url: '/trainer/earnings', icon: CreditCard, group: 'Training', permission: 'trainer.earnings.view', teamRole: 'trainer' },
+  
+  // Staff-specific items
+  { title: 'Member Check-in', url: '/staff/checkin', icon: UserCheck, group: 'Front Desk', permission: 'staff.checkin.process', teamRole: 'staff' },
+  { title: 'Member Support', url: '/staff/support', icon: MessageSquare, group: 'Front Desk', permission: 'staff.support.handle', teamRole: 'staff' },
+  { title: 'Daily Tasks', url: '/staff/tasks', icon: CheckSquare, group: 'Front Desk', permission: 'tasks.view', teamRole: 'staff' },
+  { title: 'Maintenance Reports', url: '/staff/maintenance', icon: Clipboard, group: 'Front Desk', permission: 'staff.maintenance.report', teamRole: 'staff' },
   
   // Business
   { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Business', permission: 'finance.view' },
@@ -115,7 +132,7 @@ export function AppSidebar() {
 
   if (!authState.user) return null;
 
-  // Filter navigation items based on permissions and role
+  // Filter navigation items based on permissions, role, and team role
   const filteredItems = navigationItems.filter(item => {
     // Check if item is member-only and user is not a member
     if (item.memberOnly && authState.user?.role !== 'member') {
@@ -129,6 +146,11 @@ export function AppSidebar() {
     
     // If user is member, only show member-only items or items without permissions
     if (authState.user?.role === 'member' && !item.memberOnly && item.permission) {
+      return false;
+    }
+    
+    // Check team role specificity
+    if (item.teamRole && authState.user?.teamRole !== item.teamRole) {
       return false;
     }
     

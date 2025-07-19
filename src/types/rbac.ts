@@ -1,3 +1,4 @@
+
 export type Permission = 
   // System Management (Super Admin only)
   | 'system.view' | 'system.manage' | 'system.backup' | 'system.restore'
@@ -41,7 +42,12 @@ export type Permission =
   // SMS Management
   | 'sms.view' | 'sms.send' | 'sms.templates.view' | 'sms.templates.create' | 'sms.templates.edit' | 'sms.templates.delete'
   | 'sms.settings.view' | 'sms.settings.edit' | 'sms.providers.view' | 'sms.providers.create' | 'sms.providers.edit' | 'sms.providers.delete'
-  | 'sms.logs.view' | 'sms.logs.export' | 'sms.analytics.view';
+  | 'sms.logs.view' | 'sms.logs.export' | 'sms.analytics.view'
+  // Trainer-specific permissions
+  | 'trainer.schedule.view' | 'trainer.schedule.manage' | 'trainer.clients.view' | 'trainer.clients.manage'
+  | 'trainer.workouts.create' | 'trainer.workouts.assign' | 'trainer.progress.track' | 'trainer.earnings.view'
+  // Staff-specific permissions
+  | 'staff.checkin.process' | 'staff.support.handle' | 'staff.orientation.conduct' | 'staff.maintenance.report';
 
 export interface RoleDefinition {
   id: string;
@@ -79,6 +85,9 @@ export interface RBACContext {
   canAccessResource: (resource: string, action: string) => boolean;
   canAccessBranch: (branchId: string) => boolean;
   getCurrentBranchId: () => string | null;
+  isTrainer: () => boolean;
+  isStaff: () => boolean;
+  isManager: () => boolean;
 }
 
 export interface AuditLog {

@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
   Calendar, 
@@ -10,91 +11,311 @@ import {
   Trophy,
   Activity,
   Target,
-  Dumbbell
+  Dumbbell,
+  TrendingUp,
+  DollarSign,
+  UserCheck,
+  FileText,
+  MessageSquare
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
-export const TrainerDashboard = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <h1 className="text-3xl font-bold text-foreground">Trainer Dashboard</h1>
-      <Badge>Trainer Access</Badge>
-    </div>
-    
-    {/* Today's Classes */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Today's Classes</CardTitle>
-          <CardDescription>Your scheduled sessions for today</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {[
-            { time: '09:00 AM', class: 'Morning Yoga', members: 12, capacity: 15 },
-            { time: '11:00 AM', class: 'HIIT Training', members: 8, capacity: 10 },
-            { time: '02:00 PM', class: 'Strength Building', members: 15, capacity: 15 },
-            { time: '06:00 PM', class: 'Cardio Blast', members: 20, capacity: 25 }
-          ].map((session, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-muted rounded-lg">
-              <div className="flex items-center gap-3">
-                <Clock className="w-4 h-4 text-primary" />
-                <div>
-                  <p className="font-medium">{session.class}</p>
-                  <p className="text-sm text-muted-foreground">{session.time}</p>
+export const TrainerDashboard = () => {
+  const { authState } = useAuth();
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            Welcome back, {authState.user?.name?.split(' ')[0]}!
+          </h1>
+          <p className="text-muted-foreground">
+            {authState.user?.branchName} • Personal Trainer Dashboard
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">
+            <UserCheck className="w-3 h-3 mr-1" />
+            Trainer
+          </Badge>
+          <Badge variant="outline">
+            {authState.user?.branchName}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Users className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">24</p>
+                <p className="text-sm text-muted-foreground">Active Clients</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Calendar className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">8</p>
+                <p className="text-sm text-muted-foreground">Today's Sessions</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <Star className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">4.9</p>
+                <p className="text-sm text-muted-foreground">Average Rating</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <DollarSign className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">$2,840</p>
+                <p className="text-sm text-muted-foreground">Monthly Earnings</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Tabs defaultValue="today" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="today">Today's Schedule</TabsTrigger>
+          <TabsTrigger value="clients">My Clients</TabsTrigger>
+          <TabsTrigger value="workouts">Workout Plans</TabsTrigger>
+          <TabsTrigger value="progress">Progress Tracking</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="today" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Today's Training Sessions</CardTitle>
+                <CardDescription>Your scheduled sessions for today</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  { time: '09:00 AM', client: 'Sarah Johnson', type: 'Strength Training', duration: '60 min', status: 'completed' },
+                  { time: '10:30 AM', client: 'Mike Chen', type: 'HIIT Workout', duration: '45 min', status: 'completed' },
+                  { time: '02:00 PM', client: 'Lisa Rodriguez', type: 'Cardio & Core', duration: '60 min', status: 'current' },
+                  { time: '03:30 PM', client: 'David Kim', type: 'Functional Training', duration: '45 min', status: 'upcoming' },
+                  { time: '05:00 PM', client: 'Emma Davis', type: 'Yoga & Flexibility', duration: '60 min', status: 'upcoming' }
+                ].map((session, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-4 h-4 text-primary" />
+                      <div>
+                        <p className="font-medium">{session.client}</p>
+                        <p className="text-sm text-muted-foreground">{session.time} • {session.type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{session.duration}</span>
+                      <Badge variant={
+                        session.status === 'completed' ? 'default' :
+                        session.status === 'current' ? 'destructive' : 'outline'
+                      }>
+                        {session.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button className="w-full justify-start">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Schedule New Session
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Create Workout Plan
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Track Progress
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Message Client
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="clients" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Clients</CardTitle>
+              <CardDescription>Manage your active client relationships</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { name: 'Sarah Johnson', sessions: 24, nextSession: 'Tomorrow 9:00 AM', progress: 85 },
+                  { name: 'Mike Chen', sessions: 18, nextSession: 'Today 10:30 AM', progress: 72 },
+                  { name: 'Lisa Rodriguez', sessions: 32, nextSession: 'Today 2:00 PM', progress: 91 },
+                  { name: 'David Kim', sessions: 15, nextSession: 'Today 3:30 PM', progress: 68 },
+                  { name: 'Emma Davis', sessions: 28, nextSession: 'Today 5:00 PM', progress: 88 },
+                  { name: 'John Smith', sessions: 12, nextSession: 'Friday 11:00 AM', progress: 55 }
+                ].map((client, index) => (
+                  <Card key={index} className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">{client.name}</h4>
+                        <Badge variant="outline">{client.sessions} sessions</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Next: {client.nextSession}</p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>Progress</span>
+                          <span>{client.progress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
+                            style={{ width: `${client.progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="workouts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Workout Plans</CardTitle>
+              <CardDescription>Create and manage custom workout plans</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { name: 'Beginner Strength', clients: 8, exercises: 12, duration: '45 min' },
+                  { name: 'Advanced HIIT', clients: 5, exercises: 15, duration: '30 min' },
+                  { name: 'Functional Training', clients: 12, exercises: 10, duration: '60 min' },
+                  { name: 'Cardio Blast', clients: 15, exercises: 8, duration: '40 min' },
+                  { name: 'Core Strength', clients: 10, exercises: 14, duration: '35 min' },
+                  { name: 'Flexibility & Mobility', clients: 7, exercises: 18, duration: '50 min' }
+                ].map((plan, index) => (
+                  <Card key={index} className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">{plan.name}</h4>
+                        <Dumbbell className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <p>{plan.clients} clients • {plan.exercises} exercises</p>
+                        <p>Duration: {plan.duration}</p>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <Button size="sm" variant="outline">Edit</Button>
+                        <Button size="sm" variant="outline">Assign</Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="progress" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Client Progress Tracking</CardTitle>
+              <CardDescription>Monitor your clients' fitness journey</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="p-4">
+                    <div className="flex items-center gap-3">
+                      <TrendingUp className="w-8 h-8 text-green-600" />
+                      <div>
+                        <p className="text-2xl font-bold">92%</p>
+                        <p className="text-sm text-muted-foreground">Goal Achievement</p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Target className="w-8 h-8 text-blue-600" />
+                      <div>
+                        <p className="text-2xl font-bold">156</p>
+                        <p className="text-sm text-muted-foreground">Total Workouts</p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Trophy className="w-8 h-8 text-yellow-600" />
+                      <div>
+                        <p className="text-2xl font-bold">28</p>
+                        <p className="text-sm text-muted-foreground">Milestones Reached</p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+                
+                <div className="space-y-3">
+                  <h4 className="font-medium">Recent Progress Updates</h4>
+                  {[
+                    { client: 'Sarah Johnson', achievement: 'Completed 30-day strength program', date: '2 hours ago' },
+                    { client: 'Mike Chen', achievement: 'Increased bench press by 15lbs', date: '1 day ago' },
+                    { client: 'Lisa Rodriguez', achievement: 'Ran 5K in under 25 minutes', date: '2 days ago' },
+                    { client: 'David Kim', achievement: 'Lost 5 pounds this month', date: '3 days ago' }
+                  ].map((update, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div>
+                        <p className="font-medium">{update.client}</p>
+                        <p className="text-sm text-muted-foreground">{update.achievement}</p>
+                      </div>
+                      <span className="text-sm text-muted-foreground">{update.date}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <Badge variant="outline">
-                {session.members}/{session.capacity}
-              </Badge>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center p-4 bg-success-light rounded-lg">
-            <Trophy className="w-8 h-8 text-success mx-auto mb-2" />
-            <p className="text-2xl font-bold text-success">4.8</p>
-            <p className="text-sm text-success">Average Rating</p>
-          </div>
-          <div className="text-center p-4 bg-primary/10 rounded-lg">
-            <Users className="w-8 h-8 text-primary mx-auto mb-2" />
-            <p className="text-2xl font-bold text-primary">124</p>
-            <p className="text-sm text-primary">Active Clients</p>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
-
-    {/* Training Tools */}
-    <Card>
-      <CardHeader>
-        <CardTitle>Training Tools</CardTitle>
-        <CardDescription>Quick access to training resources</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button className="h-20 flex flex-col gap-2">
-            <Calendar className="w-6 h-6" />
-            <span className="text-sm">Schedule Class</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex flex-col gap-2">
-            <Target className="w-6 h-6" />
-            <span className="text-sm">Member Goals</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex flex-col gap-2">
-            <Activity className="w-6 h-6" />
-            <span className="text-sm">Progress Track</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex flex-col gap-2">
-            <Dumbbell className="w-6 h-6" />
-            <span className="text-sm">Workout Plans</span>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-);
+  );
+};

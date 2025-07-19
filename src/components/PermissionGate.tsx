@@ -14,6 +14,8 @@ interface PermissionGateProps {
   action?: string;
   allowedRoles?: string[];
   restrictToRoles?: string[];
+  teamRole?: string;
+  excludeTeamRoles?: string[];
 }
 
 export const PermissionGate = ({
@@ -25,7 +27,9 @@ export const PermissionGate = ({
   resource,
   action,
   allowedRoles,
-  restrictToRoles
+  restrictToRoles,
+  teamRole,
+  excludeTeamRoles
 }: PermissionGateProps) => {
   const { hasPermission, hasAnyPermission, hasAllPermissions, canAccessResource } = useRBAC();
   const { authState } = useAuth();
@@ -39,6 +43,15 @@ export const PermissionGate = ({
 
   if (restrictToRoles && authState.user) {
     hasAccess = hasAccess && restrictToRoles.includes(authState.user.role);
+  }
+
+  // Check team role specificity
+  if (teamRole && authState.user) {
+    hasAccess = hasAccess && authState.user.teamRole === teamRole;
+  }
+
+  if (excludeTeamRoles && authState.user && authState.user.teamRole) {
+    hasAccess = hasAccess && !excludeTeamRoles.includes(authState.user.teamRole);
   }
 
   // Then check permissions if access is still granted

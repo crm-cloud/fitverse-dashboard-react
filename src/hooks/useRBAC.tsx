@@ -2,9 +2,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Permission, RoleDefinition, UserWithRoles, AuditLog, type RBACContext as RBACContextType } from '@/types/rbac';
 import { useAuth } from './useAuth';
-import { useBranchContext } from './useBranchContext';
 
-// Updated role definitions for 4-role system
+// Updated role definitions with role-specific permissions
 const mockRoles: Record<string, RoleDefinition> = {
   'super-admin': {
     id: 'super-admin',
@@ -35,7 +34,10 @@ const mockRoles: Record<string, RoleDefinition> = {
       'notifications.view', 'notifications.send',
       'sms.view', 'sms.send', 'sms.templates.view', 'sms.templates.create', 'sms.templates.edit', 'sms.templates.delete',
       'sms.settings.view', 'sms.settings.edit', 'sms.providers.view', 'sms.providers.create', 'sms.providers.edit', 'sms.providers.delete',
-      'sms.logs.view', 'sms.logs.export', 'sms.analytics.view'
+      'sms.logs.view', 'sms.logs.export', 'sms.analytics.view',
+      'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
+      'trainer.workouts.create', 'trainer.workouts.assign', 'trainer.progress.track', 'trainer.earnings.view',
+      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -67,20 +69,24 @@ const mockRoles: Record<string, RoleDefinition> = {
       'notifications.view', 'notifications.send',
       'sms.view', 'sms.send', 'sms.templates.view', 'sms.templates.create', 'sms.templates.edit', 'sms.templates.delete',
       'sms.settings.view', 'sms.settings.edit', 'sms.providers.view', 'sms.providers.edit',
-      'sms.logs.view', 'sms.logs.export', 'sms.analytics.view'
+      'sms.logs.view', 'sms.logs.export', 'sms.analytics.view',
+      'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
+      'trainer.workouts.create', 'trainer.workouts.assign', 'trainer.progress.track', 'trainer.earnings.view',
+      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   },
-  'team': {
-    id: 'team',
-    name: 'Team Member',
-    description: 'Branch-specific operational access with role specialization',
-    color: '#2563eb',
+  'team-manager': {
+    id: 'team-manager',
+    name: 'Team Manager',
+    description: 'Branch management and team oversight',
+    color: '#0ea5e9',
     isSystem: true,
     scope: 'branch',
     permissions: [
       'members.view', 'members.create', 'members.edit', 'members.export',
+      'team.view', 'team.create', 'team.edit',
       'classes.view', 'classes.create', 'classes.edit', 'classes.schedule',
       'equipment.view', 'equipment.edit',
       'finance.view', 'finance.edit',
@@ -92,8 +98,54 @@ const mockRoles: Record<string, RoleDefinition> = {
       'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.respond',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign',
       'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
-      'notifications.view',
-      'sms.view', 'sms.send', 'sms.templates.view', 'sms.logs.view'
+      'notifications.view', 'notifications.send',
+      'sms.view', 'sms.send', 'sms.templates.view', 'sms.logs.view',
+      'trainer.schedule.view', 'trainer.clients.view', 'trainer.workouts.assign',
+      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report'
+    ],
+    createdAt: new Date('2023-01-01'),
+    updatedAt: new Date('2023-01-01')
+  },
+  'team-trainer': {
+    id: 'team-trainer',
+    name: 'Team Trainer',
+    description: 'Trainer-specific access for classes and client management',
+    color: '#16a34a',
+    isSystem: true,
+    scope: 'branch',
+    permissions: [
+      'members.view', 'members.edit',
+      'classes.view', 'classes.create', 'classes.edit', 'classes.schedule',
+      'equipment.view',
+      'analytics.view',
+      'products.view',
+      'feedback.view', 'feedback.create', 'feedback.edit',
+      'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
+      'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
+      'trainer.workouts.create', 'trainer.workouts.assign', 'trainer.progress.track', 'trainer.earnings.view'
+    ],
+    createdAt: new Date('2023-01-01'),
+    updatedAt: new Date('2023-01-01')
+  },
+  'team-staff': {
+    id: 'team-staff',
+    name: 'Team Staff',
+    description: 'Staff-specific access for front desk and member support',
+    color: '#7c3aed',
+    isSystem: true,
+    scope: 'branch',
+    permissions: [
+      'members.view', 'members.create', 'members.edit',
+      'classes.view',
+      'equipment.view',
+      'analytics.view',
+      'products.view',
+      'pos.view', 'pos.process',
+      'leads.view', 'leads.create', 'leads.edit',
+      'referrals.view', 'referrals.create',
+      'feedback.view', 'feedback.create', 'feedback.respond',
+      'tasks.view', 'tasks.create', 'tasks.edit',
+      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -102,7 +154,7 @@ const mockRoles: Record<string, RoleDefinition> = {
     id: 'member',
     name: 'Member',
     description: 'Basic member access for personal use',
-    color: '#7c3aed',
+    color: '#dc2626',
     isSystem: true,
     scope: 'self',
     permissions: [
@@ -119,7 +171,7 @@ const mockRoles: Record<string, RoleDefinition> = {
   }
 };
 
-// Updated mock users with branch assignments and team roles
+// Updated mock users with role-specific assignments
 const mockUsersWithRoles: Record<string, UserWithRoles> = {
   'superadmin@gymfit.com': {
     id: '0',
@@ -163,7 +215,7 @@ const mockUsersWithRoles: Record<string, UserWithRoles> = {
     joinDate: '2023-02-10',
     branchId: 'branch_1',
     branchName: 'Downtown Branch',
-    roles: [mockRoles['team']],
+    roles: [mockRoles['team-manager']],
     isActive: true,
     lastLogin: new Date(Date.now() - 30 * 60 * 1000),
     createdBy: 'admin@gymfit.com',
@@ -181,7 +233,7 @@ const mockUsersWithRoles: Record<string, UserWithRoles> = {
     joinDate: '2023-04-15',
     branchId: 'branch_1',
     branchName: 'Downtown Branch',
-    roles: [mockRoles['team']],
+    roles: [mockRoles['team-staff']],
     isActive: true,
     lastLogin: new Date(Date.now() - 60 * 60 * 1000),
     createdBy: 'manager@gymfit.com',
@@ -199,7 +251,7 @@ const mockUsersWithRoles: Record<string, UserWithRoles> = {
     joinDate: '2023-03-20',
     branchId: 'branch_1',
     branchName: 'Downtown Branch',
-    roles: [mockRoles['team']],
+    roles: [mockRoles['team-trainer']],
     isActive: true,
     lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000),
     createdBy: 'manager@gymfit.com',
@@ -292,6 +344,18 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     return currentUser?.branchId || null;
   };
 
+  const isTrainer = (): boolean => {
+    return currentUser?.role === 'team' && currentUser?.teamRole === 'trainer';
+  };
+
+  const isStaff = (): boolean => {
+    return currentUser?.role === 'team' && currentUser?.teamRole === 'staff';
+  };
+
+  const isManager = (): boolean => {
+    return currentUser?.role === 'team' && currentUser?.teamRole === 'manager';
+  };
+
   const value: RBACContextType = {
     currentUser,
     hasPermission,
@@ -300,7 +364,10 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     getUserPermissions,
     canAccessResource,
     canAccessBranch,
-    getCurrentBranchId
+    getCurrentBranchId,
+    isTrainer,
+    isStaff,
+    isManager
   };
 
   return (
