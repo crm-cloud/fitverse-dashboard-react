@@ -18,7 +18,7 @@ interface TrainerMarketplaceProps {
 }
 
 export const TrainerMarketplace = ({ onTrainerSelect, showPackageSelection = false }: TrainerMarketplaceProps) => {
-  const { currentBranch } = useBranchContext();
+  const { currentBranchId } = useBranchContext();
   const [selectedTrainer, setSelectedTrainer] = useState<TrainerProfileType | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState<TrainerSpecialty | 'all'>('all');
@@ -35,7 +35,7 @@ export const TrainerMarketplace = ({ onTrainerSelect, showPackageSelection = fal
 
   const filteredTrainers = useMemo(() => {
     let filtered = mockTrainers.filter(trainer => {
-      if (currentBranch && trainer.branchId !== currentBranch.id) return false;
+      if (currentBranchId && trainer.branchId !== currentBranchId) return false;
       if (!trainer.isActive || trainer.status !== 'active') return false;
       
       // Search query filter
@@ -77,7 +77,7 @@ export const TrainerMarketplace = ({ onTrainerSelect, showPackageSelection = fal
     });
 
     return filtered;
-  }, [currentBranch, searchQuery, selectedSpecialty, priceRange, experienceRange, sortBy]);
+  }, [currentBranchId, searchQuery, selectedSpecialty, priceRange, experienceRange, sortBy]);
 
   const handleTrainerClick = (trainer: TrainerProfileType) => {
     if (showPackageSelection) {
@@ -228,7 +228,7 @@ export const TrainerMarketplace = ({ onTrainerSelect, showPackageSelection = fal
             <TrainerCard
               key={trainer.id}
               trainer={trainer}
-              onClick={() => handleTrainerClick(trainer)}
+              onViewProfile={() => handleTrainerClick(trainer)}
               showBookButton={true}
             />
           ))}

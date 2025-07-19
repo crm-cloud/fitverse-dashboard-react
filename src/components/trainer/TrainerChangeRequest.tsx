@@ -25,7 +25,7 @@ export const TrainerChangeRequest = ({
   className = ""
 }: TrainerChangeRequestProps) => {
   const { toast } = useToast();
-  const { currentBranch } = useBranchContext();
+  const { currentBranchId } = useBranchContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [requestData, setRequestData] = useState({
@@ -39,7 +39,7 @@ export const TrainerChangeRequest = ({
     mockTrainers.find(t => t.id === currentTrainerId) : null;
 
   const availableTrainers = mockTrainers.filter(trainer => 
-    trainer.branchId === currentBranch?.id &&
+    trainer.branchId === currentBranchId &&
     trainer.id !== currentTrainerId &&
     trainer.isActive &&
     trainer.status === 'active'
