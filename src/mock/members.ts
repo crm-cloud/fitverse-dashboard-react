@@ -3,16 +3,16 @@ import { Member } from '@/types/member';
 export const mockMembers: Member[] = [
   {
     id: 'mem_001',
-    fullName: 'Rahul Sharma',
-    phone: '+91 9876543210',
-    email: 'rahul.sharma@email.com',
+    fullName: 'Emily Chen',
+    phone: '+1 (555) 345-6789',
+    email: 'member@gymfit.com',
     dateOfBirth: new Date('1995-03-15'),
-    gender: 'male',
+    gender: 'female',
     address: {
-      street: '123 MG Road',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001'
+      street: '123 Main Street',
+      city: 'New York',
+      state: 'New York',
+      pincode: '10001'
     },
     governmentId: {
       type: 'aadhaar',
@@ -26,17 +26,17 @@ export const mockMembers: Member[] = [
       bmi: 22.9
     },
     emergencyContact: {
-      name: 'Priya Sharma',
+      name: 'David Chen',
       relationship: 'Spouse',
-      phone: '+91 9876543211',
-      email: 'priya.sharma@email.com'
+      phone: '+1 (555) 345-6788',
+      email: 'david.chen@email.com'
     },
-    profilePhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    branchId: 'branch_001',
-    branchName: 'Mumbai Central',
+    profilePhoto: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+    branchId: 'branch_1',
+    branchName: 'Downtown Branch',
     membershipStatus: 'active',
     membershipPlan: 'Premium Annual',
-    trainerId: 'trainer_001',
+    trainerId: '4',
     trainerName: 'Mike Rodriguez',
     joinedDate: new Date('2023-01-15'),
     createdBy: 'admin@gymfit.com',

@@ -37,6 +37,9 @@ import { FeedbackManagementPage } from "./pages/feedback/management";
 import { TaskManagementPage } from "./pages/tasks/management";
 import { MemberFeedbackPage } from "./pages/member/feedback";
 import { TrainerManagementPage } from "./pages/trainers/management";
+import { MemberProfileSettings } from "./pages/member/ProfileSettings";
+import { MemberBilling } from "./pages/member/Billing";
+import { TrainerChangeRequest } from "./pages/member/TrainerChangeRequest";
 // New system pages
 import SystemHealth from "./pages/system/SystemHealth";
 import SystemSettings from "./pages/system/SystemSettings";
@@ -88,16 +91,26 @@ const App = () => (
                           </ProtectedRoute>
                         } 
                       />
-                      <Route 
-                        path="/profile" 
-                        element={
-                          <ProtectedRoute>
-                            <DashboardLayout>
-                              <ProfileSettings />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
+                       <Route 
+                         path="/profile" 
+                         element={
+                           <ProtectedRoute>
+                             <DashboardLayout>
+                               <ProfileSettings />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/member/profile-settings" 
+                         element={
+                           <ProtectedRoute allowedRoles={['member']}>
+                             <DashboardLayout>
+                               <MemberProfileSettings />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
                       
                       {/* System Management Routes - Super Admin only */}
                       <Route 
@@ -506,16 +519,26 @@ const App = () => (
                           </ProtectedRoute>
                         } 
                       />
-                      <Route 
-                        path="/billing" 
-                        element={
-                          <ProtectedRoute allowedRoles={['member']}>
-                            <DashboardLayout>
-                              <MemberDashboardPage />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
+                       <Route 
+                         path="/billing" 
+                         element={
+                           <ProtectedRoute allowedRoles={['member']}>
+                             <DashboardLayout>
+                               <MemberBilling />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/trainer-change-request" 
+                         element={
+                           <ProtectedRoute allowedRoles={['member']}>
+                             <DashboardLayout>
+                               <TrainerChangeRequest />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
                       <Route 
                         path="/referrals" 
                         element={

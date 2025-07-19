@@ -115,8 +115,10 @@ const navigationItems = [
   { title: 'Membership Plans', url: '/membership/plans', icon: CreditCard, group: 'Membership', permission: 'members.view' },
   { title: 'My Membership', url: '/membership/dashboard', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },
   
-  // Account
+  // Account & Member Settings
   { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },
+  { title: 'Profile Settings', url: '/member/profile-settings', icon: User, group: 'Account', permission: null, memberOnly: true },
+  { title: 'Trainer Change', url: '/trainer-change-request', icon: UserCog, group: 'Account', permission: null, memberOnly: true },
   { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support', permission: null, memberOnly: true },
   { title: 'Settings', url: '/settings', icon: Settings, group: 'System', permission: 'settings.view' }
 ];
