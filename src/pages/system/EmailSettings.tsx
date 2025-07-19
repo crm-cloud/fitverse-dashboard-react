@@ -110,7 +110,7 @@ export default function EmailSettings() {
     // Mock email test - in a real app, this would make an API call
     return new Promise<{ success: boolean; message: string }>((resolve) => {
       setTimeout(() => {
-        const isValid = settings.fromEmail && settings.fromName;
+        const isValid = Boolean(settings.fromEmail && settings.fromName);
         resolve({
           success: isValid,
           message: isValid 

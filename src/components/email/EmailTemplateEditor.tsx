@@ -211,9 +211,9 @@ export const EmailTemplateEditor = ({ template, onSave, onPreview, onTest }: Ema
                       <FormControl>
                         <Input placeholder="Welcome to {{gymName}}, {{memberName}}!" {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Use variables like {{`memberName`}} for dynamic content
-                      </FormDescription>
+                       <FormDescription>
+                        Use variables like {'{'}{'{'}{'}'}memberName{'{'}{'}'}{'}'}  for dynamic content
+                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

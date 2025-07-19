@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,11 +5,9 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, TestTube, Eye, EyeOff } from 'lucide-react';
 import { EmailProvider, EmailSettings } from '@/types/email';
 import { useToast } from '@/hooks/use-toast';
@@ -22,35 +19,24 @@ const emailProviders: EmailProvider[] = [
   { id: 'ses', name: 'Amazon SES', type: 'ses' }
 ];
 
-const smtpSchema = z.object({
-  host: z.string().min(1, 'Host is required'),
-  port: z.number().min(1).max(65535),
-  secure: z.boolean(),
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required')
-});
-
-const sendgridSchema = z.object({
-  apiKey: z.string().min(1, 'API Key is required')
-});
-
-const mailgunSchema = z.object({
-  apiKey: z.string().min(1, 'API Key is required'),
-  domain: z.string().min(1, 'Domain is required')
-});
-
-const sesSchema = z.object({
-  accessKeyId: z.string().min(1, 'Access Key ID is required'),
-  secretAccessKey: z.string().min(1, 'Secret Access Key is required'),
-  region: z.string().min(1, 'Region is required')
-});
-
-const baseSchema = z.object({
+const emailConfigSchema = z.object({
   providerId: z.string().min(1, 'Provider is required'),
   fromEmail: z.string().email('Valid email is required'),
   fromName: z.string().min(1, 'From name is required'),
   replyToEmail: z.string().email('Valid email is required').optional().or(z.literal('')),
-  isActive: z.boolean()
+  isActive: z.boolean(),
+  // SMTP fields
+  host: z.string().optional(),
+  port: z.number().optional(),
+  secure: z.boolean().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  // SendGrid/Mailgun/AWS fields
+  apiKey: z.string().optional(),
+  domain: z.string().optional(),
+  region: z.string().optional(),
+  accessKeyId: z.string().optional(),
+  secretAccessKey: z.string().optional()
 });
 
 interface EmailConfigurationFormProps {
@@ -67,25 +53,25 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
   const [isTesting, setIsTesting] = useState(false);
   const { toast } = useToast();
 
-  const getConfigSchema = () => {
-    switch (selectedProvider) {
-      case 'smtp': return smtpSchema;
-      case 'sendgrid': return sendgridSchema;
-      case 'mailgun': return mailgunSchema;
-      case 'ses': return sesSchema;
-      default: return smtpSchema;
-    }
-  };
-
   const form = useForm({
-    resolver: zodResolver(baseSchema.extend({ config: getConfigSchema() })),
+    resolver: zodResolver(emailConfigSchema),
     defaultValues: {
       providerId: settings?.providerId || 'smtp',
       fromEmail: settings?.fromEmail || '',
       fromName: settings?.fromName || '',
       replyToEmail: settings?.replyToEmail || '',
       isActive: settings?.isActive ?? true,
-      config: settings?.config || {}
+      // Extract config fields to flat structure
+      host: (settings?.config as any)?.host || '',
+      port: (settings?.config as any)?.port || 587,
+      secure: (settings?.config as any)?.secure || false,
+      username: (settings?.config as any)?.username || '',
+      password: (settings?.config as any)?.password || '',
+      apiKey: (settings?.config as any)?.apiKey || '',
+      domain: (settings?.config as any)?.domain || '',
+      region: (settings?.config as any)?.region || '',
+      accessKeyId: (settings?.config as any)?.accessKeyId || '',
+      secretAccessKey: (settings?.config as any)?.secretAccessKey || ''
     }
   });
 
@@ -94,7 +80,6 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
     if (provider) {
       setSelectedProvider(provider.type);
       form.setValue('providerId', providerId);
-      form.setValue('config', {});
     }
   };
 
@@ -105,7 +90,8 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
     setIsTesting(true);
     try {
       const values = form.getValues();
-      const result = await onTest(values);
+      const formattedSettings = formatSettingsForSubmission(values);
+      const result = await onTest(formattedSettings);
       
       toast({
         title: result.success ? 'Test Successful' : 'Test Failed',
@@ -123,8 +109,55 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
     }
   };
 
+  const formatSettingsForSubmission = (values: any) => {
+    const { providerId, fromEmail, fromName, replyToEmail, isActive, ...configFields } = values;
+    
+    let config: any = {};
+    
+    switch (selectedProvider) {
+      case 'smtp':
+        config = {
+          host: configFields.host || '',
+          port: configFields.port || 587,
+          secure: configFields.secure || false,
+          username: configFields.username || '',
+          password: configFields.password || ''
+        };
+        break;
+      case 'sendgrid':
+        config = {
+          apiKey: configFields.apiKey || ''
+        };
+        break;
+      case 'mailgun':
+        config = {
+          apiKey: configFields.apiKey || '',
+          domain: configFields.domain || ''
+        };
+        break;
+      case 'ses':
+        config = {
+          accessKeyId: configFields.accessKeyId || '',
+          secretAccessKey: configFields.secretAccessKey || '',
+          region: configFields.region || ''
+        };
+        break;
+    }
+    
+    return {
+      providerId,
+      fromEmail,
+      fromName,
+      replyToEmail,
+      isActive,
+      providerType: selectedProvider,
+      config
+    } as Partial<EmailSettings>;
+  };
+
   const onSubmit = (values: any) => {
-    onSave(values);
+    const formattedSettings = formatSettingsForSubmission(values);
+    onSave(formattedSettings);
     toast({
       title: 'Settings Saved',
       description: 'Email configuration has been saved successfully'
@@ -139,7 +172,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="config.host"
+                name="host"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>SMTP Host</FormLabel>
@@ -152,7 +185,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
               />
               <FormField
                 control={form.control}
-                name="config.port"
+                name="port"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Port</FormLabel>
@@ -161,7 +194,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
                         type="number" 
                         placeholder="587" 
                         {...field}
-                        onChange={e => field.onChange(parseInt(e.target.value))}
+                        onChange={e => field.onChange(parseInt(e.target.value) || 587)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -171,7 +204,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
             </div>
             <FormField
               control={form.control}
-              name="config.secure"
+              name="secure"
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between">
                   <div>
@@ -187,7 +220,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="config.username"
+                name="username"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Username</FormLabel>
@@ -200,7 +233,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
               />
               <FormField
                 control={form.control}
-                name="config.password"
+                name="password"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Password</FormLabel>
@@ -234,7 +267,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
         return (
           <FormField
             control={form.control}
-            name="config.apiKey"
+            name="apiKey"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>SendGrid API Key</FormLabel>
@@ -267,7 +300,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
           <div className="space-y-4">
             <FormField
               control={form.control}
-              name="config.domain"
+              name="domain"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Domain</FormLabel>
@@ -280,7 +313,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
             />
             <FormField
               control={form.control}
-              name="config.apiKey"
+              name="apiKey"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>API Key</FormLabel>
@@ -314,7 +347,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
           <div className="space-y-4">
             <FormField
               control={form.control}
-              name="config.region"
+              name="region"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>AWS Region</FormLabel>
@@ -328,7 +361,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="config.accessKeyId"
+                name="accessKeyId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Access Key ID</FormLabel>
@@ -356,7 +389,7 @@ export const EmailConfigurationForm = ({ settings, onSave, onTest }: EmailConfig
               />
               <FormField
                 control={form.control}
-                name="config.secretAccessKey"
+                name="secretAccessKey"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Secret Access Key</FormLabel>
