@@ -46,12 +46,14 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'User Management', url: '/users', icon: UserCog, group: 'Administration' },
     { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
     { title: 'Branch Management', url: '/branches', icon: Settings, group: 'Administration' },
+    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
     { title: 'System Backup', url: '/backup', icon: HelpCircle, group: 'System' },
     { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Insights' },
   ],
   admin: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Overview' },
+    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
     { title: 'User Management', url: '/users', icon: UserCog, group: 'Administration' },
     { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
     { title: 'Leads', url: '/leads', icon: Users, group: 'Sales' },
@@ -68,6 +70,7 @@ const navigationItems: Record<UserRole, Array<{
   ],
   manager: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
     { title: 'Leads', url: '/leads', icon: Users, group: 'Sales' },
     { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales' },
     { title: 'Team Management', url: '/team', icon: UserCheck, group: 'Management' },

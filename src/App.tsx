@@ -31,6 +31,7 @@ import { POSInterface } from "./components/pos/POSInterface";
 import { ProductManagement } from "./pages/products/ProductManagement";
 import { LeadListPage } from "./pages/leads/list";
 import { DietWorkoutPlannerPage } from "./pages/diet-workout/planner";
+import FinanceDashboard from "./pages/finance/dashboard";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,16 @@ const App = () => (
                         <ProtectedRoute allowedRoles={['admin']}>
                           <DashboardLayout>
                             <RoleManagement />
+                          </DashboardLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/finance" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                          <DashboardLayout>
+                            <FinanceDashboard />
                           </DashboardLayout>
                         </ProtectedRoute>
                       } 
