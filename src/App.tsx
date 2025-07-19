@@ -10,6 +10,7 @@ import { CartProvider } from "@/hooks/useCart";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { BranchProvider } from "@/hooks/useBranches";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PermissionGate } from "@/components/PermissionGate";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
