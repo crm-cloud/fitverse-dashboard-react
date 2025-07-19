@@ -19,7 +19,7 @@ import {
   Trash2, 
   MoreHorizontal,
   Phone,
-  Template,
+  FileText,
   Activity,
   Shield,
   Clock,
@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { SMSProviderConfig } from '@/components/sms/SMSProviderConfig';
 import { SMSTemplateEditor } from '@/components/sms/SMSTemplateEditor';
-import { SMSProvider, SMSTemplate, SMSSettings } from '@/types/sms';
+import { SMSProvider, SMSTemplate, type SMSSettings } from '@/types/sms';
 import { PermissionGate } from '@/components/PermissionGate';
 
 export default function SMSSettings() {
@@ -260,7 +260,7 @@ export default function SMSSettings() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Template className="w-5 h-5" />
+                    <FileText className="w-5 h-5" />
                     SMS Templates
                   </CardTitle>
                   <CardDescription>
