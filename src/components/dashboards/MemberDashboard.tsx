@@ -12,9 +12,13 @@ import {
   TrendingUp,
   TrendingDown,
   Weight,
-  Zap
+  Zap,
+  MessageSquare,
+  Plus
 } from 'lucide-react';
 import { mockProgressSummary, mockMemberGoals } from '@/mock/member-progress';
+import { mockFeedback } from '@/mock/feedback';
+import { FeedbackCard } from '@/components/feedback/FeedbackCard';
 
 interface MemberDashboardProps {
   memberId: string;
@@ -25,6 +29,7 @@ interface MemberDashboardProps {
 export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDashboardProps) => {
   const progressSummary = mockProgressSummary[memberId];
   const memberGoals = mockMemberGoals.filter(g => g.memberId === memberId && g.status === 'active');
+  const memberFeedback = mockFeedback.filter(f => f.memberId === memberId).slice(0, 2);
 
   return (
     <div className="space-y-6">
@@ -149,8 +154,71 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
         </Card>
       )}
 
-      {/* Achievements & Activity */}
+      {/* Recent Feedback and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* My Recent Feedback */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                My Recent Feedback
+              </CardTitle>
+              <Button size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-1" />
+                Give Feedback
+              </Button>
+            </div>
+            <CardDescription>Your recent feedback and responses</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {memberFeedback.length > 0 ? (
+              memberFeedback.map((feedback) => (
+                <div key={feedback.id} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-3 h-3 ${
+                              star <= feedback.rating
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-muted-foreground'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {feedback.type}
+                      </Badge>
+                    </div>
+                    <Badge variant={feedback.status === 'resolved' ? 'secondary' : 'default'} className="text-xs">
+                      {feedback.status}
+                    </Badge>
+                  </div>
+                  <p className="font-medium text-sm mb-1">{feedback.title}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {feedback.description}
+                  </p>
+                  {feedback.adminResponse && (
+                    <div className="mt-2 p-2 bg-muted rounded text-xs">
+                      <span className="font-medium">Response:</span> {feedback.adminResponse}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">You haven't given any feedback yet.</p>
+                <p className="text-xs">Share your experience to help us improve!</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Achievements & Activity */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -174,35 +242,35 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
             ))}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Classes</CardTitle>
-            <CardDescription>Your booked sessions this week</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[
-                { date: 'Today', time: '6:00 PM', class: 'Yoga Flow', instructor: 'Sarah M.' },
-                { date: 'Tomorrow', time: '7:00 AM', class: 'HIIT Training', instructor: 'Mike R.' },
-                { date: 'Wed', time: '5:30 PM', class: 'Strength Training', instructor: 'Alex K.' }
-              ].map((booking, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div>
-                    <p className="font-medium">{booking.class}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {booking.date} at {booking.time} • {booking.instructor}
-                    </p>
-                  </div>
-                  <Button size="sm" variant="outline">
-                    Cancel
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Upcoming Classes</CardTitle>
+          <CardDescription>Your booked sessions this week</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[
+              { date: 'Today', time: '6:00 PM', class: 'Yoga Flow', instructor: 'Sarah M.' },
+              { date: 'Tomorrow', time: '7:00 AM', class: 'HIIT Training', instructor: 'Mike R.' },
+              { date: 'Wed', time: '5:30 PM', class: 'Strength Training', instructor: 'Alex K.' }
+            ].map((booking, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <div>
+                  <p className="font-medium">{booking.class}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {booking.date} at {booking.time} • {booking.instructor}
+                  </p>
+                </div>
+                <Button size="sm" variant="outline">
+                  Cancel
+                </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>
@@ -225,8 +293,8 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
               <span className="text-sm">View Progress</span>
             </Button>
             <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <Zap className="w-6 h-6" />
-              <span className="text-sm">Quick Workout</span>
+              <MessageSquare className="w-6 h-6" />
+              <span className="text-sm">Give Feedback</span>
             </Button>
           </div>
         </CardContent>
