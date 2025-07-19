@@ -42,7 +42,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBranches } from "@/hooks/useBranches";
-import { ModeToggle } from "@/components/ModeToggle";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 import { useSidebar } from "@/components/ui/sidebar";
 
 interface MenuItem {
@@ -201,11 +201,11 @@ const branchMenuItems = [
 ];
 
 export const AppSidebar = () => {
-  const { user, isLoading } = useAuth();
+  const { authState } = useAuth();
   const { branches, isLoading: isBranchesLoading } = useBranches();
   const location = useLocation();
   const [isExpanded, setIsExpanded] = useState(true);
-  const { isOpen, onOpen, onClose } = useSidebar();
+  const { state } = useSidebar();
 
   const toggleSidebar = () => {
     setIsExpanded(!isExpanded);
@@ -231,7 +231,7 @@ export const AppSidebar = () => {
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={onClose}>
+      <Sheet open={state === "expanded"} onOpenChange={() => {}}>
         <SheetContent side="left" className="w-full sm:w-64 p-0">
           <div className="flex flex-col h-full">
             <div className="px-4 py-6">
@@ -240,15 +240,15 @@ export const AppSidebar = () => {
                   {isBranchesLoading ? (
                     <Skeleton className="h-6 w-32" />
                   ) : (
-                    branches?.find((branch) => branch.id === user?.branchId)
+                    branches?.find((branch) => branch.id === authState.user?.branchId)
                       ?.name || "Select Branch"
                   )}
                 </SheetTitle>
                 <SheetDescription>
-                  {isLoading ? (
+                  {authState.isLoading ? (
                     <Skeleton className="h-4 w-24" />
                   ) : (
-                    user?.email
+                    authState.user?.email
                   )}
                 </SheetDescription>
               </SheetHeader>
@@ -419,12 +419,12 @@ export const AppSidebar = () => {
               {isBranchesLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : (
-                branches?.find((branch) => branch.id === user?.branchId)
+                branches?.find((branch) => branch.id === authState.user?.branchId)
                   ?.name || "Select Branch"
               )}
             </SheetTitle>
             <SheetDescription>
-              {isLoading ? <Skeleton className="h-4 w-24" /> : user?.email}
+              {authState.isLoading ? <Skeleton className="h-4 w-24" /> : authState.user?.email}
             </SheetDescription>
           </SheetHeader>
         </div>
