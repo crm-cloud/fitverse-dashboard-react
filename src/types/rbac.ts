@@ -1,34 +1,42 @@
+
 export type Permission = 
+  // System Management (Super Admin only)
+  | 'system.view' | 'system.manage' | 'system.backup' | 'system.restore'
+  // Branch Management
+  | 'branches.view' | 'branches.create' | 'branches.edit' | 'branches.delete'
   // User Management
   | 'users.view' | 'users.create' | 'users.edit' | 'users.delete' | 'users.export'
   // Role Management
   | 'roles.view' | 'roles.create' | 'roles.edit' | 'roles.delete'
   // Member Management
   | 'members.view' | 'members.create' | 'members.edit' | 'members.delete' | 'members.export'
-  // Staff Management
-  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.delete'
+  // Team Management
+  | 'team.view' | 'team.create' | 'team.edit' | 'team.delete'
   // Class Management
   | 'classes.view' | 'classes.create' | 'classes.edit' | 'classes.delete' | 'classes.schedule'
   // Equipment Management
   | 'equipment.view' | 'equipment.create' | 'equipment.edit' | 'equipment.delete'
-  // Billing & Payments
-  | 'billing.view' | 'billing.create' | 'billing.edit' | 'billing.process'
+  // Finance Management
+  | 'finance.view' | 'finance.create' | 'finance.edit' | 'finance.process'
   // Analytics & Reports
   | 'analytics.view' | 'reports.view' | 'reports.export'
-  // System Settings
-  | 'settings.view' | 'settings.edit' | 'system.backup' | 'system.restore'
-  // Branch Management
-  | 'branches.view' | 'branches.create' | 'branches.edit' | 'branches.delete'
-  // Notifications
-  | 'notifications.view' | 'notifications.send'
+  // Settings
+  | 'settings.view' | 'settings.edit'
+  // Products & POS
+  | 'products.view' | 'products.create' | 'products.edit' | 'products.delete'
+  | 'pos.view' | 'pos.process'
   // Lead Management
   | 'leads.view' | 'leads.create' | 'leads.edit' | 'leads.delete' | 'leads.assign' | 'leads.export'
   // Referral Management
-  | 'referrals.view' | 'referrals.create' | 'referrals.edit' | 'referrals.process' | 'referrals.export'
+  | 'referrals.view' | 'referrals.create' | 'referrals.edit' | 'referrals.process'
   // Feedback Management
-  | 'feedback.view' | 'feedback.create' | 'feedback.edit' | 'feedback.delete' | 'feedback.respond' | 'feedback.export'
+  | 'feedback.view' | 'feedback.create' | 'feedback.edit' | 'feedback.delete' | 'feedback.respond'
   // Task Management
-  | 'tasks.view' | 'tasks.create' | 'tasks.edit' | 'tasks.delete' | 'tasks.assign';
+  | 'tasks.view' | 'tasks.create' | 'tasks.edit' | 'tasks.delete' | 'tasks.assign'
+  // Diet & Workout
+  | 'diet-workout.view' | 'diet-workout.create' | 'diet-workout.edit' | 'diet-workout.assign'
+  // Notifications
+  | 'notifications.view' | 'notifications.send';
 
 export interface RoleDefinition {
   id: string;
@@ -36,12 +44,11 @@ export interface RoleDefinition {
   description: string;
   permissions: Permission[];
   color: string;
-  isSystem: boolean; // Cannot be deleted
+  isSystem: boolean;
+  scope: 'global' | 'branch' | 'self'; // Data access scope
   createdAt: Date;
   updatedAt: Date;
 }
-
-import { User } from './auth';
 
 export interface UserWithRoles extends User {
   roles: RoleDefinition[];
@@ -49,8 +56,11 @@ export interface UserWithRoles extends User {
   lastLogin?: Date;
   createdBy?: string;
   updatedBy?: string;
-  customPermissions?: Permission[]; // Additional permissions beyond role
-  deniedPermissions?: Permission[]; // Explicitly denied permissions
+  customPermissions?: Permission[];
+  deniedPermissions?: Permission[];
+  // Branch context
+  assignedBranches?: string[]; // For users who can access multiple branches
+  primaryBranchId?: string;
 }
 
 export interface RBACContext {
@@ -60,6 +70,8 @@ export interface RBACContext {
   hasAllPermissions: (permissions: Permission[]) => boolean;
   getUserPermissions: () => Permission[];
   canAccessResource: (resource: string, action: string) => boolean;
+  canAccessBranch: (branchId: string) => boolean;
+  getCurrentBranchId: () => string | null;
 }
 
 export interface AuditLog {
@@ -69,6 +81,7 @@ export interface AuditLog {
   action: string;
   resource: string;
   resourceId?: string;
+  branchId?: string;
   details: Record<string, any>;
   ipAddress: string;
   userAgent: string;
@@ -78,6 +91,7 @@ export interface AuditLog {
 export interface ActivityLog {
   id: string;
   userId: string;
+  branchId?: string;
   type: 'login' | 'logout' | 'create' | 'update' | 'delete' | 'view' | 'export';
   description: string;
   metadata?: Record<string, any>;

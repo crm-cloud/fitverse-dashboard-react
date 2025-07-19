@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { RBACProvider } from "@/hooks/useRBAC";
+import { BranchContextProvider } from "@/hooks/useBranchContext";
 import { CartProvider } from "@/hooks/useCart";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { BranchProvider } from "@/hooks/useBranches";
@@ -43,232 +45,245 @@ const App = () => (
     <ThemeProvider>
       <AuthProvider>
         <RBACProvider>
-          <BranchProvider>
-            <CartProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <Routes>
-                    <Route path="/" element={<PublicHome />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/unauthorized" element={<Unauthorized />} />
-                    <Route 
-                      path="/dashboard" 
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout>
-                            <Dashboard />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/profile" 
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout>
-                            <ProfileSettings />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/users" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin']}>
-                          <DashboardLayout>
-                            <UserManagement />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/roles" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin']}>
-                          <DashboardLayout>
-                            <RoleManagement />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/finance" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <DashboardLayout>
-                            <FinanceDashboard />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/feedback" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
-                          <DashboardLayout>
-                            <FeedbackManagementPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/tasks" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
-                          <DashboardLayout>
-                            <TaskManagementPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/leads" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff', 'trainer']}>
-                          <DashboardLayout>
-                            <LeadListPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/members" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
-                          <DashboardLayout>
-                            <MemberListPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/members/create" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
-                          <DashboardLayout>
-                            <MemberCreatePage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/membership/plans" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
-                          <DashboardLayout>
-                            <MembershipPlansPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/membership/dashboard" 
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout>
-                            <MemberDashboardPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/diet-workout" 
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout>
-                            <DietWorkoutPlannerPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/members/:id/profile" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
-                          <DashboardLayout>
-                            <MemberProfilePage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/classes" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
-                          <DashboardLayout>
-                            <ClassListPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/member/classes" 
-                      element={
-                        <ProtectedRoute allowedRoles={['member']}>
-                          <DashboardLayout>
-                            <MemberClassesPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/member/feedback" 
-                      element={
-                        <ProtectedRoute allowedRoles={['member']}>
-                          <DashboardLayout>
-                            <MemberFeedbackPage />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/team" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <DashboardLayout>
-                            <TeamManagement />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/store" 
-                      element={
-                        <ProtectedRoute allowedRoles={['member']}>
-                          <DashboardLayout>
-                            <MemberStore />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/pos" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
-                          <DashboardLayout>
-                            <POSInterface />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/products" 
-                      element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <DashboardLayout>
-                            <ProductManagement />
-                          </DashboardLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
-              </TooltipProvider>
-            </CartProvider>
-          </BranchProvider>
+          <BranchContextProvider>
+            <BranchProvider>
+              <CartProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="/" element={<PublicHome />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/unauthorized" element={<Unauthorized />} />
+                      <Route 
+                        path="/dashboard" 
+                        element={
+                          <ProtectedRoute>
+                            <DashboardLayout>
+                              <Dashboard />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/profile" 
+                        element={
+                          <ProtectedRoute>
+                            <DashboardLayout>
+                              <ProfileSettings />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* System Management Routes - Super Admin & Admin */}
+                      <Route 
+                        path="/users" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                            <DashboardLayout>
+                              <UserManagement />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/roles" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                            <DashboardLayout>
+                              <RoleManagement />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Business Operations Routes - Super Admin, Admin, Team */}
+                      <Route 
+                        path="/finance" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <FinanceDashboard />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/feedback" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <FeedbackManagementPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/tasks" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <TaskManagementPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/leads" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <LeadListPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/members" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <MemberListPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/members/create" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <MemberCreatePage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/members/:id/profile" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <MemberProfilePage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/classes" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <ClassListPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/team" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <TeamManagement />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/pos" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <POSInterface />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/products" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <ProductManagement />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Membership Management Routes */}
+                      <Route 
+                        path="/membership/plans" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <MembershipPlansPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/membership/dashboard" 
+                        element={
+                          <ProtectedRoute>
+                            <DashboardLayout>
+                              <MemberDashboardPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Fitness & Services Routes - All roles */}
+                      <Route 
+                        path="/diet-workout" 
+                        element={
+                          <ProtectedRoute>
+                            <DashboardLayout>
+                              <DietWorkoutPlannerPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Member-specific Routes */}
+                      <Route 
+                        path="/member/classes" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberClassesPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/feedback" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberFeedbackPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/store" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberStore />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                </TooltipProvider>
+              </CartProvider>
+            </BranchProvider>
+          </BranchContextProvider>
         </RBACProvider>
       </AuthProvider>
     </ThemeProvider>

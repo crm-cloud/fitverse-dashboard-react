@@ -2,31 +2,37 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Permission, RoleDefinition, UserWithRoles, AuditLog, type RBACContext as RBACContextType } from '@/types/rbac';
 import { useAuth } from './useAuth';
+import { useBranchContext } from './useBranchContext';
 
-// Mock roles with comprehensive permissions
+// Updated role definitions for 4-role system
 const mockRoles: Record<string, RoleDefinition> = {
   'super-admin': {
     id: 'super-admin',
     name: 'Super Administrator',
-    description: 'Full system access with all permissions',
+    description: 'Complete system access across all branches',
     color: '#dc2626',
     isSystem: true,
+    scope: 'global',
     permissions: [
+      'system.view', 'system.manage', 'system.backup', 'system.restore',
+      'branches.view', 'branches.create', 'branches.edit', 'branches.delete',
       'users.view', 'users.create', 'users.edit', 'users.delete', 'users.export',
       'roles.view', 'roles.create', 'roles.edit', 'roles.delete',
       'members.view', 'members.create', 'members.edit', 'members.delete', 'members.export',
-      'staff.view', 'staff.create', 'staff.edit', 'staff.delete',
+      'team.view', 'team.create', 'team.edit', 'team.delete',
       'classes.view', 'classes.create', 'classes.edit', 'classes.delete', 'classes.schedule',
       'equipment.view', 'equipment.create', 'equipment.edit', 'equipment.delete',
-      'billing.view', 'billing.create', 'billing.edit', 'billing.process',
+      'finance.view', 'finance.create', 'finance.edit', 'finance.process',
       'analytics.view', 'reports.view', 'reports.export',
-      'settings.view', 'settings.edit', 'system.backup', 'system.restore',
-      'branches.view', 'branches.create', 'branches.edit', 'branches.delete',
-      'notifications.view', 'notifications.send',
+      'settings.view', 'settings.edit',
+      'products.view', 'products.create', 'products.edit', 'products.delete',
+      'pos.view', 'pos.process',
       'leads.view', 'leads.create', 'leads.edit', 'leads.delete', 'leads.assign', 'leads.export',
-      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process', 'referrals.export',
-      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond', 'feedback.export',
-      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign'
+      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process',
+      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond',
+      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
+      'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
+      'notifications.view', 'notifications.send'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -34,66 +40,53 @@ const mockRoles: Record<string, RoleDefinition> = {
   'admin': {
     id: 'admin',
     name: 'Administrator',
-    description: 'Administrative access with most permissions',
+    description: 'Full operational access across all branches',
     color: '#ea580c',
     isSystem: true,
+    scope: 'global',
     permissions: [
+      'branches.view',
       'users.view', 'users.create', 'users.edit', 'users.export',
-      'roles.view',
       'members.view', 'members.create', 'members.edit', 'members.delete', 'members.export',
-      'staff.view', 'staff.create', 'staff.edit',
+      'team.view', 'team.create', 'team.edit', 'team.delete',
       'classes.view', 'classes.create', 'classes.edit', 'classes.delete', 'classes.schedule',
       'equipment.view', 'equipment.create', 'equipment.edit', 'equipment.delete',
-      'billing.view', 'billing.create', 'billing.edit', 'billing.process',
+      'finance.view', 'finance.create', 'finance.edit', 'finance.process',
       'analytics.view', 'reports.view', 'reports.export',
       'settings.view', 'settings.edit',
-      'branches.view',
-      'notifications.view', 'notifications.send',
-      'leads.view', 'leads.create', 'leads.edit', 'leads.assign', 'leads.export',
-      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process', 'referrals.export',
-      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.respond', 'feedback.export',
-      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign'
+      'products.view', 'products.create', 'products.edit', 'products.delete',
+      'pos.view', 'pos.process',
+      'leads.view', 'leads.create', 'leads.edit', 'leads.delete', 'leads.assign', 'leads.export',
+      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process',
+      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond',
+      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
+      'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
+      'notifications.view', 'notifications.send'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   },
-  'manager': {
-    id: 'manager',
-    name: 'Manager',
-    description: 'Management access with operational permissions',
+  'team': {
+    id: 'team',
+    name: 'Team Member',
+    description: 'Branch-specific operational access with role specialization',
     color: '#2563eb',
     isSystem: true,
+    scope: 'branch',
     permissions: [
-      'users.view',
       'members.view', 'members.create', 'members.edit', 'members.export',
-      'staff.view',
       'classes.view', 'classes.create', 'classes.edit', 'classes.schedule',
       'equipment.view', 'equipment.edit',
-      'billing.view', 'billing.edit',
+      'finance.view', 'finance.edit',
       'analytics.view', 'reports.view',
-      'branches.view',
-      'notifications.view', 'notifications.send',
-      'leads.view', 'leads.edit', 'leads.assign', 'leads.export',
-      'referrals.view', 'referrals.edit', 'referrals.process',
-      'feedback.view', 'feedback.respond',
-      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign'
-    ],
-    createdAt: new Date('2023-01-01'),
-    updatedAt: new Date('2023-01-01')
-  },
-  'trainer': {
-    id: 'trainer',
-    name: 'Personal Trainer',
-    description: 'Trainer access for classes and member interaction',
-    color: '#059669',
-    isSystem: true,
-    permissions: [
-      'members.view',
-      'classes.view', 'classes.edit', 'classes.schedule',
-      'equipment.view',
-      'notifications.view',
-      'leads.view', 'leads.edit',
-      'tasks.view', 'tasks.edit'
+      'products.view', 'products.edit',
+      'pos.view', 'pos.process',
+      'leads.view', 'leads.create', 'leads.edit', 'leads.assign', 'leads.export',
+      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process',
+      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.respond',
+      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign',
+      'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
+      'notifications.view'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -101,23 +94,41 @@ const mockRoles: Record<string, RoleDefinition> = {
   'member': {
     id: 'member',
     name: 'Member',
-    description: 'Basic member access',
+    description: 'Basic member access for personal use',
     color: '#7c3aed',
     isSystem: true,
+    scope: 'self',
     permissions: [
       'classes.view',
       'equipment.view',
-      'billing.view',
+      'finance.view',
+      'products.view',
+      'referrals.view', 'referrals.create',
       'feedback.create',
-      'referrals.view', 'referrals.create'
+      'diet-workout.view'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   }
 };
 
-// Mock users with enhanced RBAC data
+// Updated mock users with branch assignments and team roles
 const mockUsersWithRoles: Record<string, UserWithRoles> = {
+  'superadmin@gymfit.com': {
+    id: '0',
+    email: 'superadmin@gymfit.com',
+    name: 'David Thompson',
+    role: 'super-admin',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    department: 'System Administration',
+    phone: '+1 (555) 000-0000',
+    joinDate: '2022-01-01',
+    roles: [mockRoles['super-admin']],
+    isActive: true,
+    lastLogin: new Date(),
+    createdBy: 'system',
+    assignedBranches: ['all']
+  },
   'admin@gymfit.com': {
     id: '1',
     email: 'admin@gymfit.com',
@@ -127,37 +138,81 @@ const mockUsersWithRoles: Record<string, UserWithRoles> = {
     department: 'Management',
     phone: '+1 (555) 123-4567',
     joinDate: '2023-01-15',
-    roles: [mockRoles['super-admin']],
+    roles: [mockRoles['admin']],
     isActive: true,
     lastLogin: new Date(),
-    createdBy: 'system'
+    createdBy: 'superadmin@gymfit.com',
+    assignedBranches: ['all']
+  },
+  'manager@gymfit.com': {
+    id: '2',
+    email: 'manager@gymfit.com',
+    name: 'Robert Kim',
+    role: 'team',
+    teamRole: 'manager',
+    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
+    department: 'Operations',
+    phone: '+1 (555) 111-2222',
+    joinDate: '2023-02-10',
+    branchId: 'branch_1',
+    branchName: 'Downtown Branch',
+    roles: [mockRoles['team']],
+    isActive: true,
+    lastLogin: new Date(Date.now() - 30 * 60 * 1000),
+    createdBy: 'admin@gymfit.com',
+    primaryBranchId: 'branch_1'
+  },
+  'staff@gymfit.com': {
+    id: '3',
+    email: 'staff@gymfit.com',
+    name: 'Lisa Chen',
+    role: 'team',
+    teamRole: 'staff',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+    department: 'Front Desk',
+    phone: '+1 (555) 222-3333',
+    joinDate: '2023-04-15',
+    branchId: 'branch_1',
+    branchName: 'Downtown Branch',
+    roles: [mockRoles['team']],
+    isActive: true,
+    lastLogin: new Date(Date.now() - 60 * 60 * 1000),
+    createdBy: 'manager@gymfit.com',
+    primaryBranchId: 'branch_1'
   },
   'trainer@gymfit.com': {
-    id: '2',
+    id: '4',
     email: 'trainer@gymfit.com',
     name: 'Mike Rodriguez',
-    role: 'trainer',
+    role: 'team',
+    teamRole: 'trainer',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
     department: 'Personal Training',
     phone: '+1 (555) 234-5678',
     joinDate: '2023-03-20',
-    roles: [mockRoles['trainer']],
+    branchId: 'branch_1',
+    branchName: 'Downtown Branch',
+    roles: [mockRoles['team']],
     isActive: true,
-    lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    createdBy: 'admin@gymfit.com'
+    lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    createdBy: 'manager@gymfit.com',
+    primaryBranchId: 'branch_1'
   },
   'member@gymfit.com': {
-    id: '3',
+    id: '5',
     email: 'member@gymfit.com',
     name: 'Emily Chen',
     role: 'member',
     avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
     phone: '+1 (555) 345-6789',
     joinDate: '2023-06-10',
+    branchId: 'branch_1',
+    branchName: 'Downtown Branch',
     roles: [mockRoles['member']],
     isActive: true,
-    lastLogin: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-    createdBy: 'admin@gymfit.com'
+    lastLogin: new Date(Date.now() - 30 * 60 * 1000),
+    createdBy: 'staff@gymfit.com',
+    primaryBranchId: 'branch_1'
   }
 };
 
@@ -171,7 +226,7 @@ export const useRBAC = () => {
   return context;
 };
 
-export const RBACProvider = ({ children }: { children: ReactNode }) => {
+export cons RBACProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
   const [currentUser, setCurrentUser] = useState<UserWithRoles | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -214,23 +269,20 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     return hasPermission(permission);
   };
 
-  const logActivity = (action: string, resource: string, details?: Record<string, any>) => {
-    if (!currentUser) return;
+  const canAccessBranch = (branchId: string): boolean => {
+    if (!currentUser) return false;
+    
+    // Super Admin and Admin can access all branches
+    if (currentUser.role === 'super-admin' || currentUser.role === 'admin') {
+      return true;
+    }
+    
+    // Team and Member are restricted to their assigned branch
+    return currentUser.branchId === branchId;
+  };
 
-    const log: AuditLog = {
-      id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: currentUser.id,
-      userName: currentUser.name,
-      action,
-      resource,
-      details: details || {},
-      ipAddress: '127.0.0.1', // Mock IP
-      userAgent: navigator.userAgent,
-      timestamp: new Date()
-    };
-
-    setAuditLogs(prev => [log, ...prev].slice(0, 1000)); // Keep last 1000 logs
-    console.log('Audit Log:', log);
+  const getCurrentBranchId = (): string | null => {
+    return currentUser?.branchId || null;
   };
 
   const value: RBACContextType = {
@@ -239,7 +291,9 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     hasAnyPermission,
     hasAllPermissions,
     getUserPermissions,
-    canAccessResource
+    canAccessResource,
+    canAccessBranch,
+    getCurrentBranchId
   };
 
   return (

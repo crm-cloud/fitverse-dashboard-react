@@ -1,5 +1,5 @@
 
-export type UserRole = 'super-admin' | 'admin' | 'manager' | 'staff' | 'trainer' | 'member';
+export type UserRole = 'super-admin' | 'admin' | 'team' | 'member';
 
 export interface User {
   id: string;
@@ -10,6 +10,11 @@ export interface User {
   department?: string;
   phone?: string;
   joinDate?: string;
+  // Branch-specific fields
+  branchId?: string;
+  branchName?: string;
+  // Team role specialization
+  teamRole?: 'manager' | 'staff' | 'trainer';
 }
 
 export interface AuthState {

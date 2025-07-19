@@ -19,7 +19,9 @@ import {
   Store,
   Apple,
   MessageSquare,
-  CheckSquare
+  CheckSquare,
+  Building2,
+  MapPin
 } from 'lucide-react';
 import {
   Sidebar,
@@ -34,8 +36,10 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types/auth';
+import { BranchSelector } from '@/components/BranchSelector';
+import { Badge } from '@/components/ui/badge';
 
-// Role-based navigation items
+// Updated navigation items for 4-role system
 const navigationItems: Record<UserRole, Array<{
   title: string;
   url: string;
@@ -45,79 +49,54 @@ const navigationItems: Record<UserRole, Array<{
   'super-admin': [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'System Health', url: '/system-health', icon: BarChart3, group: 'Overview' },
-    { title: 'User Management', url: '/users', icon: UserCog, group: 'Administration' },
-    { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
-    { title: 'Branch Management', url: '/branches', icon: Settings, group: 'Administration' },
-    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
-    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management' },
-    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management' },
-    { title: 'System Backup', url: '/backup', icon: HelpCircle, group: 'System' },
-    { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Insights' },
+    { title: 'Branch Management', url: '/branches', icon: Building2, group: 'System Management' },
+    { title: 'User Management', url: '/users', icon: UserCog, group: 'System Management' },
+    { title: 'Role Management', url: '/roles', icon: Shield, group: 'System Management' },
+    { title: 'System Settings', url: '/system-settings', icon: Settings, group: 'System Management' },
+    { title: 'Global Analytics', url: '/analytics', icon: BarChart3, group: 'Insights' },
+    { title: 'System Backup', url: '/backup', icon: HelpCircle, group: 'System Management' },
   ],
   admin: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Overview' },
-    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
-    { title: 'User Management', url: '/users', icon: UserCog, group: 'Administration' },
-    { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
-    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management' },
-    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management' },
-    { title: 'Leads', url: '/leads', icon: Users, group: 'Sales' },
-    { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales' },
-    { title: 'Members', url: '/members', icon: Users, group: 'Management' },
-    { title: 'Team', url: '/team', icon: UserCheck, group: 'Management' },
-    { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Management' },
-    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Fitness' },
-    { title: 'Products', url: '/products', icon: Package, group: 'Store' },
-    { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
-    { title: 'Classes', url: '/classes', icon: Calendar, group: 'Services' },
-    { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Services' },
-    { title: 'Settings', url: '/settings', icon: Settings, group: 'System' },
-  ],
-  manager: [
-    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
-    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
-    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management' },
-    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management' },
-    { title: 'Leads', url: '/leads', icon: Users, group: 'Sales' },
-    { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales' },
-    { title: 'Team Management', url: '/team', icon: UserCheck, group: 'Management' },
-    { title: 'Members', url: '/members', icon: Users, group: 'Management' },
-    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Fitness' },
-    { title: 'Products', url: '/products', icon: Package, group: 'Store' },
-    { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
+    { title: 'Branch Overview', url: '/branches', icon: Building2, group: 'Management' },
+    { title: 'User Management', url: '/users', icon: UserCog, group: 'Management' },
+    { title: 'Members', url: '/members', icon: Users, group: 'Operations' },
+    { title: 'Team', url: '/team', icon: UserCheck, group: 'Operations' },
     { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations' },
     { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations' },
-    { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Analytics' },
-    { title: 'Schedule', url: '/schedule', icon: Calendar, group: 'Planning' },
-  ],
-  staff: [
-    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
-    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Daily Tasks' },
-    { title: 'Leads', url: '/leads', icon: Users, group: 'Daily Tasks' },
-    { title: 'Members', url: '/members', icon: Users, group: 'Daily Tasks' },
-    { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Daily Tasks' },
-    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Support' },
+    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Business' },
+    { title: 'Leads', url: '/leads', icon: Users, group: 'Business' },
+    { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Business' },
+    { title: 'Products', url: '/products', icon: Package, group: 'Store' },
     { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
-    { title: 'Classes', url: '/classes', icon: Calendar, group: 'Support' },
-    { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Reports' },
+    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Services' },
+    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management' },
+    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management' },
+    { title: 'Settings', url: '/settings', icon: Settings, group: 'System' },
   ],
-  trainer: [
+  team: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
-    { title: 'My Leads', url: '/leads', icon: Users, group: 'Training' },
-    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Training' },
-    { title: 'My Classes', url: '/my-classes', icon: Calendar, group: 'Classes' },
-    { title: 'Members', url: '/members', icon: Users, group: 'Training' },
-    { title: 'Schedule', url: '/schedule', icon: Calendar, group: 'Planning' },
-    { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Resources' },
+    { title: 'Members', url: '/members', icon: Users, group: 'Daily Operations' },
+    { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Daily Operations' },
+    { title: 'Classes', url: '/classes', icon: Calendar, group: 'Daily Operations' },
+    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Daily Operations' },
+    { title: 'Leads', url: '/leads', icon: Users, group: 'Sales & Marketing' },
+    { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales & Marketing' },
+    { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store Operations' },
+    { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Facility' },
+    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Member Services' },
+    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Member Services' },
+    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Reports' },
+    { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Reports' },
   ],
   member: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
-    { title: 'My Plans', url: '/diet-workout', icon: Apple, group: 'Fitness' },
     { title: 'My Workouts', url: '/workouts', icon: Dumbbell, group: 'Fitness' },
+    { title: 'Diet Plans', url: '/diet-workout', icon: Apple, group: 'Fitness' },
     { title: 'Classes', url: '/member/classes', icon: Calendar, group: 'Fitness' },
+    { title: 'Goals & Progress', url: '/goals', icon: Trophy, group: 'Fitness' },
     { title: 'Store', url: '/store', icon: Store, group: 'Shopping' },
-    { title: 'Goals', url: '/goals', icon: Trophy, group: 'Fitness' },
     { title: 'Refer Friends', url: '/referrals', icon: Trophy, group: 'Rewards' },
     { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account' },
     { title: 'Give Feedback', url: '/member/feedback', icon: MessageSquare, group: 'Support' },
@@ -146,6 +125,13 @@ export function AppSidebar() {
 
   const isActive = (path: string) => currentPath === path;
 
+  const getRoleDisplayName = (role: UserRole, teamRole?: string) => {
+    if (role === 'team' && teamRole) {
+      return `${teamRole.charAt(0).toUpperCase() + teamRole.slice(1)} Panel`;
+    }
+    return `${role.charAt(0).toUpperCase() + role.slice(1)} Panel`;
+  };
+
   return (
     <Sidebar className={collapsed ? 'w-14' : 'w-64'} collapsible="icon">
       <SidebarContent className="px-0">
@@ -156,13 +142,32 @@ export function AppSidebar() {
               <Dumbbell className="w-4 h-4 text-white" />
             </div>
             {!collapsed && (
-              <div>
+              <div className="flex-1">
                 <h2 className="font-bold text-sidebar-foreground">GymFit Pro</h2>
-                <p className="text-xs text-sidebar-foreground/60 capitalize">{authState.user.role} Panel</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-sidebar-foreground/60">
+                    {getRoleDisplayName(authState.user.role, authState.user.teamRole)}
+                  </p>
+                  {authState.user.teamRole && (
+                    <Badge variant="secondary" className="text-xs px-1 py-0">
+                      {authState.user.teamRole}
+                    </Badge>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Branch Selector for non-global roles */}
+        {!collapsed && (authState.user.role === 'team' || authState.user.role === 'member') && (
+          <div className="px-4 py-2 border-b border-sidebar-border">
+            <div className="flex items-center gap-2 text-sm text-sidebar-foreground">
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{authState.user.branchName || 'No Branch'}</span>
+            </div>
+          </div>
+        )}
 
         {/* Navigation */}
         {Object.entries(groupedItems).map(([group, items]) => (

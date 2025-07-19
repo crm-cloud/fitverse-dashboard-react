@@ -1,10 +1,11 @@
+
 import { useState, useEffect, createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { User, AuthState, LoginCredentials, UserRole } from '@/types/auth';
 
-// Mock users for different roles
-const mockUsers: Record<UserRole, User> = {
-  'super-admin': {
+// Mock users for the 4-role system with branch assignments
+const mockUsers: Record<UserRole, User[]> = {
+  'super-admin': [{
     id: '0',
     email: 'superadmin@gymfit.com',
     name: 'David Thompson',
@@ -13,8 +14,8 @@ const mockUsers: Record<UserRole, User> = {
     department: 'System Administration',
     phone: '+1 (555) 000-0000',
     joinDate: '2022-01-01'
-  },
-  admin: {
+  }],
+  admin: [{
     id: '1',
     email: 'admin@gymfit.com',
     name: 'Sarah Johnson',
@@ -23,46 +24,59 @@ const mockUsers: Record<UserRole, User> = {
     department: 'Management',
     phone: '+1 (555) 123-4567',
     joinDate: '2023-01-15'
-  },
-  manager: {
-    id: '2',
-    email: 'manager@gymfit.com',
-    name: 'Robert Kim',
-    role: 'manager',
-    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
-    department: 'Operations',
-    phone: '+1 (555) 111-2222',
-    joinDate: '2023-02-10'
-  },
-  staff: {
-    id: '3',
-    email: 'staff@gymfit.com',
-    name: 'Lisa Chen',
-    role: 'staff',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-    department: 'Front Desk',
-    phone: '+1 (555) 222-3333',
-    joinDate: '2023-04-15'
-  },
-  trainer: {
-    id: '4',
-    email: 'trainer@gymfit.com',
-    name: 'Mike Rodriguez',
-    role: 'trainer',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    department: 'Personal Training',
-    phone: '+1 (555) 234-5678',
-    joinDate: '2023-03-20'
-  },
-  member: {
+  }],
+  team: [
+    {
+      id: '2',
+      email: 'manager@gymfit.com',
+      name: 'Robert Kim',
+      role: 'team',
+      teamRole: 'manager',
+      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
+      department: 'Operations',
+      phone: '+1 (555) 111-2222',
+      joinDate: '2023-02-10',
+      branchId: 'branch_1',
+      branchName: 'Downtown Branch'
+    },
+    {
+      id: '3',
+      email: 'staff@gymfit.com',
+      name: 'Lisa Chen',
+      role: 'team',
+      teamRole: 'staff',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+      department: 'Front Desk',
+      phone: '+1 (555) 222-3333',
+      joinDate: '2023-04-15',
+      branchId: 'branch_1',
+      branchName: 'Downtown Branch'
+    },
+    {
+      id: '4',
+      email: 'trainer@gymfit.com',
+      name: 'Mike Rodriguez',
+      role: 'team',
+      teamRole: 'trainer',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+      department: 'Personal Training',
+      phone: '+1 (555) 234-5678',
+      joinDate: '2023-03-20',
+      branchId: 'branch_1',
+      branchName: 'Downtown Branch'
+    }
+  ],
+  member: [{
     id: '5',
     email: 'member@gymfit.com',
     name: 'Emily Chen',
     role: 'member',
     avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
     phone: '+1 (555) 345-6789',
-    joinDate: '2023-06-10'
-  }
+    joinDate: '2023-06-10',
+    branchId: 'branch_1',
+    branchName: 'Downtown Branch'
+  }]
 };
 
 const AuthContext = createContext<{
@@ -124,10 +138,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Mock authentication - in real app, this would be an API call
-    const user = mockUsers[credentials.role];
+    // Find user by email and role
+    const roleUsers = mockUsers[credentials.role];
+    const user = roleUsers.find(u => u.email === credentials.email);
     
-    if (user && credentials.email === user.email) {
+    if (user) {
       localStorage.setItem('gymfit_user', JSON.stringify(user));
       setAuthState({
         user,
