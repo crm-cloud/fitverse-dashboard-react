@@ -32,7 +32,8 @@ import { POSInterface } from "./components/pos/POSInterface";
 import { ProductManagement } from "./pages/products/ProductManagement";
 import { LeadListPage } from "./pages/leads/list";
 import { DietWorkoutPlannerPage } from "./pages/diet-workout/planner";
-import FinanceDashboard from "./pages/finance/dashboard";
+import FinanceDashboard from '@/pages/finance/dashboard';
+import TransactionsPage from '@/pages/finance/transactions';
 import { FeedbackManagementPage } from "./pages/feedback/management";
 import { TaskManagementPage } from "./pages/tasks/management";
 import { MemberFeedbackPage } from "./pages/member/feedback";
@@ -203,9 +204,23 @@ const App = () => (
                         path="/finance" 
                         element={
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
-                            <DashboardLayout>
-                              <FinanceDashboard />
-                            </DashboardLayout>
+                            <PermissionGate permission="finance.view">
+                              <DashboardLayout>
+                                <FinanceDashboard />
+                              </DashboardLayout>
+                            </PermissionGate>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/finance/transactions" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <PermissionGate permission="finance.view">
+                              <DashboardLayout>
+                                <TransactionsPage />
+                              </DashboardLayout>
+                            </PermissionGate>
                           </ProtectedRoute>
                         } 
                       />
