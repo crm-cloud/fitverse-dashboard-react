@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTrainerAutoAssignment } from './useTrainerAutoAssignment';
 import { useTrainerUtilization } from './useTrainerUtilization';
-import { TrainerProfile, TrainerAssignment, TrainerConfigSettings } from '@/types/trainer';
+import { TrainerProfile, TrainerAssignment } from '@/types/trainer';
 import { TrainerConfigSettings as ConfigType } from '@/types/trainer-config';
 import { useToast } from '@/hooks/use-toast';
 

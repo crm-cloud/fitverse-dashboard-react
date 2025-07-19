@@ -135,7 +135,7 @@ export const TrainerManagementPage = () => {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <TrainerUtilizationDashboard branchId={branchId} />
+          <TrainerUtilizationDashboard />
         </TabsContent>
 
         <TabsContent value="settings">
