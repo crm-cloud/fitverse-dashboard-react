@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -37,6 +36,7 @@ import FinanceDashboard from "./pages/finance/dashboard";
 import { FeedbackManagementPage } from "./pages/feedback/management";
 import { TaskManagementPage } from "./pages/tasks/management";
 import { MemberFeedbackPage } from "./pages/member/feedback";
+import { TrainerManagementPage } from "./pages/trainers/management";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +186,16 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                             <DashboardLayout>
                               <TeamManagement />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/trainers" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <TrainerManagementPage />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 
