@@ -140,27 +140,39 @@ const App = () => (
                         } 
                       />
                       
-                      {/* User & Role Management Routes - Super Admin & Admin */}
-                      <Route 
-                        path="/users" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                            <DashboardLayout>
-                              <UserManagement />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
-                      <Route 
-                        path="/roles" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                            <DashboardLayout>
-                              <RoleManagement />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
+                       {/* Branch Management Routes - Super Admin only */}
+                       <Route 
+                         path="/branches" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin']}>
+                             <DashboardLayout>
+                               <BranchManagement />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       
+                       {/* User & Role Management Routes - Super Admin & Admin */}
+                       <Route 
+                         path="/users" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                             <DashboardLayout>
+                               <UserManagement />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/roles" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                             <DashboardLayout>
+                               <RoleManagement />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
                       
                       {/* Business Operations Routes - Super Admin, Admin, Team */}
                       <Route 

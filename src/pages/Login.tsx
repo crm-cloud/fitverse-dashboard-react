@@ -24,26 +24,12 @@ const roleConfig = {
     description: 'Full system access and management',
     email: 'admin@gymfit.com'
   },
-  manager: {
+  team: {
     icon: Users,
     color: 'bg-blue-600',
-    title: 'Manager Portal',
-    description: 'Operational management and oversight',
-    email: 'manager@gymfit.com'
-  },
-  staff: {
-    icon: User,
-    color: 'bg-green-600',
-    title: 'Staff Portal',
-    description: 'Daily operations and member support',
-    email: 'staff@gymfit.com'
-  },
-  trainer: {
-    icon: Users,
-    color: 'bg-primary',
-    title: 'Trainer Portal',
-    description: 'Manage classes and member interactions',
-    email: 'trainer@gymfit.com'
+    title: 'Team Portal',
+    description: 'Team member access (Manager/Staff/Trainer)',
+    email: 'team@gymfit.com'
   },
   member: {
     icon: User,
@@ -68,7 +54,14 @@ export default function Login() {
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
-    setCredentials({ email: roleConfig[role].email, password: 'demo123' });
+    // Set different emails based on role for team members
+    const emails = {
+      'super-admin': 'superadmin@gymfit.com',
+      'admin': 'admin@gymfit.com',
+      'team': 'manager@gymfit.com', // Default to manager for team
+      'member': 'member@gymfit.com'
+    };
+    setCredentials({ email: emails[role], password: 'demo123' });
   };
 
   const handleLogin = async (e: React.FormEvent) => {

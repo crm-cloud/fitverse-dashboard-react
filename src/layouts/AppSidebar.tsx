@@ -127,8 +127,13 @@ export function AppSidebar() {
       return false;
     }
     
-    // Check permission if required
-    if (item.permission && !hasPermission(item.permission as any)) {
+    // If user is member, only show member-only items or items without permissions
+    if (authState.user?.role === 'member' && !item.memberOnly && item.permission) {
+      return false;
+    }
+    
+    // Check permission if required for non-member users
+    if (item.permission && authState.user?.role !== 'member' && !hasPermission(item.permission as any)) {
       return false;
     }
     
