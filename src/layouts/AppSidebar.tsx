@@ -231,7 +231,7 @@ export const AppSidebar = () => {
 
   return (
     <>
-      <Sheet open={state === "expanded"} onOpenChange={() => {}}>
+      <Sheet open={false} onOpenChange={() => {}}>
         <SheetContent side="left" className="w-full sm:w-64 p-0">
           <SheetHeader className="px-4 py-6">
             <SheetTitle>
