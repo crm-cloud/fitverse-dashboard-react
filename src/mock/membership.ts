@@ -107,3 +107,12 @@ export const mockInvoices: Invoice[] = [];
 
 // Mock data for Payments
 export const mockPayments: Payment[] = [];
+
+// Access type labels for UI display
+export const accessTypeLabels = {
+  'gym': 'Gym Access',
+  'classes': 'Group Classes',
+  'pool': 'Swimming Pool',
+  'sauna': 'Sauna',
+  'personal-training': 'Personal Training'
+};

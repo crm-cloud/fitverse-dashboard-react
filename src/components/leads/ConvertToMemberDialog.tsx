@@ -159,15 +159,28 @@ export const ConvertToMemberDialog = ({
         email: data.email,
         dateOfBirth: data.dateOfBirth,
         gender: data.gender,
-        address: data.address,
-        governmentId: data.governmentId,
+        address: {
+          street: data.address.street || '',
+          city: data.address.city || '',
+          state: data.address.state || '',
+          pincode: data.address.pincode || '',
+        },
+        governmentId: {
+          type: data.governmentId.type || 'aadhaar',
+          number: data.governmentId.number || '',
+        },
         measurements: {
-          ...data.measurements,
+          height: data.measurements.height || 0,
+          weight: data.measurements.weight || 0,
+          fatPercentage: data.measurements.fatPercentage,
+          musclePercentage: data.measurements.musclePercentage,
           bmi,
         },
         emergencyContact: {
-          ...data.emergencyContact,
-          email: data.emergencyContact.email || undefined,
+          name: data.emergencyContact.name || '',
+          relationship: data.emergencyContact.relationship || '',
+          phone: data.emergencyContact.phone || '',
+          email: data.emergencyContact.email,
         },
         branchId: data.branchId,
       };
