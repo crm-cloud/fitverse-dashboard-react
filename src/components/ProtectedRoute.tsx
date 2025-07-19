@@ -1,10 +1,10 @@
 import { ReactNode } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types/auth';
 
 interface ProtectedRouteProps {
-  children?: ReactNode;
+  children: ReactNode;
   allowedRoles?: UserRole[];
 }
 
@@ -30,5 +30,5 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/unauthorized" replace />;
   }
   
-  return children ? <>{children}</> : <Outlet />;
+  return <>{children}</>;
 };
