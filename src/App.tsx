@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -37,6 +38,15 @@ import { FeedbackManagementPage } from "./pages/feedback/management";
 import { TaskManagementPage } from "./pages/tasks/management";
 import { MemberFeedbackPage } from "./pages/member/feedback";
 import { TrainerManagementPage } from "./pages/trainers/management";
+// New system pages
+import SystemHealth from "./pages/system/SystemHealth";
+import SystemSettings from "./pages/system/SystemSettings";
+import SystemBackup from "./pages/system/SystemBackup";
+import BranchManagement from "./pages/branches/BranchManagement";
+// New member pages
+import Goals from "./pages/member/Goals";
+import Help from "./pages/member/Help";
+import CheckIns from "./pages/member/CheckIns";
 
 const queryClient = new QueryClient();
 
@@ -77,7 +87,49 @@ const App = () => (
                         } 
                       />
                       
-                      {/* System Management Routes - Super Admin & Admin */}
+                      {/* System Management Routes - Super Admin only */}
+                      <Route 
+                        path="/system-health" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin']}>
+                            <DashboardLayout>
+                              <SystemHealth />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/system-settings" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin']}>
+                            <DashboardLayout>
+                              <SystemSettings />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/backup" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin']}>
+                            <DashboardLayout>
+                              <SystemBackup />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/branches" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                            <DashboardLayout>
+                              <BranchManagement />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* User & Role Management Routes - Super Admin & Admin */}
                       <Route 
                         path="/users" 
                         element={
@@ -282,6 +334,106 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['member']}>
                             <DashboardLayout>
                               <MemberStore />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/goals" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <Goals />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/help" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <Help />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/checkins" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team', 'member']}>
+                            <DashboardLayout>
+                              <CheckIns />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/workouts" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <DietWorkoutPlannerPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/billing" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberDashboardPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/referrals" 
+                        element={
+                          <ProtectedRoute>
+                            <DashboardLayout>
+                              <MemberDashboardPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/analytics" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                            <DashboardLayout>
+                              <Dashboard />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/reports" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <Dashboard />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/settings" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                            <DashboardLayout>
+                              <ProfileSettings />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/equipment" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <Dashboard />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 

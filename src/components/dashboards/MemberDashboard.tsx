@@ -14,11 +14,16 @@ import {
   Weight,
   Zap,
   MessageSquare,
-  Plus
+  Plus,
+  UserCheck,
+  Clock,
+  MapPin
 } from 'lucide-react';
 import { mockProgressSummary, mockMemberGoals } from '@/mock/member-progress';
 import { mockFeedback } from '@/mock/feedback';
-import { FeedbackCard } from '@/components/feedback/FeedbackCard';
+import { useAuth } from '@/hooks/useAuth';
+import { useRBAC } from '@/hooks/useRBAC';
+import { PermissionGate } from '@/components/PermissionGate';
 
 interface MemberDashboardProps {
   memberId: string;
@@ -27,18 +32,39 @@ interface MemberDashboardProps {
 }
 
 export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDashboardProps) => {
+  const { authState } = useAuth();
+  const { hasPermission } = useRBAC();
   const progressSummary = mockProgressSummary[memberId];
   const memberGoals = mockMemberGoals.filter(g => g.memberId === memberId && g.status === 'active');
   const memberFeedback = mockFeedback.filter(f => f.memberId === memberId).slice(0, 2);
+
+  const isCurrentMember = authState.user?.role === 'member';
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Welcome back, {memberName.split(' ')[0]}!</h1>
-          <p className="text-muted-foreground">Track your fitness journey and reach your goals</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            {isCurrentMember ? `Welcome back, ${memberName.split(' ')[0]}!` : `${memberName}'s Dashboard`}
+          </h1>
+          <p className="text-muted-foreground">
+            {isCurrentMember ? 'Track your fitness journey and reach your goals' : 'Member progress and activity overview'}
+          </p>
+          {authState.user?.branchName && (
+            <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+              <MapPin className="w-4 h-4" />
+              <span>{authState.user.branchName}</span>
+            </div>
+          )}
         </div>
-        <Badge variant="secondary">Member</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">{isCurrentMember ? 'Member' : 'Profile View'}</Badge>
+          {!isCurrentMember && (
+            <PermissionGate permission="members.edit">
+              <Button size="sm" variant="outline">Edit Profile</Button>
+            </PermissionGate>
+          )}
+        </div>
       </div>
       
       {/* Progress Overview */}
@@ -120,9 +146,11 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5 text-primary" />
-              Active Goals
+              {isCurrentMember ? 'Your Active Goals' : `${memberName.split(' ')[0]}'s Goals`}
             </CardTitle>
-            <CardDescription>Your current fitness goals and progress</CardDescription>
+            <CardDescription>
+              {isCurrentMember ? 'Your current fitness goals and progress' : 'Current fitness objectives and progress'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {memberGoals.map((goal) => {
@@ -154,22 +182,26 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
         </Card>
       )}
 
-      {/* Recent Feedback and Quick Actions */}
+      {/* Recent Activity and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* My Recent Feedback */}
+        {/* Feedback Section */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-primary" />
-                My Recent Feedback
+                {isCurrentMember ? 'My Recent Feedback' : 'Recent Feedback'}
               </CardTitle>
-              <Button size="sm" variant="outline">
-                <Plus className="w-4 h-4 mr-1" />
-                Give Feedback
-              </Button>
+              {isCurrentMember && (
+                <Button size="sm" variant="outline">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Give Feedback
+                </Button>
+              )}
             </div>
-            <CardDescription>Your recent feedback and responses</CardDescription>
+            <CardDescription>
+              {isCurrentMember ? 'Your recent feedback and responses' : 'Member feedback history'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {memberFeedback.length > 0 ? (
@@ -211,8 +243,12 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">You haven't given any feedback yet.</p>
-                <p className="text-xs">Share your experience to help us improve!</p>
+                <p className="text-sm">
+                  {isCurrentMember ? "You haven't given any feedback yet." : "No feedback submitted yet."}
+                </p>
+                {isCurrentMember && (
+                  <p className="text-xs">Share your experience to help us improve!</p>
+                )}
               </div>
             )}
           </CardContent>
@@ -244,61 +280,65 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming Classes</CardTitle>
-          <CardDescription>Your booked sessions this week</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              { date: 'Today', time: '6:00 PM', class: 'Yoga Flow', instructor: 'Sarah M.' },
-              { date: 'Tomorrow', time: '7:00 AM', class: 'HIIT Training', instructor: 'Mike R.' },
-              { date: 'Wed', time: '5:30 PM', class: 'Strength Training', instructor: 'Alex K.' }
-            ].map((booking, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <p className="font-medium">{booking.class}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {booking.date} at {booking.time} • {booking.instructor}
-                  </p>
-                </div>
-                <Button size="sm" variant="outline">
-                  Cancel
+      {/* Quick Actions - Only for current member */}
+      {isCurrentMember && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Upcoming Classes</CardTitle>
+              <CardDescription>Your booked sessions this week</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[
+                  { date: 'Today', time: '6:00 PM', class: 'Yoga Flow', instructor: 'Sarah M.' },
+                  { date: 'Tomorrow', time: '7:00 AM', class: 'HIIT Training', instructor: 'Mike R.' },
+                  { date: 'Wed', time: '5:30 PM', class: 'Strength Training', instructor: 'Alex K.' }
+                ].map((booking, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div>
+                      <p className="font-medium">{booking.class}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {booking.date} at {booking.time} • {booking.instructor}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline">
+                      Cancel
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Start your fitness journey</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button className="h-20 flex flex-col gap-2">
+                  <Calendar className="w-6 h-6" />
+                  <span className="text-sm">Book Class</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                  <Target className="w-6 h-6" />
+                  <span className="text-sm">Set Goals</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                  <TrendingUp className="w-6 h-6" />
+                  <span className="text-sm">View Progress</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                  <MessageSquare className="w-6 h-6" />
+                  <span className="text-sm">Give Feedback</span>
                 </Button>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Start your fitness journey</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button className="h-20 flex flex-col gap-2">
-              <Calendar className="w-6 h-6" />
-              <span className="text-sm">Book Class</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <Target className="w-6 h-6" />
-              <span className="text-sm">Set Goals</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <TrendingUp className="w-6 h-6" />
-              <span className="text-sm">View Progress</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <MessageSquare className="w-6 h-6" />
-              <span className="text-sm">Give Feedback</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };

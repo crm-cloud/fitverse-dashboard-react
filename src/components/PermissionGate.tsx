@@ -2,6 +2,7 @@
 import { ReactNode } from 'react';
 import { Permission } from '@/types/rbac';
 import { useRBAC } from '@/hooks/useRBAC';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PermissionGateProps {
   children: ReactNode;
@@ -11,6 +12,8 @@ interface PermissionGateProps {
   fallback?: ReactNode;
   resource?: string;
   action?: string;
+  allowedRoles?: string[];
+  restrictToRoles?: string[];
 }
 
 export const PermissionGate = ({
@@ -20,20 +23,33 @@ export const PermissionGate = ({
   requireAll = false,
   fallback = null,
   resource,
-  action
+  action,
+  allowedRoles,
+  restrictToRoles
 }: PermissionGateProps) => {
   const { hasPermission, hasAnyPermission, hasAllPermissions, canAccessResource } = useRBAC();
+  const { authState } = useAuth();
 
-  let hasAccess = false;
+  let hasAccess = true;
 
-  if (resource && action) {
-    hasAccess = canAccessResource(resource, action);
-  } else if (permission) {
-    hasAccess = hasPermission(permission);
-  } else if (permissions) {
-    hasAccess = requireAll ? hasAllPermissions(permissions) : hasAnyPermission(permissions);
-  } else {
-    hasAccess = true; // No restrictions
+  // Check role-based access first
+  if (allowedRoles && authState.user) {
+    hasAccess = allowedRoles.includes(authState.user.role);
+  }
+
+  if (restrictToRoles && authState.user) {
+    hasAccess = hasAccess && restrictToRoles.includes(authState.user.role);
+  }
+
+  // Then check permissions if access is still granted
+  if (hasAccess) {
+    if (resource && action) {
+      hasAccess = canAccessResource(resource, action);
+    } else if (permission) {
+      hasAccess = hasPermission(permission);
+    } else if (permissions) {
+      hasAccess = requireAll ? hasAllPermissions(permissions) : hasAnyPermission(permissions);
+    }
   }
 
   return hasAccess ? <>{children}</> : <>{fallback}</>;

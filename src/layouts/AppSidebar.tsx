@@ -21,7 +21,10 @@ import {
   MessageSquare,
   CheckSquare,
   Building2,
-  MapPin
+  MapPin,
+  Database,
+  Target,
+  Activity
 } from 'lucide-react';
 import {
   Sidebar,
@@ -35,93 +38,102 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { useRBAC } from '@/hooks/useRBAC';
 import { UserRole } from '@/types/auth';
-import { BranchSelector } from '@/components/BranchSelector';
 import { Badge } from '@/components/ui/badge';
 
-// Updated navigation items for 4-role system
-const navigationItems: Record<UserRole, Array<{
-  title: string;
-  url: string;
-  icon: any;
-  group: string;
-}>> = {
-  'super-admin': [
-    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
-    { title: 'System Health', url: '/system-health', icon: BarChart3, group: 'Overview' },
-    { title: 'Branch Management', url: '/branches', icon: Building2, group: 'System Management' },
-    { title: 'User Management', url: '/users', icon: UserCog, group: 'System Management' },
-    { title: 'Role Management', url: '/roles', icon: Shield, group: 'System Management' },
-    { title: 'System Settings', url: '/system-settings', icon: Settings, group: 'System Management' },
-    { title: 'Global Analytics', url: '/analytics', icon: BarChart3, group: 'Insights' },
-    { title: 'System Backup', url: '/backup', icon: HelpCircle, group: 'System Management' },
-  ],
-  admin: [
-    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
-    { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Overview' },
-    { title: 'Branch Overview', url: '/branches', icon: Building2, group: 'Management' },
-    { title: 'User Management', url: '/users', icon: UserCog, group: 'Management' },
-    { title: 'Members', url: '/members', icon: Users, group: 'Operations' },
-    { title: 'Team', url: '/team', icon: UserCheck, group: 'Operations' },
-    { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations' },
-    { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations' },
-    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Business' },
-    { title: 'Leads', url: '/leads', icon: Users, group: 'Business' },
-    { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Business' },
-    { title: 'Products', url: '/products', icon: Package, group: 'Store' },
-    { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store' },
-    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Services' },
-    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management' },
-    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management' },
-    { title: 'Settings', url: '/settings', icon: Settings, group: 'System' },
-  ],
-  team: [
-    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
-    { title: 'Members', url: '/members', icon: Users, group: 'Daily Operations' },
-    { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Daily Operations' },
-    { title: 'Classes', url: '/classes', icon: Calendar, group: 'Daily Operations' },
-    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Daily Operations' },
-    { title: 'Leads', url: '/leads', icon: Users, group: 'Sales & Marketing' },
-    { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales & Marketing' },
-    { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store Operations' },
-    { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Facility' },
-    { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Member Services' },
-    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Member Services' },
-    { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Reports' },
-    { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Reports' },
-  ],
-  member: [
-    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
-    { title: 'My Workouts', url: '/workouts', icon: Dumbbell, group: 'Fitness' },
-    { title: 'Diet Plans', url: '/diet-workout', icon: Apple, group: 'Fitness' },
-    { title: 'Classes', url: '/member/classes', icon: Calendar, group: 'Fitness' },
-    { title: 'Goals & Progress', url: '/goals', icon: Trophy, group: 'Fitness' },
-    { title: 'Store', url: '/store', icon: Store, group: 'Shopping' },
-    { title: 'Refer Friends', url: '/referrals', icon: Trophy, group: 'Rewards' },
-    { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account' },
-    { title: 'Give Feedback', url: '/member/feedback', icon: MessageSquare, group: 'Support' },
-    { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support' },
-  ]
-};
+// Navigation items with permission requirements
+const navigationItems = [
+  // Dashboard - All roles
+  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview', permission: null },
+  
+  // System Management - Super Admin only
+  { title: 'System Health', url: '/system-health', icon: BarChart3, group: 'System Management', permission: 'system.view' },
+  { title: 'Branch Management', url: '/branches', icon: Building2, group: 'System Management', permission: 'branches.view' },
+  { title: 'User Management', url: '/users', icon: UserCog, group: 'System Management', permission: 'users.view' },
+  { title: 'Role Management', url: '/roles', icon: Shield, group: 'System Management', permission: 'roles.view' },
+  { title: 'System Settings', url: '/system-settings', icon: Settings, group: 'System Management', permission: 'system.manage' },
+  { title: 'System Backup', url: '/backup', icon: Database, group: 'System Management', permission: 'system.backup' },
+  
+  // Analytics & Reports
+  { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Insights', permission: 'analytics.view' },
+  { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Insights', permission: 'reports.view' },
+  
+  // Operations
+  { title: 'Members', url: '/members', icon: Users, group: 'Operations', permission: 'members.view' },
+  { title: 'Team', url: '/team', icon: UserCheck, group: 'Operations', permission: 'team.view' },
+  { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations', permission: 'classes.view' },
+  { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations', permission: 'equipment.view' },
+  { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Operations', permission: null },
+  
+  // Business
+  { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Business', permission: 'finance.view' },
+  { title: 'Leads', url: '/leads', icon: Users, group: 'Business', permission: 'leads.view' },
+  { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Business', permission: 'referrals.view' },
+  
+  // Store
+  { title: 'Products', url: '/products', icon: Package, group: 'Store', permission: 'products.view' },
+  { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store', permission: 'pos.view' },
+  { title: 'Store', url: '/store', icon: Store, group: 'Store', permission: 'products.view', memberOnly: true },
+  
+  // Services
+  { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Services', permission: 'diet-workout.view' },
+  { title: 'My Workouts', url: '/workouts', icon: Dumbbell, group: 'Fitness', permission: null, memberOnly: true },
+  { title: 'Goals & Progress', url: '/goals', icon: Target, group: 'Fitness', permission: null, memberOnly: true },
+  
+  // Member Classes
+  { title: 'My Classes', url: '/member/classes', icon: Calendar, group: 'Fitness', permission: null, memberOnly: true },
+  
+  // Management
+  { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management', permission: 'feedback.view' },
+  { title: 'Give Feedback', url: '/member/feedback', icon: MessageSquare, group: 'Support', permission: null, memberOnly: true },
+  { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management', permission: 'tasks.view' },
+  
+  // Account
+  { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },
+  { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support', permission: null, memberOnly: true },
+  { title: 'Settings', url: '/settings', icon: Settings, group: 'System', permission: 'settings.view' }
+];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { authState } = useAuth();
+  const { hasPermission } = useRBAC();
   const currentPath = location.pathname;
   
   const collapsed = state === 'collapsed';
 
   if (!authState.user) return null;
 
-  const userNavItems = navigationItems[authState.user.role];
-  const groupedItems = userNavItems.reduce((groups, item) => {
+  // Filter navigation items based on permissions and role
+  const filteredItems = navigationItems.filter(item => {
+    // Check if item is member-only and user is not a member
+    if (item.memberOnly && authState.user?.role !== 'member') {
+      return false;
+    }
+    
+    // Check if item is not for members and user is a member
+    if (!item.memberOnly && authState.user?.role === 'member' && item.permission) {
+      return false;
+    }
+    
+    // Check permission if required
+    if (item.permission && !hasPermission(item.permission as any)) {
+      return false;
+    }
+    
+    return true;
+  });
+
+  // Group filtered items
+  const groupedItems = filteredItems.reduce((groups, item) => {
     if (!groups[item.group]) {
       groups[item.group] = [];
     }
     groups[item.group].push(item);
     return groups;
-  }, {} as Record<string, typeof userNavItems>);
+  }, {} as Record<string, typeof filteredItems>);
 
   const isActive = (path: string) => currentPath === path;
 
