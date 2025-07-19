@@ -25,6 +25,7 @@ const mockRoles: Record<string, RoleDefinition> = {
       'notifications.view', 'notifications.send',
       'leads.view', 'leads.create', 'leads.edit', 'leads.delete', 'leads.assign', 'leads.export',
       'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process', 'referrals.export',
+      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond', 'feedback.export',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign'
     ],
     createdAt: new Date('2023-01-01'),
@@ -50,6 +51,7 @@ const mockRoles: Record<string, RoleDefinition> = {
       'notifications.view', 'notifications.send',
       'leads.view', 'leads.create', 'leads.edit', 'leads.assign', 'leads.export',
       'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process', 'referrals.export',
+      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.respond', 'feedback.export',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign'
     ],
     createdAt: new Date('2023-01-01'),
@@ -73,6 +75,7 @@ const mockRoles: Record<string, RoleDefinition> = {
       'notifications.view', 'notifications.send',
       'leads.view', 'leads.edit', 'leads.assign', 'leads.export',
       'referrals.view', 'referrals.edit', 'referrals.process',
+      'feedback.view', 'feedback.respond',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign'
     ],
     createdAt: new Date('2023-01-01'),
@@ -105,6 +108,7 @@ const mockRoles: Record<string, RoleDefinition> = {
       'classes.view',
       'equipment.view',
       'billing.view',
+      'feedback.create',
       'referrals.view', 'referrals.create'
     ],
     createdAt: new Date('2023-01-01'),

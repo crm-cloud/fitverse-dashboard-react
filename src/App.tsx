@@ -32,6 +32,9 @@ import { ProductManagement } from "./pages/products/ProductManagement";
 import { LeadListPage } from "./pages/leads/list";
 import { DietWorkoutPlannerPage } from "./pages/diet-workout/planner";
 import FinanceDashboard from "./pages/finance/dashboard";
+import { FeedbackManagementPage } from "./pages/feedback/management";
+import { TaskManagementPage } from "./pages/tasks/management";
+import { MemberFeedbackPage } from "./pages/member/feedback";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +99,26 @@ const App = () => (
                         <ProtectedRoute allowedRoles={['admin', 'manager']}>
                           <DashboardLayout>
                             <FinanceDashboard />
+                          </DashboardLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/feedback" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
+                          <DashboardLayout>
+                            <FeedbackManagementPage />
+                          </DashboardLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/tasks" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}>
+                          <DashboardLayout>
+                            <TaskManagementPage />
                           </DashboardLayout>
                         </ProtectedRoute>
                       } 
@@ -186,6 +209,16 @@ const App = () => (
                         <ProtectedRoute allowedRoles={['member']}>
                           <DashboardLayout>
                             <MemberClassesPage />
+                          </DashboardLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/member/feedback" 
+                      element={
+                        <ProtectedRoute allowedRoles={['member']}>
+                          <DashboardLayout>
+                            <MemberFeedbackPage />
                           </DashboardLayout>
                         </ProtectedRoute>
                       } 

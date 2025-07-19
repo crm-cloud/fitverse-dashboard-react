@@ -17,7 +17,9 @@ import {
   Monitor,
   Package,
   Store,
-  Apple
+  Apple,
+  MessageSquare,
+  CheckSquare
 } from 'lucide-react';
 import {
   Sidebar,
@@ -47,6 +49,8 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
     { title: 'Branch Management', url: '/branches', icon: Settings, group: 'Administration' },
     { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
+    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management' },
+    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management' },
     { title: 'System Backup', url: '/backup', icon: HelpCircle, group: 'System' },
     { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Insights' },
   ],
@@ -56,6 +60,8 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
     { title: 'User Management', url: '/users', icon: UserCog, group: 'Administration' },
     { title: 'Role Management', url: '/roles', icon: Shield, group: 'Administration' },
+    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management' },
+    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management' },
     { title: 'Leads', url: '/leads', icon: Users, group: 'Sales' },
     { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales' },
     { title: 'Members', url: '/members', icon: Users, group: 'Management' },
@@ -71,6 +77,8 @@ const navigationItems: Record<UserRole, Array<{
   manager: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
     { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Financial' },
+    { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management' },
+    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management' },
     { title: 'Leads', url: '/leads', icon: Users, group: 'Sales' },
     { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Sales' },
     { title: 'Team Management', url: '/team', icon: UserCheck, group: 'Management' },
@@ -85,6 +93,7 @@ const navigationItems: Record<UserRole, Array<{
   ],
   staff: [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview' },
+    { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Daily Tasks' },
     { title: 'Leads', url: '/leads', icon: Users, group: 'Daily Tasks' },
     { title: 'Members', url: '/members', icon: Users, group: 'Daily Tasks' },
     { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Daily Tasks' },
@@ -111,6 +120,7 @@ const navigationItems: Record<UserRole, Array<{
     { title: 'Goals', url: '/goals', icon: Trophy, group: 'Fitness' },
     { title: 'Refer Friends', url: '/referrals', icon: Trophy, group: 'Rewards' },
     { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account' },
+    { title: 'Give Feedback', url: '/member/feedback', icon: MessageSquare, group: 'Support' },
     { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support' },
   ]
 };

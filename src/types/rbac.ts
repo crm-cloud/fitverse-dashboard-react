@@ -25,6 +25,8 @@ export type Permission =
   | 'leads.view' | 'leads.create' | 'leads.edit' | 'leads.delete' | 'leads.assign' | 'leads.export'
   // Referral Management
   | 'referrals.view' | 'referrals.create' | 'referrals.edit' | 'referrals.process' | 'referrals.export'
+  // Feedback Management
+  | 'feedback.view' | 'feedback.create' | 'feedback.edit' | 'feedback.delete' | 'feedback.respond' | 'feedback.export'
   // Task Management
   | 'tasks.view' | 'tasks.create' | 'tasks.edit' | 'tasks.delete' | 'tasks.assign';
 
