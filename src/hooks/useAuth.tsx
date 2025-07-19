@@ -138,11 +138,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Find user by email and role
-    const roleUsers = mockUsers[credentials.role];
-    const user = roleUsers.find(u => u.email === credentials.email);
+    // Find user by email across all roles
+    let user = null;
+    for (const [role, users] of Object.entries(mockUsers)) {
+      const foundUser = users.find(u => u.email === credentials.email);
+      if (foundUser) {
+        user = foundUser;
+        break;
+      }
+    }
     
-    if (user) {
+    if (user && credentials.password === 'demo123') {
       localStorage.setItem('gymfit_user', JSON.stringify(user));
       setAuthState({
         user,

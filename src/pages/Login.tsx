@@ -15,35 +15,55 @@ const roleConfig = {
     color: 'bg-red-600',
     title: 'Super Admin',
     description: 'Full system administration access',
-    email: 'superadmin@gymfit.com'
+    email: 'superadmin@gymfit.com',
+    teamRole: undefined
   },
   admin: {
     icon: Shield,
     color: 'bg-destructive',
     title: 'Admin Portal',
     description: 'Full system access and management',
-    email: 'admin@gymfit.com'
+    email: 'admin@gymfit.com',
+    teamRole: undefined
   },
-  team: {
+  manager: {
     icon: Users,
     color: 'bg-blue-600',
-    title: 'Team Portal',
-    description: 'Team member access (Manager/Staff/Trainer)',
-    email: 'team@gymfit.com'
+    title: 'Manager Portal',
+    description: 'Operational management and oversight',
+    email: 'manager@gymfit.com',
+    teamRole: 'manager'
+  },
+  staff: {
+    icon: User,
+    color: 'bg-green-600',
+    title: 'Staff Portal',
+    description: 'Daily operations and member support',
+    email: 'staff@gymfit.com',
+    teamRole: 'staff'
+  },
+  trainer: {
+    icon: Users,
+    color: 'bg-primary',
+    title: 'Trainer Portal',
+    description: 'Manage classes and member interactions',
+    email: 'trainer@gymfit.com',
+    teamRole: 'trainer'
   },
   member: {
     icon: User,
     color: 'bg-success',
     title: 'Member Portal',
     description: 'Track your fitness journey',
-    email: 'member@gymfit.com'
+    email: 'member@gymfit.com',
+    teamRole: undefined
   }
 };
 
 export default function Login() {
   const { authState, login } = useAuth();
   const { toast } = useToast();
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<keyof typeof roleConfig | null>(null);
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,16 +72,9 @@ export default function Login() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleRoleSelect = (role: UserRole) => {
+  const handleRoleSelect = (role: keyof typeof roleConfig) => {
     setSelectedRole(role);
-    // Set different emails based on role for team members
-    const emails = {
-      'super-admin': 'superadmin@gymfit.com',
-      'admin': 'admin@gymfit.com',
-      'team': 'manager@gymfit.com', // Default to manager for team
-      'member': 'member@gymfit.com'
-    };
-    setCredentials({ email: emails[role], password: 'demo123' });
+    setCredentials({ email: roleConfig[role].email, password: 'demo123' });
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -70,10 +83,12 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      await login({ ...credentials, role: selectedRole });
+      const config = roleConfig[selectedRole];
+      const userRole: UserRole = config.teamRole ? 'team' : selectedRole as UserRole;
+      await login({ ...credentials, role: userRole });
       toast({
         title: 'Welcome to GymFit Pro!',
-        description: `Logged in as ${selectedRole}`,
+        description: `Logged in as ${config.title}`,
       });
     } catch (error) {
       toast({
@@ -102,8 +117,8 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {(Object.entries(roleConfig) as [UserRole, typeof roleConfig.admin][]).map(([role, config]) => {
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {(Object.entries(roleConfig) as [keyof typeof roleConfig, typeof roleConfig.admin][]).map(([role, config]) => {
               const IconComponent = config.icon;
               return (
                 <Card 
@@ -115,12 +130,12 @@ export default function Login() {
                     <div className={`inline-flex items-center justify-center w-12 h-12 ${config.color} rounded-full mx-auto mb-4`}>
                       <IconComponent className="w-6 h-6 text-white" />
                     </div>
-                    <CardTitle className="text-xl">{config.title}</CardTitle>
+                    <CardTitle className="text-lg">{config.title}</CardTitle>
                     <CardDescription className="text-sm">{config.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <Button className="w-full" variant="outline">
-                      Continue as {role.charAt(0).toUpperCase() + role.slice(1)}
+                    <Button className="w-full" variant="outline" size="sm">
+                      Continue
                     </Button>
                   </CardContent>
                 </Card>
@@ -198,6 +213,7 @@ export default function Login() {
               <strong>Demo Credentials:</strong><br />
               Email: {selectedConfig.email}<br />
               Password: demo123
+              {selectedConfig.teamRole && <><br />Team Role: {selectedConfig.teamRole}</>}
             </p>
           </div>
         </CardContent>
