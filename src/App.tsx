@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,6 +40,7 @@ import { TrainerManagementPage } from "./pages/trainers/management";
 // New system pages
 import SystemHealth from "./pages/system/SystemHealth";
 import SystemSettings from "./pages/system/SystemSettings";
+import EmailSettings from "./pages/system/EmailSettings";
 import SystemBackup from "./pages/system/SystemBackup";
 import BranchManagement from "./pages/branches/BranchManagement";
 // New member pages
@@ -104,6 +104,16 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['super-admin']}>
                             <DashboardLayout>
                               <SystemSettings />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/email-settings" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin']}>
+                            <DashboardLayout>
+                              <EmailSettings />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 
