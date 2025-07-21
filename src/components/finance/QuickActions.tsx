@@ -8,6 +8,7 @@ import {
   FileText, 
   Settings 
 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 interface QuickActionsProps {
   onAddIncome?: () => void;
@@ -24,12 +25,68 @@ export function QuickActions({
   onViewReports,
   onManageCategories,
 }: QuickActionsProps) {
+  
+  const handleAddIncome = () => {
+    if (onAddIncome) {
+      onAddIncome();
+    } else {
+      toast({
+        title: "Add Income",
+        description: "Income recording feature will be available soon.",
+      });
+    }
+  };
+
+  const handleAddExpense = () => {
+    if (onAddExpense) {
+      onAddExpense();
+    } else {
+      toast({
+        title: "Add Expense",
+        description: "Expense recording feature will be available soon.",
+      });
+    }
+  };
+
+  const handleCreateInvoice = () => {
+    if (onCreateInvoice) {
+      onCreateInvoice();
+    } else {
+      toast({
+        title: "Create Invoice",
+        description: "Invoice creation feature will be available soon.",
+      });
+    }
+  };
+
+  const handleViewReports = () => {
+    if (onViewReports) {
+      onViewReports();
+    } else {
+      toast({
+        title: "View Reports",
+        description: "Financial reports feature will be available soon.",
+      });
+    }
+  };
+
+  const handleManageCategories = () => {
+    if (onManageCategories) {
+      onManageCategories();
+    } else {
+      toast({
+        title: "Manage Categories",
+        description: "Category management feature will be available soon.",
+      });
+    }
+  };
+
   return (
     <Card>
       <CardContent className="p-6">
         <div className="flex flex-wrap gap-4">
           <Button 
-            onClick={onAddIncome}
+            onClick={handleAddIncome}
             className="flex items-center gap-2"
           >
             <TrendingUp className="w-4 h-4" />
@@ -38,7 +95,7 @@ export function QuickActions({
           
           <Button 
             variant="outline"
-            onClick={onAddExpense}
+            onClick={handleAddExpense}
             className="flex items-center gap-2"
           >
             <TrendingDown className="w-4 h-4" />
@@ -47,7 +104,7 @@ export function QuickActions({
           
           <Button 
             variant="outline"
-            onClick={onCreateInvoice}
+            onClick={handleCreateInvoice}
             className="flex items-center gap-2"
           >
             <FileText className="w-4 h-4" />
@@ -56,7 +113,7 @@ export function QuickActions({
           
           <Button 
             variant="outline"
-            onClick={onViewReports}
+            onClick={handleViewReports}
             className="flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -65,7 +122,7 @@ export function QuickActions({
           
           <Button 
             variant="ghost"
-            onClick={onManageCategories}
+            onClick={handleManageCategories}
             className="flex items-center gap-2"
           >
             <Settings className="w-4 h-4" />

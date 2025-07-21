@@ -26,6 +26,7 @@ import { MemberProfilePage } from "./pages/members/[id]/profile";
 import { MembershipPlansPage } from "./pages/membership/plans";
 import { MemberDashboardPage } from "./pages/membership/dashboard";
 import { ClassListPage } from "./pages/classes/list";
+import { ClassCreatePage } from "./pages/classes/create";
 import { MemberClassesPage } from "./pages/member/classes";
 import TeamManagement from "./pages/TeamManagement";
 import { MemberStore } from "./pages/store/MemberStore";
@@ -64,6 +65,10 @@ import StaffCheckinPage from "./pages/staff/checkin";
 import StaffSupportPage from "./pages/staff/support";
 import StaffTasksPage from "./pages/staff/tasks";
 import StaffMaintenancePage from "./pages/staff/maintenance";
+// New missing pages
+import EquipmentListPage from "./pages/equipment/list";
+import AnalyticsPage from "./pages/analytics/index";
+import ReportsPage from "./pages/reports/index";
 
 const queryClient = new QueryClient();
 
@@ -296,6 +301,16 @@ const App = () => (
                         } 
                       />
                       <Route 
+                        path="/classes/create" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <ClassCreatePage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
                         path="/team" 
                         element={
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
@@ -331,6 +346,16 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                             <DashboardLayout>
                               <ProductManagement />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/equipment" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <EquipmentListPage />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 
@@ -570,7 +595,7 @@ const App = () => (
                         element={
                           <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
                             <DashboardLayout>
-                              <Dashboard />
+                              <AnalyticsPage />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 
@@ -580,7 +605,7 @@ const App = () => (
                         element={
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                             <DashboardLayout>
-                              <Dashboard />
+                              <ReportsPage />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 
