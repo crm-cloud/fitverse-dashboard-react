@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import type { DateRange } from 'react-day-picker';
 import { 
   FileText, 
   Download, 
@@ -16,7 +17,7 @@ import {
   DollarSign,
   BarChart3,
   FileSpreadsheet,
-  FilePdf
+  File
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -112,7 +113,7 @@ const quickReports = [
 
 export default function ReportsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [dateRange, setDateRange] = useState<{from?: Date; to?: Date}>({});
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const filteredReports = mockReports.filter(report => 
@@ -132,7 +133,7 @@ export default function ReportsPage() {
   const getFormatIcon = (format: Report['format']) => {
     switch (format) {
       case 'pdf':
-        return FilePdf;
+        return File;
       case 'excel':
         return FileSpreadsheet;
       case 'csv':
@@ -205,7 +206,7 @@ export default function ReportsPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-64 justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from ? (
+                  {dateRange?.from ? (
                     dateRange.to ? (
                       <>
                         {format(dateRange.from, "LLL dd, y")} -{" "}
@@ -223,7 +224,7 @@ export default function ReportsPage() {
                 <Calendar
                   initialFocus
                   mode="range"
-                  defaultMonth={dateRange.from}
+                  defaultMonth={dateRange?.from}
                   selected={dateRange}
                   onSelect={setDateRange}
                   numberOfMonths={2}
