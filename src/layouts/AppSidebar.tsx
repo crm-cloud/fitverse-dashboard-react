@@ -114,6 +114,7 @@ const navigationItems = [
   // Membership Management
   { title: 'Membership Plans', url: '/membership/plans', icon: CreditCard, group: 'Membership', permission: 'members.view' },
   { title: 'My Membership', url: '/membership/dashboard', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },
+  { title: 'Add Membership', url: '/membership/add', icon: Plus, group: 'Membership', permission: 'members.create' },
   
   // Account & Member Settings
   { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },

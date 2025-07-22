@@ -25,6 +25,7 @@ import { MemberCreatePage } from "./pages/members/create";
 import { MemberProfilePage } from "./pages/members/[id]/profile";
 import { MembershipPlansPage } from "./pages/membership/plans";
 import { MemberDashboardPage } from "./pages/membership/dashboard";
+import { AddMembershipWorkflowPage } from "./pages/membership/add-membership";
 import { ClassListPage } from "./pages/classes/list";
 import { ClassCreatePage } from "./pages/classes/create";
 import { MemberClassesPage } from "./pages/member/classes";
@@ -462,6 +463,16 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                             <DashboardLayout>
                               <MembershipPlansPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/membership/add" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <DashboardLayout>
+                              <AddMembershipWorkflowPage />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 

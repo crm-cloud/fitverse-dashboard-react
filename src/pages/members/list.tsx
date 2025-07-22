@@ -52,6 +52,12 @@ export const MemberListPage = () => {
             Add Member
           </Button>
         )}
+        {hasPermission('members.create') && (
+          <Button variant="outline" onClick={() => navigate('/membership/add')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add with Membership
+          </Button>
+        )}
       </div>
 
       <MemberFiltersComponent filters={filters} onFiltersChange={handleFiltersChange} />
