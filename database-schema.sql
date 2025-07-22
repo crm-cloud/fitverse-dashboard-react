@@ -1,5 +1,199 @@
--- Database Schema for Trainer Management System
--- This schema supports Phase 3 and Phase 4 functionality
+-- Payment Gateway Management System Database Schema
+-- For Muscle Garage Gym Management System
+-- Complete payment integration with multiple gateways
+
+-- ==========================================
+-- PAYMENT GATEWAY CONFIGURATION
+-- ==========================================
+
+-- Payment Gateways Configuration
+CREATE TABLE payment_gateways (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    type ENUM('razorpay', 'payu', 'phonepe', 'ccavenue') NOT NULL,
+    is_active BOOLEAN DEFAULT false,
+    environment ENUM('sandbox', 'live') DEFAULT 'sandbox',
+    api_key VARCHAR(500),
+    api_secret VARCHAR(500),
+    merchant_id VARCHAR(200),
+    webhook_secret VARCHAR(500),
+    additional_config JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Main Payments Table
+CREATE TABLE payments (
+    id VARCHAR(50) PRIMARY KEY,
+    txn_id VARCHAR(100) UNIQUE NOT NULL,
+    order_id VARCHAR(100),
+    payment_reference VARCHAR(100),
+    member_id VARCHAR(50),
+    amount DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(10) DEFAULT 'INR',
+    payment_type ENUM('membership', 'pos', 'invoice', 'training_fee') NOT NULL,
+    gateway_type ENUM('razorpay', 'payu', 'phonepe', 'ccavenue') NOT NULL,
+    payment_method ENUM('card', 'upi', 'netbanking', 'wallet', 'cash') NOT NULL,
+    status ENUM('pending', 'processing', 'success', 'failed', 'cancelled') DEFAULT 'pending',
+    invoice_id VARCHAR(50),
+    membership_id VARCHAR(50),
+    pos_order_id VARCHAR(50),
+    training_package_id VARCHAR(50),
+    gateway_response JSON,
+    failure_reason TEXT,
+    initiated_by VARCHAR(50),
+    completed_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_member_payments (member_id),
+    INDEX idx_payment_status (status),
+    INDEX idx_payment_type (payment_type),
+    INDEX idx_txn_id (txn_id)
+);
+
+-- Payment Logs for Webhook Tracking
+CREATE TABLE payment_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_id VARCHAR(50),
+    gateway_type ENUM('razorpay', 'payu', 'phonepe', 'ccavenue') NOT NULL,
+    log_type ENUM('webhook', 'api_call', 'callback', 'error') NOT NULL,
+    request_payload JSON,
+    response_payload JSON,
+    headers JSON,
+    status_code INT,
+    processing_status ENUM('received', 'processed', 'failed') DEFAULT 'received',
+    error_message TEXT,
+    received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP NULL,
+    
+    INDEX idx_payment_logs (payment_id),
+    INDEX idx_gateway_logs (gateway_type, received_at)
+);
+
+-- Payment Links (for email/SMS sharing)
+CREATE TABLE payment_links (
+    id VARCHAR(50) PRIMARY KEY,
+    payment_id VARCHAR(50) NOT NULL,
+    link_token VARCHAR(100) UNIQUE NOT NULL,
+    member_id VARCHAR(50) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_type ENUM('membership', 'pos', 'invoice', 'training_fee') NOT NULL,
+    description TEXT,
+    expires_at TIMESTAMP NOT NULL,
+    is_used BOOLEAN DEFAULT false,
+    used_at TIMESTAMP NULL,
+    created_by VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_payment_links_token (link_token),
+    INDEX idx_payment_links_member (member_id)
+);
+
+-- Email Notifications Log
+CREATE TABLE email_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_id VARCHAR(50),
+    member_id VARCHAR(50),
+    email_type ENUM('payment_success', 'payment_failed', 'payment_link', 'invoice') NOT NULL,
+    recipient_email VARCHAR(255) NOT NULL,
+    subject VARCHAR(500),
+    email_body TEXT,
+    template_used VARCHAR(100),
+    delivery_status ENUM('queued', 'sent', 'delivered', 'failed', 'bounced') DEFAULT 'queued',
+    provider_response JSON,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delivered_at TIMESTAMP NULL,
+    
+    INDEX idx_email_logs_payment (payment_id),
+    INDEX idx_email_logs_member (member_id)
+);
+
+-- SMS Notifications Log
+CREATE TABLE sms_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_id VARCHAR(50),
+    member_id VARCHAR(50),
+    sms_type ENUM('payment_success', 'payment_failed', 'payment_link', 'reminder') NOT NULL,
+    recipient_phone VARCHAR(20) NOT NULL,
+    message_content TEXT NOT NULL,
+    template_used VARCHAR(100),
+    delivery_status ENUM('queued', 'sent', 'delivered', 'failed') DEFAULT 'queued',
+    provider VARCHAR(50),
+    provider_response JSON,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delivered_at TIMESTAMP NULL,
+    
+    INDEX idx_sms_logs_payment (payment_id),
+    INDEX idx_sms_logs_member (member_id)
+);
+
+-- In-App Notifications Log
+CREATE TABLE notification_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_id VARCHAR(50),
+    member_id VARCHAR(50) NOT NULL,
+    notification_type ENUM('payment_success', 'payment_failed', 'payment_reminder', 'receipt_ready') NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    action_url VARCHAR(500),
+    is_read BOOLEAN DEFAULT false,
+    read_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_notifications_member (member_id, created_at),
+    INDEX idx_notifications_unread (member_id, is_read)
+);
+
+-- Payment Receipts/Invoices
+CREATE TABLE payment_receipts (
+    id VARCHAR(50) PRIMARY KEY,
+    payment_id VARCHAR(50) NOT NULL,
+    receipt_number VARCHAR(100) UNIQUE NOT NULL,
+    member_id VARCHAR(50) NOT NULL,
+    invoice_data JSON NOT NULL,
+    pdf_path VARCHAR(500),
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    generated_by VARCHAR(50),
+    
+    INDEX idx_receipts_payment (payment_id),
+    INDEX idx_receipts_member (member_id)
+);
+
+-- Payment Gateway Analytics
+CREATE TABLE payment_analytics (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    date DATE NOT NULL,
+    gateway_type ENUM('razorpay', 'payu', 'phonepe', 'ccavenue') NOT NULL,
+    payment_type ENUM('membership', 'pos', 'invoice', 'training_fee') NOT NULL,
+    total_transactions INT DEFAULT 0,
+    successful_transactions INT DEFAULT 0,
+    failed_transactions INT DEFAULT 0,
+    total_amount DECIMAL(12,2) DEFAULT 0.00,
+    successful_amount DECIMAL(12,2) DEFAULT 0.00,
+    average_transaction_value DECIMAL(10,2) DEFAULT 0.00,
+    success_rate DECIMAL(5,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    UNIQUE KEY unique_analytics (date, gateway_type, payment_type),
+    INDEX idx_analytics_date (date),
+    INDEX idx_analytics_gateway (gateway_type)
+);
+
+-- Insert default payment gateway configurations
+INSERT INTO payment_gateways (id, name, type, is_active, environment) VALUES
+('razorpay_sandbox', 'Razorpay Sandbox', 'razorpay', true, 'sandbox'),
+('razorpay_live', 'Razorpay Live', 'razorpay', false, 'live'),
+('payu_sandbox', 'PayU Sandbox', 'payu', true, 'sandbox'),
+('payu_live', 'PayU Live', 'payu', false, 'live'),
+('phonepe_sandbox', 'PhonePe Sandbox', 'phonepe', true, 'sandbox'),
+('phonepe_live', 'PhonePe Live', 'phonepe', false, 'live'),
+('ccavenue_sandbox', 'CCAvenue Sandbox', 'ccavenue', true, 'sandbox'),
+('ccavenue_live', 'CCAvenue Live', 'ccavenue', false, 'live');
+
+-- ==========================================
+-- EXISTING TRAINER MANAGEMENT SCHEMA
+-- ==========================================
 
 -- ==========================================
 -- TRAINER TABLES
