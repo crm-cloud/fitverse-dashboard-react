@@ -1,8 +1,10 @@
 
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 import { Permission } from '@/types/rbac';
 import { useRBAC } from '@/hooks/useRBAC';
 import { useAuth } from '@/hooks/useAuth';
+import { LoadingState } from './LoadingState';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface PermissionGateProps {
   children: ReactNode;
@@ -16,6 +18,8 @@ interface PermissionGateProps {
   restrictToRoles?: string[];
   teamRole?: string;
   excludeTeamRoles?: string[];
+  showLoader?: boolean;
+  errorBoundary?: boolean;
 }
 
 export const PermissionGate = ({
@@ -29,10 +33,22 @@ export const PermissionGate = ({
   allowedRoles,
   restrictToRoles,
   teamRole,
-  excludeTeamRoles
+  excludeTeamRoles,
+  showLoader = false,
+  errorBoundary = false
 }: PermissionGateProps) => {
   const { hasPermission, hasAnyPermission, hasAllPermissions, canAccessResource } = useRBAC();
   const { authState } = useAuth();
+
+  // Show loading state if auth is still loading
+  if (authState.isLoading && showLoader) {
+    return <LoadingState text="Checking permissions..." />;
+  }
+
+  // If not authenticated, deny access
+  if (!authState.isAuthenticated) {
+    return <>{fallback}</>;
+  }
 
   let hasAccess = true;
 
@@ -56,14 +72,35 @@ export const PermissionGate = ({
 
   // Then check permissions if access is still granted
   if (hasAccess) {
-    if (resource && action) {
-      hasAccess = canAccessResource(resource, action);
-    } else if (permission) {
-      hasAccess = hasPermission(permission);
-    } else if (permissions) {
-      hasAccess = requireAll ? hasAllPermissions(permissions) : hasAnyPermission(permissions);
+    try {
+      if (resource && action) {
+        hasAccess = canAccessResource(resource, action);
+      } else if (permission) {
+        hasAccess = hasPermission(permission);
+      } else if (permissions) {
+        hasAccess = requireAll ? hasAllPermissions(permissions) : hasAnyPermission(permissions);
+      }
+    } catch (error) {
+      console.error('Permission check failed:', error);
+      hasAccess = false;
     }
   }
 
-  return hasAccess ? <>{children}</> : <>{fallback}</>;
+  const content = hasAccess ? <>{children}</> : <>{fallback}</>;
+
+  if (errorBoundary) {
+    return (
+      <ErrorBoundary>
+        {showLoader ? (
+          <Suspense fallback={<LoadingState />}>
+            {content}
+          </Suspense>
+        ) : (
+          content
+        )}
+      </ErrorBoundary>
+    );
+  }
+
+  return content;
 };

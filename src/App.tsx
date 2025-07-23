@@ -11,6 +11,8 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { BranchProvider } from "@/hooks/useBranches";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PermissionGate } from "@/components/PermissionGate";
+import { RouteGuard } from "@/components/RouteGuard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -71,108 +73,57 @@ import EquipmentListPage from "./pages/equipment/list";
 import AnalyticsPage from "./pages/analytics/index";
 import ReportsPage from "./pages/reports/index";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <RBACProvider>
-          <BranchContextProvider>
-            <BranchProvider>
-              <CartProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <Routes>
-                      <Route path="/" element={<PublicHome />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/unauthorized" element={<Unauthorized />} />
-                      <Route 
-                        path="/dashboard" 
-                        element={
-                          <ProtectedRoute>
-                            <DashboardLayout>
-                              <Dashboard />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
-                       <Route 
-                         path="/profile" 
-                         element={
-                           <ProtectedRoute>
-                             <DashboardLayout>
-                               <ProfileSettings />
-                             </DashboardLayout>
-                           </ProtectedRoute>
-                         } 
-                       />
-                       <Route 
-                         path="/member/profile-settings" 
-                         element={
-                           <ProtectedRoute allowedRoles={['member']}>
-                             <DashboardLayout>
-                               <MemberProfileSettings />
-                             </DashboardLayout>
-                           </ProtectedRoute>
-                         } 
-                       />
-                      
-                      {/* System Management Routes - Super Admin only */}
-                      <Route 
-                        path="/system-health" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin']}>
-                            <DashboardLayout>
-                              <SystemHealth />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
-                      <Route 
-                        path="/system-settings" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin']}>
-                            <DashboardLayout>
-                              <SystemSettings />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
-                      <Route 
-                        path="/email-settings" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin']}>
-                            <DashboardLayout>
-                              <EmailSettings />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
-                      <Route 
-                        path="/sms-settings" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin']}>
-                            <DashboardLayout>
-                              <SMSSettings />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
-                      <Route 
-                        path="/backup" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin']}>
-                            <DashboardLayout>
-                              <SystemBackup />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
-                      
-                       {/* Branch Management Routes - Super Admin only */}
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <RBACProvider>
+            <BranchContextProvider>
+              <BranchProvider>
+                <CartProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
+                      <Routes>
+                        <Route path="/" element={<PublicHome />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/unauthorized" element={<Unauthorized />} />
+                        <Route 
+                          path="/dashboard" 
+                          element={
+                            <RouteGuard>
+                              <DashboardLayout>
+                                <Dashboard />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        
+                        {/* System Management Routes - Super Admin only */}
+                        <Route 
+                          path="/system-health" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <SystemHealth />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        
+                        {/* Branch Management Routes - Super Admin only */}
                        <Route 
                          path="/branches" 
                          element={
@@ -642,6 +593,26 @@ const App = () => (
                         } 
                       />
                       
+                      <Route 
+                         path="/profile" 
+                         element={
+                           <ProtectedRoute>
+                             <DashboardLayout>
+                               <ProfileSettings />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/member/profile-settings" 
+                         element={
+                           <ProtectedRoute allowedRoles={['member']}>
+                             <DashboardLayout>
+                               <MemberProfileSettings />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </BrowserRouter>
@@ -653,6 +624,7 @@ const App = () => (
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

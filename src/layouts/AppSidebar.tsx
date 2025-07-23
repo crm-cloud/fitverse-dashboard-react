@@ -30,7 +30,8 @@ import {
   Clock,
   User,
   Coffee,
-  Clipboard
+  Clipboard,
+  Plus
 } from 'lucide-react';
 import {
   Sidebar,
