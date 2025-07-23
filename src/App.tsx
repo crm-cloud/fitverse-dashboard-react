@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Suspense } from "react";
 import { AuthProvider } from "@/hooks/useAuth";
 import { RBACProvider } from "@/hooks/useRBAC";
 import { BranchContextProvider } from "@/hooks/useBranchContext";
@@ -13,11 +14,11 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PermissionGate } from "@/components/PermissionGate";
 import { RouteGuard } from "@/components/RouteGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PageLoadingState } from "@/components/LoadingState";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { lazyRoutes } from "@/utils/lazyLoad";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import UserManagement from "./pages/UserManagement";
-import RoleManagement from "./pages/RoleManagement";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import PublicHome from "./pages/public/PublicHome";
@@ -76,9 +77,16 @@ import ReportsPage from "./pages/reports/index";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
+      retry: (failureCount, error: any) => {
+        if (error?.response?.status === 404 || error?.response?.status === 401) return false;
+        return failureCount < 2;
+      },
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
+    },
+    mutations: {
+      retry: 1,
     },
   },
 });
@@ -135,13 +143,15 @@ const App = () => (
                          } 
                        />
                        
-                       {/* User & Role Management Routes - Super Admin & Admin */}
+                        {/* User & Role Management Routes - Super Admin & Admin */}
                        <Route 
                          path="/users" 
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
                              <DashboardLayout>
-                               <UserManagement />
+                               <Suspense fallback={<PageLoadingState />}>
+                                 <lazyRoutes.UserManagement />
+                               </Suspense>
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
@@ -150,9 +160,11 @@ const App = () => (
                          path="/roles" 
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                             <DashboardLayout>
-                               <RoleManagement />
-                             </DashboardLayout>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.RoleManagement />
+                                </Suspense>
+                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
                        />
@@ -164,7 +176,9 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                             <PermissionGate permission="finance.view">
                               <DashboardLayout>
-                                <FinanceDashboard />
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.FinanceDashboard />
+                                </Suspense>
                               </DashboardLayout>
                             </PermissionGate>
                           </ProtectedRoute>
@@ -176,7 +190,9 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                             <PermissionGate permission="finance.view">
                               <DashboardLayout>
-                                <TransactionsPage />
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.TransactionsPage />
+                                </Suspense>
                               </DashboardLayout>
                             </PermissionGate>
                           </ProtectedRoute>
