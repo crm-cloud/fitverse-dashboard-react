@@ -24,12 +24,20 @@ export const MembershipPlansPage = () => {
           <h1 className="text-3xl font-bold">Membership Plans</h1>
           <p className="text-muted-foreground">Manage membership plans and assign to members</p>
         </div>
-        {hasPermission('members.create') && (
-          <Button onClick={() => navigate('/membership/add')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Member with Plan
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {hasPermission('members.create') && (
+            <Button variant="outline" onClick={() => navigate('/membership/add')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Member with Plan
+            </Button>
+          )}
+          {hasPermission('members.create') && (
+            <Button onClick={() => navigate('/membership/plans/create')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Plan
+            </Button>
+          )}
+        </div>
       </div>
       <MembershipPlanList />
     </div>

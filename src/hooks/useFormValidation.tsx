@@ -18,7 +18,7 @@ interface FormConfig {
 }
 
 interface FormErrors {
-  [key: string]: string[];
+  [key: string]: string;
 }
 
 interface UseFormValidationReturn {
@@ -41,29 +41,35 @@ export const useFormValidation = (config: FormConfig): UseFormValidationReturn =
     const fieldConfig = config[fieldName];
     if (!fieldConfig) return true;
 
-    const fieldErrors: string[] = [];
+    let errorMessage = '';
 
     // Required validation
     if (fieldConfig.required && (!value || value === '' || value === null || value === undefined)) {
-      fieldErrors.push(`${fieldName} is required`);
+      errorMessage = `This field is required`;
     }
 
     // Custom rules validation
-    if (fieldConfig.rules && value) {
-      fieldConfig.rules.forEach(rule => {
+    if (!errorMessage && fieldConfig.rules && value) {
+      for (const rule of fieldConfig.rules) {
         if (!rule.validate(value)) {
-          fieldErrors.push(rule.message);
+          errorMessage = rule.message;
+          break;
         }
-      });
+      }
     }
 
     // Update errors state
-    setErrors(prev => ({
-      ...prev,
-      [fieldName]: fieldErrors
-    }));
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      if (errorMessage) {
+        newErrors[fieldName] = errorMessage;
+      } else {
+        delete newErrors[fieldName];
+      }
+      return newErrors;
+    });
 
-    return fieldErrors.length === 0;
+    return !errorMessage;
   }, [config]);
 
   const validateForm = useCallback((data: any): boolean => {
@@ -73,26 +79,27 @@ export const useFormValidation = (config: FormConfig): UseFormValidationReturn =
     Object.keys(config).forEach(fieldName => {
       const fieldConfig = config[fieldName];
       const value = data[fieldName];
-      const fieldErrors: string[] = [];
+      let errorMessage = '';
 
       // Required validation
       if (fieldConfig.required && (!value || value === '' || value === null || value === undefined)) {
-        fieldErrors.push(`${fieldName} is required`);
+        errorMessage = 'This field is required';
         isFormValid = false;
       }
 
       // Custom rules validation
-      if (fieldConfig.rules && value) {
-        fieldConfig.rules.forEach(rule => {
+      if (!errorMessage && fieldConfig.rules && value) {
+        for (const rule of fieldConfig.rules) {
           if (!rule.validate(value)) {
-            fieldErrors.push(rule.message);
+            errorMessage = rule.message;
             isFormValid = false;
+            break;
           }
-        });
+        }
       }
 
-      if (fieldErrors.length > 0) {
-        newErrors[fieldName] = fieldErrors;
+      if (errorMessage) {
+        newErrors[fieldName] = errorMessage;
       }
     });
 
@@ -149,6 +156,10 @@ export const useFormValidation = (config: FormConfig): UseFormValidationReturn =
 
 // Common validation rules
 export const validationRules = {
+  required: {
+    validate: (value: any) => value !== null && value !== undefined && value !== '',
+    message: 'This field is required'
+  },
   email: {
     validate: (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
     message: 'Please enter a valid email address'

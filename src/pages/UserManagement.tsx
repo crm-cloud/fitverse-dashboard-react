@@ -64,7 +64,7 @@ export default function UserManagement() {
           </p>
         </div>
         <PermissionGate permission="users.create">
-          <Button>
+          <Button onClick={() => window.location.href = '/users/create'}>
             <Plus className="w-4 h-4 mr-2" />
             Add User
           </Button>

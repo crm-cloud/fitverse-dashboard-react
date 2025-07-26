@@ -73,6 +73,11 @@ import StaffMaintenancePage from "./pages/staff/maintenance";
 import EquipmentListPage from "./pages/equipment/list";
 import AnalyticsPage from "./pages/analytics/index";
 import ReportsPage from "./pages/reports/index";
+// New create pages
+import { BranchCreatePage } from "./pages/branches/create";
+import { UserCreatePage } from "./pages/users/create";
+import { RoleCreatePage } from "./pages/roles/create";
+import { PlanCreatePage } from "./pages/membership/plans/create";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -131,7 +136,49 @@ const App = () => (
                           } 
                         />
                         
-                        {/* Branch Management Routes - Super Admin only */}
+                        {/* System Settings Routes - Super Admin only */}
+                        <Route 
+                          path="/system-settings" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <SystemSettings />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/email-settings" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <EmailSettings />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/sms-settings" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <SMSSettings />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/backup" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <SystemBackup />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        
+                         {/* Branch Management Routes - Super Admin only */}
                        <Route 
                          path="/branches" 
                          element={
@@ -155,21 +202,61 @@ const App = () => (
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
-                       />
-                       <Route 
-                         path="/roles" 
-                         element={
-                           <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                        />
+                        <Route 
+                          path="/branches/create" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin']}>
                               <DashboardLayout>
-                                <Suspense fallback={<PageLoadingState />}>
-                                  <lazyRoutes.RoleManagement />
-                                </Suspense>
+                                <BranchCreatePage />
                               </DashboardLayout>
-                           </ProtectedRoute>
-                         } 
-                       />
-                      
-                      {/* Business Operations Routes - Super Admin, Admin, Team */}
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/users/create" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                              <DashboardLayout>
+                                <UserCreatePage />
+                              </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/roles" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                               <DashboardLayout>
+                                 <Suspense fallback={<PageLoadingState />}>
+                                   <lazyRoutes.RoleManagement />
+                                 </Suspense>
+                               </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/roles/create" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                              <DashboardLayout>
+                                <RoleCreatePage />
+                              </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/membership/plans/create" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                              <DashboardLayout>
+                                <PlanCreatePage />
+                              </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
+                       
+                       {/* Business Operations Routes - Super Admin, Admin, Team */}
                       <Route 
                         path="/finance" 
                         element={

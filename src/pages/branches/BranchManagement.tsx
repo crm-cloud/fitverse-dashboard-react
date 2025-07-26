@@ -85,7 +85,7 @@ export default function BranchManagement() {
           <h1 className="text-3xl font-bold text-foreground">Branch Management</h1>
           <p className="text-muted-foreground">Manage gym branches and locations</p>
         </div>
-        <Button>
+        <Button onClick={() => window.location.href = '/branches/create'}>
           <Plus className="w-4 h-4 mr-2" />
           Add Branch
         </Button>

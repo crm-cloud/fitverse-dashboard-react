@@ -47,7 +47,7 @@ export default function RoleManagement() {
           </p>
         </div>
         <PermissionGate permission="roles.create">
-          <Button>
+          <Button onClick={() => window.location.href = '/roles/create'}>
             <Plus className="w-4 h-4 mr-2" />
             Create Role
           </Button>
