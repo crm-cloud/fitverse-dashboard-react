@@ -49,7 +49,13 @@ export type Permission =
   | 'trainer.schedule.view' | 'trainer.schedule.manage' | 'trainer.clients.view' | 'trainer.clients.manage'
   | 'trainer.workouts.create' | 'trainer.workouts.assign' | 'trainer.progress.track' | 'trainer.earnings.view'
   // Staff-specific permissions
-  | 'staff.checkin.process' | 'staff.support.handle' | 'staff.orientation.conduct' | 'staff.maintenance.report';
+  | 'staff.checkin.process' | 'staff.support.handle' | 'staff.orientation.conduct' | 'staff.maintenance.report'
+  // Attendance Management
+  | 'attendance.view' | 'attendance.create' | 'attendance.edit' | 'attendance.delete' | 'attendance.export'
+  | 'attendance.checkin.manual' | 'attendance.checkout.manual' | 'attendance.approve' | 'attendance.reports.view'
+  // Device Management
+  | 'devices.view' | 'devices.create' | 'devices.edit' | 'devices.delete' | 'devices.sync' | 'devices.settings'
+  | 'devices.maintenance' | 'devices.restart' | 'devices.logs.view';
 
 export interface RoleDefinition {
   id: string;

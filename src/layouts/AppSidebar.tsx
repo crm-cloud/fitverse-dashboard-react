@@ -74,6 +74,7 @@ const navigationItems = [
   { title: 'Trainers', url: '/trainers', icon: UserCheck, group: 'Operations', permission: 'team.view' },
   { title: 'Team', url: '/team', icon: UserCheck, group: 'Operations', permission: 'team.view' },
   { title: 'Attendance', url: '/attendance', icon: Clock, group: 'Operations', permission: 'attendance.view' },
+  { title: 'Device Management', url: '/attendance/devices', icon: Monitor, group: 'Operations', permission: 'devices.view' },
   { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations', permission: 'classes.view' },
   { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations', permission: 'equipment.view' },
   { title: 'Lockers', url: '/lockers', icon: Key, group: 'Operations', permission: 'lockers.view' },

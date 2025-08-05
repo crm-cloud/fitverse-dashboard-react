@@ -80,6 +80,7 @@ import { RoleCreatePage } from "./pages/roles/create";
 import { PlanCreatePage } from "./pages/membership/plans/create";
 import LockerManagement from "./pages/lockers/management";
 import AttendanceDashboard from "./pages/attendance/dashboard";
+import AttendanceDevicesPage from "./pages/attendance/devices";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -393,6 +394,16 @@ const App = () => (
                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                              <DashboardLayout>
                                <AttendanceDashboard />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/attendance/devices" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                             <DashboardLayout>
+                               <AttendanceDevicesPage />
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
