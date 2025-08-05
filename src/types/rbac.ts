@@ -16,6 +16,8 @@ export type Permission =
   | 'classes.view' | 'classes.create' | 'classes.edit' | 'classes.delete' | 'classes.schedule'
   // Equipment Management
   | 'equipment.view' | 'equipment.create' | 'equipment.edit' | 'equipment.delete'
+  // Locker Management
+  | 'lockers.view' | 'lockers.create' | 'lockers.edit' | 'lockers.delete' | 'lockers.assign' | 'lockers.release'
   // Finance Management
   | 'finance.view' | 'finance.create' | 'finance.edit' | 'finance.process'
   // Analytics & Reports

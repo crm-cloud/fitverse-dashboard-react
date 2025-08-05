@@ -31,7 +31,8 @@ import {
   User,
   Coffee,
   Clipboard,
-  Plus
+  Plus,
+  Key
 } from 'lucide-react';
 import {
   Sidebar,
@@ -74,6 +75,7 @@ const navigationItems = [
   { title: 'Team', url: '/team', icon: UserCheck, group: 'Operations', permission: 'team.view' },
   { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations', permission: 'classes.view' },
   { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations', permission: 'equipment.view' },
+  { title: 'Lockers', url: '/lockers', icon: Key, group: 'Operations', permission: 'lockers.view' },
   { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Operations', permission: null },
   
   // Trainer-specific items

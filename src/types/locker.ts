@@ -9,6 +9,7 @@ export interface Locker {
   assignedMemberId?: string;
   assignedMemberName?: string;
   assignedDate?: string;
+  expirationDate?: string;
   releaseDate?: string;
   monthlyFee: number;
   notes?: string;
@@ -32,6 +33,7 @@ export interface LockerAssignment {
   memberId: string;
   memberName: string;
   assignedDate: string;
+  expirationDate?: string;
   releaseDate?: string;
   monthlyFee: number;
   status: 'active' | 'released';

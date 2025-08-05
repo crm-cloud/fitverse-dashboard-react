@@ -160,7 +160,7 @@ export default function LockerManagement() {
           </p>
         </div>
         
-        <PermissionGate permission="finance.create">
+        <PermissionGate permission="lockers.create">
           <Button onClick={() => setShowLockerForm(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Locker
@@ -235,18 +235,20 @@ export default function LockerManagement() {
           />
 
           {/* Locker Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredLockers.map((locker) => (
-              <LockerCard
-                key={locker.id}
-                locker={locker}
-                onAssign={handleAssignLocker}
-                onRelease={handleReleaseLocker}
-                onEdit={handleEditLocker}
-                onDelete={handleDeleteLocker}
-              />
-            ))}
-          </div>
+          <PermissionGate permission="lockers.view">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredLockers.map((locker) => (
+                <LockerCard
+                  key={locker.id}
+                  locker={locker}
+                  onAssign={handleAssignLocker}
+                  onRelease={handleReleaseLocker}
+                  onEdit={handleEditLocker}
+                  onDelete={handleDeleteLocker}
+                />
+              ))}
+            </div>
+          </PermissionGate>
 
           {filteredLockers.length === 0 && (
             <Card>
