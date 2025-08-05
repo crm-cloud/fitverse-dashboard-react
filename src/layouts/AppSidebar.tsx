@@ -1,39 +1,6 @@
 
-import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  CreditCard,
-  Settings,
-  BarChart3,
-  Dumbbell,
-  UserCheck,
-  Trophy,
-  HelpCircle,
-  Shield,
-  UserCog,
-  Monitor,
-  Package,
-  Store,
-  Apple,
-  MessageSquare,
-  CheckSquare,
-  Building2,
-  MapPin,
-  Database,
-  Target,
-  Activity,
-  Mail,
-  Phone,
-  Clock,
-  User,
-  Coffee,
-  Clipboard,
-  Plus,
-  Key
-} from 'lucide-react';
+import { Dumbbell, MapPin } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -49,135 +16,25 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRBAC } from '@/hooks/useRBAC';
 import { UserRole } from '@/types/auth';
 import { Badge } from '@/components/ui/badge';
-
-// Enhanced navigation items with team role specificity
-const navigationItems = [
-  // Dashboard - All roles
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, group: 'Overview', permission: null },
-  
-  // System Management - Super Admin only
-  { title: 'System Health', url: '/system-health', icon: BarChart3, group: 'System Management', permission: 'system.view' },
-  { title: 'Branch Management', url: '/branches', icon: Building2, group: 'System Management', permission: 'branches.view' },
-  { title: 'User Management', url: '/users', icon: UserCog, group: 'System Management', permission: 'users.view' },
-  { title: 'Role Management', url: '/roles', icon: Shield, group: 'System Management', permission: 'roles.view' },
-  { title: 'System Settings', url: '/system-settings', icon: Settings, group: 'System Management', permission: 'system.manage' },
-  { title: 'Email Settings', url: '/email-settings', icon: Mail, group: 'System Management', permission: 'system.manage' },
-  { title: 'SMS Settings', url: '/sms-settings', icon: Phone, group: 'System Management', permission: 'system.manage' },
-  { title: 'System Backup', url: '/backup', icon: Database, group: 'System Management', permission: 'system.backup' },
-  
-  // Analytics & Reports
-  { title: 'Analytics', url: '/analytics', icon: BarChart3, group: 'Insights', permission: 'analytics.view' },
-  { title: 'Reports', url: '/reports', icon: BarChart3, group: 'Insights', permission: 'reports.view' },
-  
-  // Operations
-  { title: 'Members', url: '/members', icon: Users, group: 'Operations', permission: 'members.view' },
-  { title: 'Trainers', url: '/trainers', icon: UserCheck, group: 'Operations', permission: 'team.view' },
-  { title: 'Team', url: '/team', icon: UserCheck, group: 'Operations', permission: 'team.view' },
-  { title: 'Attendance', url: '/attendance', icon: Clock, group: 'Operations', permission: 'attendance.view' },
-  { title: 'Device Management', url: '/attendance/devices', icon: Monitor, group: 'Operations', permission: 'devices.view' },
-  { title: 'Classes', url: '/classes', icon: Calendar, group: 'Operations', permission: 'classes.view' },
-  { title: 'Equipment', url: '/equipment', icon: Dumbbell, group: 'Operations', permission: 'equipment.view' },
-  { title: 'Lockers', url: '/lockers', icon: Key, group: 'Operations', permission: 'lockers.view' },
-  { title: 'Check-ins', url: '/checkins', icon: UserCheck, group: 'Operations', permission: null },
-  
-  // Trainer-specific items
-  { title: 'My Schedule', url: '/trainer/schedule', icon: Calendar, group: 'Training', permission: 'trainer.schedule.view', teamRole: 'trainer' },
-  { title: 'My Clients', url: '/trainer/clients', icon: Users, group: 'Training', permission: 'trainer.clients.view', teamRole: 'trainer' },
-  { title: 'Workout Plans', url: '/trainer/workouts', icon: Dumbbell, group: 'Training', permission: 'trainer.workouts.create', teamRole: 'trainer' },
-  { title: 'Progress Tracking', url: '/trainer/progress', icon: Activity, group: 'Training', permission: 'trainer.progress.track', teamRole: 'trainer' },
-  { title: 'Earnings', url: '/trainer/earnings', icon: CreditCard, group: 'Training', permission: 'trainer.earnings.view', teamRole: 'trainer' },
-  
-  // Staff-specific items
-  { title: 'Member Check-in', url: '/staff/checkin', icon: UserCheck, group: 'Front Desk', permission: 'staff.checkin.process', teamRole: 'staff' },
-  { title: 'Member Support', url: '/staff/support', icon: MessageSquare, group: 'Front Desk', permission: 'staff.support.handle', teamRole: 'staff' },
-  { title: 'Daily Tasks', url: '/staff/tasks', icon: CheckSquare, group: 'Front Desk', permission: 'tasks.view', teamRole: 'staff' },
-  { title: 'Maintenance Reports', url: '/staff/maintenance', icon: Clipboard, group: 'Front Desk', permission: 'staff.maintenance.report', teamRole: 'staff' },
-  
-  // Business
-  { title: 'Finance', url: '/finance', icon: CreditCard, group: 'Business', permission: 'finance.view' },
-  { title: 'Leads', url: '/leads', icon: Users, group: 'Business', permission: 'leads.view' },
-  { title: 'Referrals', url: '/referrals', icon: Trophy, group: 'Business', permission: 'referrals.view' },
-  
-  // Store
-  { title: 'Products', url: '/products', icon: Package, group: 'Store', permission: 'products.view' },
-  { title: 'POS System', url: '/pos', icon: Monitor, group: 'Store', permission: 'pos.view' },
-  { title: 'Store', url: '/store', icon: Store, group: 'Store', permission: 'products.view', memberOnly: true },
-  
-  // Services
-  { title: 'Diet & Workout', url: '/diet-workout', icon: Apple, group: 'Services', permission: 'diet-workout.view' },
-  { title: 'My Workouts', url: '/workouts', icon: Dumbbell, group: 'Fitness', permission: null, memberOnly: true },
-  { title: 'Goals & Progress', url: '/goals', icon: Target, group: 'Fitness', permission: null, memberOnly: true },
-  
-  // Member Classes
-  { title: 'My Classes', url: '/member/classes', icon: Calendar, group: 'Fitness', permission: null, memberOnly: true },
-  
-  // Management
-  { title: 'Feedback', url: '/feedback', icon: MessageSquare, group: 'Management', permission: 'feedback.view' },
-  { title: 'Give Feedback', url: '/member/feedback', icon: MessageSquare, group: 'Support', permission: null, memberOnly: true },
-  { title: 'Tasks', url: '/tasks', icon: CheckSquare, group: 'Management', permission: 'tasks.view' },
-  
-  // Membership Management
-  { title: 'Membership Plans', url: '/membership/plans', icon: CreditCard, group: 'Membership', permission: 'members.view' },
-  { title: 'My Membership', url: '/membership/dashboard', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },
-  { title: 'Add Membership', url: '/membership/add', icon: Plus, group: 'Membership', permission: 'members.create' },
-  
-  // Account & Member Settings
-  { title: 'Billing', url: '/billing', icon: CreditCard, group: 'Account', permission: null, memberOnly: true },
-  { title: 'Profile Settings', url: '/member/profile-settings', icon: User, group: 'Account', permission: null, memberOnly: true },
-  { title: 'Trainer Change', url: '/trainer-change-request', icon: UserCog, group: 'Account', permission: null, memberOnly: true },
-  { title: 'Help', url: '/help', icon: HelpCircle, group: 'Support', permission: null, memberOnly: true },
-  { title: 'Settings', url: '/settings', icon: Settings, group: 'System', permission: 'settings.view' }
-];
+import { getNavigationForUser } from '@/config/navigationConfig';
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { authState } = useAuth();
-  const { hasPermission } = useRBAC();
+  const { getUserPermissions } = useRBAC();
   const currentPath = location.pathname;
   
   const collapsed = state === 'collapsed';
 
   if (!authState.user) return null;
 
-  // Filter navigation items based on permissions, role, and team role
-  const filteredItems = navigationItems.filter(item => {
-    // Check if item is member-only and user is not a member
-    if (item.memberOnly && authState.user?.role !== 'member') {
-      return false;
-    }
-    
-    // Check if item is not for members and user is a member
-    if (!item.memberOnly && authState.user?.role === 'member' && item.permission) {
-      return false;
-    }
-    
-    // If user is member, only show member-only items or items without permissions
-    if (authState.user?.role === 'member' && !item.memberOnly && item.permission) {
-      return false;
-    }
-    
-    // Check team role specificity
-    if (item.teamRole && authState.user?.teamRole !== item.teamRole) {
-      return false;
-    }
-    
-    // Check permission if required for non-member users
-    if (item.permission && authState.user?.role !== 'member' && !hasPermission(item.permission as any)) {
-      return false;
-    }
-    
-    return true;
-  });
-
-  // Group filtered items
-  const groupedItems = filteredItems.reduce((groups, item) => {
-    if (!groups[item.group]) {
-      groups[item.group] = [];
-    }
-    groups[item.group].push(item);
-    return groups;
-  }, {} as Record<string, typeof filteredItems>);
+  // Get filtered navigation groups using centralized configuration
+  const navigationGroups = getNavigationForUser(
+    authState.user.role,
+    getUserPermissions(),
+    authState.user.teamRole
+  );
 
   const isActive = (path: string) => currentPath === path;
 
@@ -226,30 +83,33 @@ export function AppSidebar() {
         )}
 
         {/* Navigation */}
-        {Object.entries(groupedItems).map(([group, items]) => (
-          <SidebarGroup key={group}>
-            {!collapsed && <SidebarGroupLabel>{group}</SidebarGroupLabel>}
+        {navigationGroups.map((group) => (
+          <SidebarGroup key={group.id}>
+            {!collapsed && <SidebarGroupLabel>{group.title}</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink 
-                        to={item.url} 
-                        className={({ isActive }) => 
-                          `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                            isActive 
-                              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
-                              : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-                          }`
-                        }
-                      >
-                        <item.icon className="w-5 h-5 shrink-0" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {group.items.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                        <NavLink 
+                          to={item.url} 
+                          className={({ isActive }) => 
+                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                              isActive 
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
+                                : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                            }`
+                          }
+                        >
+                          <IconComponent className="w-5 h-5 shrink-0" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
