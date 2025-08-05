@@ -79,6 +79,7 @@ import { UserCreatePage } from "./pages/users/create";
 import { RoleCreatePage } from "./pages/roles/create";
 import { PlanCreatePage } from "./pages/membership/plans/create";
 import LockerManagement from "./pages/lockers/management";
+import AttendanceDashboard from "./pages/attendance/dashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -376,16 +377,26 @@ const App = () => (
                           </ProtectedRoute>
                         } 
                       />
-                      <Route 
-                        path="/trainers" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
-                            <DashboardLayout>
-                              <TrainerManagementPage />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
+                       <Route 
+                         path="/trainers" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                             <DashboardLayout>
+                               <TrainerManagementPage />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/attendance" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                             <DashboardLayout>
+                               <AttendanceDashboard />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
                       <Route 
                         path="/pos" 
                         element={
