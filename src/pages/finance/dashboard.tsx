@@ -81,7 +81,13 @@ export default function FinanceDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <QuickActions />
+      <QuickActions 
+        onAddIncome={() => setShowIncomeDialog(true)}
+        onAddExpense={() => setShowExpenseDialog(true)}
+        onCreateInvoice={() => setShowInvoiceDialog(true)}
+        onViewReports={() => navigate('/finance/reports')}
+        onManageCategories={() => setShowCategoryDialog(true)}
+      />
 
       {/* Overview Cards */}
       <FinanceOverviewCards summary={mockFinancialSummary} />
