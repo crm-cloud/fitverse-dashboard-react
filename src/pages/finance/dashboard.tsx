@@ -22,6 +22,10 @@ import { RecentTransactions } from '@/components/finance/RecentTransactions';
 import { QuickActions } from '@/components/finance/QuickActions';
 import { TransactionTable } from '@/components/finance/TransactionTable';
 import { TransactionForm } from '@/components/finance/TransactionForm';
+import { AddIncomeDialog } from '@/components/finance/AddIncomeDialog';
+import { AddExpenseDialog } from '@/components/finance/AddExpenseDialog';
+import { InvoiceCreationDialog } from '@/components/finance/InvoiceCreationDialog';
+import { CategoryManagementDialog } from '@/components/finance/CategoryManagementDialog';
 import { PermissionGate } from '@/components/PermissionGate';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +33,10 @@ import { useNavigate } from 'react-router-dom';
 export default function FinanceDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const [showIncomeDialog, setShowIncomeDialog] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -251,6 +259,35 @@ export default function FinanceDashboard() {
           onSubmit={handleAddTransaction}
         />
       </PermissionGate>
+
+      {/* Additional Dialogs */}
+      <AddIncomeDialog
+        open={showIncomeDialog}
+        onOpenChange={setShowIncomeDialog}
+        onSubmit={handleAddTransaction}
+      />
+      
+      <AddExpenseDialog
+        open={showExpenseDialog}
+        onOpenChange={setShowExpenseDialog}
+        onSubmit={handleAddTransaction}
+      />
+      
+      <InvoiceCreationDialog
+        open={showInvoiceDialog}
+        onOpenChange={setShowInvoiceDialog}
+        onSubmit={(data) => {
+          toast({
+            title: "Invoice Created",
+            description: `Invoice ${data.invoiceNumber} has been created successfully.`,
+          });
+        }}
+      />
+      
+      <CategoryManagementDialog
+        open={showCategoryDialog}
+        onOpenChange={setShowCategoryDialog}
+      />
     </div>
   );
 }
