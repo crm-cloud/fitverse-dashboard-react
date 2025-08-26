@@ -23,6 +23,8 @@ export const lazyRoutes = {
   TeamManagement: createLazyComponent(() => import('@/pages/TeamManagement').then(m => ({ default: m.default }))),
   FinanceDashboard: createLazyComponent(() => import('@/pages/finance/dashboard').then(m => ({ default: m.default }))),
   TransactionsPage: createLazyComponent(() => import('@/pages/finance/transactions').then(m => ({ default: m.default }))),
+  FinanceReports: createLazyComponent(() => import('@/pages/finance/reports').then(m => ({ default: m.default }))),
+  MembershipPlans: createLazyComponent(() => import('@/pages/membership/plans').then(m => ({ default: m.MembershipPlansPage }))),
 };
 
 // Component-based lazy loading for heavy components (commented out until components are available)

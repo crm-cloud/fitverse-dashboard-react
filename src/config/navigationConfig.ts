@@ -32,7 +32,8 @@ import {
   Smartphone,
   Database,
   Monitor,
-  LifeBuoy
+  LifeBuoy,
+  BrainCircuit
 } from 'lucide-react';
 import { UserRole } from '@/types/auth';
 import { Permission } from '@/types/rbac';
@@ -408,6 +409,15 @@ export const navigationConfig: NavigationGroup[] = [
     allowedRoles: ['super-admin', 'admin'],
     priority: 12,
     items: [
+      {
+        id: 'ai-settings',
+        title: 'AI Settings',
+        url: '/system/ai-settings',
+        icon: BrainCircuit,
+        group: 'system',
+        allowedRoles: ['super-admin', 'admin'],
+        requiredPermissions: ['system.manage'],
+      },
       {
         id: 'system-settings',
         title: 'System Settings',

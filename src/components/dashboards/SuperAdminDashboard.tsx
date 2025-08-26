@@ -1,7 +1,9 @@
 
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   Users, 
   Calendar, 
@@ -14,10 +16,72 @@ import {
   Database,
   Server,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 
-export const SuperAdminDashboard = () => (
+export const SuperAdminDashboard = () => {
+  const { toast } = useToast();
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isCheckingServer, setIsCheckingServer] = useState(false);
+  const [isManagingUsers, setIsManagingUsers] = useState(false);
+  const [isViewingAnalytics, setIsViewingAnalytics] = useState(false);
+
+  const handleBackup = async () => {
+    try {
+      setIsBackingUp(true);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast({
+        title: 'Backup Initiated',
+        description: 'System backup has been started. You will be notified when complete.',
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Backup Failed',
+        description: 'Failed to initiate system backup. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleServerStatus = async () => {
+    try {
+      setIsCheckingServer(true);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast({
+        title: 'Server Status',
+        description: 'All systems operational. No issues detected.',
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Server Error',
+        description: 'Unable to fetch server status. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCheckingServer(false);
+    }
+  };
+
+  const handleUserRoles = () => {
+    setIsManagingUsers(true);
+    // In a real app, this would navigate to the user management page
+    window.location.href = '/users';
+  };
+
+  const handleAnalytics = () => {
+    setIsViewingAnalytics(true);
+    // In a real app, this would navigate to the analytics page
+    window.location.href = '/analytics';
+  };
+
+  return (
   <div className="space-y-6">
     <div className="flex items-center justify-between">
       <h1 className="text-3xl font-bold text-foreground">Super Admin Dashboard</h1>
@@ -91,20 +155,62 @@ export const SuperAdminDashboard = () => (
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
-            <Button className="h-20 flex flex-col gap-2">
-              <Database className="w-6 h-6" />
-              <span className="text-sm">Backup System</span>
+            <Button 
+              onClick={handleBackup}
+              disabled={isBackingUp}
+              className="h-20 flex flex-col gap-2"
+            >
+              {isBackingUp ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Database className="w-6 h-6" />
+              )}
+              <span className="text-sm">
+                {isBackingUp ? 'Backing Up...' : 'Backup System'}
+              </span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <Server className="w-6 h-6" />
-              <span className="text-sm">Server Status</span>
+            
+            <Button 
+              variant="outline" 
+              onClick={handleServerStatus}
+              disabled={isCheckingServer}
+              className="h-20 flex flex-col gap-2"
+            >
+              {isCheckingServer ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Server className="w-6 h-6" />
+              )}
+              <span className="text-sm">
+                {isCheckingServer ? 'Checking...' : 'Server Status'}
+              </span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <Users className="w-6 h-6" />
+            
+            <Button 
+              variant="outline" 
+              onClick={handleUserRoles}
+              disabled={isManagingUsers}
+              className="h-20 flex flex-col gap-2"
+            >
+              {isManagingUsers ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Users className="w-6 h-6" />
+              )}
               <span className="text-sm">User Roles</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <TrendingUp className="w-6 h-6" />
+            
+            <Button 
+              variant="outline" 
+              onClick={handleAnalytics}
+              disabled={isViewingAnalytics}
+              className="h-20 flex flex-col gap-2"
+            >
+              {isViewingAnalytics ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <TrendingUp className="w-6 h-6" />
+              )}
               <span className="text-sm">Analytics</span>
             </Button>
           </div>
@@ -141,4 +247,5 @@ export const SuperAdminDashboard = () => (
       </Card>
     </div>
   </div>
-);
+  );
+};

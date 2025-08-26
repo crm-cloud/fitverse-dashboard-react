@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Shield, Database, Mail, Bell } from 'lucide-react';
+import { Settings, Shield, Database, Mail, Bell, ChevronDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SystemSettings() {
   return (
@@ -45,11 +46,44 @@ export default function SystemSettings() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Default Timezone</Label>
-                  <Input id="timezone" defaultValue="UTC" />
+                  <Select defaultValue="UTC">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px] overflow-auto">
+                      {Intl.supportedValuesOf('timeZone').map((timezone) => (
+                        <SelectItem key={timezone} value={timezone}>
+                          {timezone.replace(/_/g, ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="currency">Default Currency</Label>
-                  <Input id="currency" defaultValue="USD" />
+                  <Select defaultValue="USD">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[
+                        { code: 'USD', name: 'US Dollar' },
+                        { code: 'INR', name: 'Indian Rupee' },
+                        { code: 'EUR', name: 'Euro' },
+                        { code: 'GBP', name: 'British Pound' },
+                        { code: 'JPY', name: 'Japanese Yen' },
+                        { code: 'AUD', name: 'Australian Dollar' },
+                        { code: 'CAD', name: 'Canadian Dollar' },
+                        { code: 'CNY', name: 'Chinese Yuan' },
+                        { code: 'SGD', name: 'Singapore Dollar' },
+                        { code: 'AED', name: 'UAE Dirham' },
+                      ].map((currency) => (
+                        <SelectItem key={currency.code} value={currency.code}>
+                          {`${currency.name} (${currency.code})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               

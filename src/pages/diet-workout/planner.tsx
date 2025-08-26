@@ -1,30 +1,76 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Apple, 
-  Dumbbell, 
-  Plus, 
-  TrendingUp, 
-  Target,
-  Calendar,
-  Users,
-  Heart,
-  Brain
-} from 'lucide-react';
-import { DietPlanList } from '@/components/diet-workout/DietPlanList';
-import { WorkoutPlanList } from '@/components/diet-workout/WorkoutPlanList';
-import { MemberDashboardView } from '@/components/diet-workout/MemberDashboardView';
-import { AIInsightsPanel } from '@/components/diet-workout/AIInsightsPanel';
-import { PlanStatsOverview } from '@/components/diet-workout/PlanStatsOverview';
+import { Dumbbell, Utensils, Brain, LayoutDashboard, Calendar, Plus, ListChecks } from 'lucide-react';
+import { DietPlanGenerator } from '@/components/diet-workout/DietPlanGenerator';
+import { WorkoutPlanGenerator } from '@/components/diet-workout/WorkoutPlanGenerator';
+import { AssignmentList } from '@/components/assignments';
+
+// Placeholder components
+const MemberDashboardView = ({ memberId }: { memberId: string }) => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Your Fitness Dashboard</CardTitle>
+        <CardDescription>Welcome back! Here's an overview of your fitness journey.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p>Your personalized dashboard content will appear here.</p>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const DietPlanList = ({ canCreate }: { canCreate: boolean }) => (
+  <div className="space-y-4">
+    <div className="flex justify-between items-center">
+      <h2 className="text-2xl font-bold">Diet Plans</h2>
+      {canCreate && (
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Create New Plan
+        </Button>
+      )}
+    </div>
+    <p>Your diet plans will be listed here.</p>
+  </div>
+);
+
+const WorkoutPlanList = ({ canCreate }: { canCreate: boolean }) => (
+  <div className="space-y-4">
+    <div className="flex justify-between items-center">
+      <h2 className="text-2xl font-bold">Workout Plans</h2>
+      {canCreate && (
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Create New Plan
+        </Button>
+      )}
+    </div>
+    <p>Your workout plans will be listed here.</p>
+  </div>
+);
+
+// AI Insights Panel Component
+const AIInsightsPanel = () => (
+  <Card>
+    <CardHeader>
+      <CardTitle>AI-Powered Insights</CardTitle>
+      <CardDescription>Get personalized recommendations based on your data</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <p>AI insights and recommendations will appear here.</p>
+    </CardContent>
+  </Card>
+);
 
 export const DietWorkoutPlannerPage = () => {
   const { authState } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('diet');
 
   if (!authState.user) return null;
 
@@ -35,38 +81,45 @@ export const DietWorkoutPlannerPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Diet & Workout Planner</h1>
+          <h1 className="text-3xl font-bold text-foreground">Fitness Planner</h1>
           <p className="text-muted-foreground">
             {isMember 
               ? 'Track your fitness journey and follow personalized plans'
-              : 'Create and manage diet and workout plans for members'
+              : 'Create and manage diet and workout plans'
             }
           </p>
         </div>
-        <Badge variant="secondary">
-          {authState.user.role.charAt(0).toUpperCase() + authState.user.role.slice(1)}
-        </Badge>
+        <div className="flex items-center space-x-2">
+          <Badge variant="secondary">
+            {authState.user.role.charAt(0).toUpperCase() + authState.user.role.slice(1)}
+          </Badge>
+          {!isMember && (
+            <Button size="sm" variant="outline" onClick={() => {
+              // Open AI settings modal or page
+              window.open('/system/ai-settings', '_blank');
+            }}>
+              <Brain className="h-4 w-4 mr-2" />
+              AI Settings
+            </Button>
+          )}
+        </div>
       </div>
 
       {isMember ? (
         <MemberDashboardView memberId={authState.user.id} />
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Overview
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="diet" className="flex items-center gap-2">
+              <Utensils className="w-4 h-4" />
+              Diet Planner
             </TabsTrigger>
-            <TabsTrigger value="diet-plans" className="flex items-center gap-2">
-              <Apple className="w-4 h-4" />
-              Diet Plans
-            </TabsTrigger>
-            <TabsTrigger value="workout-plans" className="flex items-center gap-2">
+            <TabsTrigger value="workout" className="flex items-center gap-2">
               <Dumbbell className="w-4 h-4" />
-              Workout Plans
+              Workout Planner
             </TabsTrigger>
             <TabsTrigger value="assignments" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
+              <Calendar className="w-4 h-4" />
               Assignments
             </TabsTrigger>
             <TabsTrigger value="insights" className="flex items-center gap-2">
@@ -75,88 +128,19 @@ export const DietWorkoutPlannerPage = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <PlanStatsOverview />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Diet Plans</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Apple className="w-4 h-4 text-green-500" />
-                    <span className="text-2xl font-bold">12</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">+2 this week</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Workout Plans</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Dumbbell className="w-4 h-4 text-blue-500" />
-                    <span className="text-2xl font-bold">8</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">+1 this week</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Member Assignments</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-purple-500" />
-                    <span className="text-2xl font-bold">45</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">85% completion rate</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Progress</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4 text-orange-500" />
-                    <span className="text-2xl font-bold">78%</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">+5% from last month</p>
-                </CardContent>
-              </Card>
-            </div>
+          <TabsContent value="diet" className="mt-6">
+            <DietPlanGenerator />
           </TabsContent>
 
-          <TabsContent value="diet-plans">
-            <DietPlanList canCreate={canCreatePlans} />
+          <TabsContent value="workout" className="mt-6">
+            <WorkoutPlanGenerator />
           </TabsContent>
 
-          <TabsContent value="workout-plans">
-            <WorkoutPlanList canCreate={canCreatePlans} />
+          <TabsContent value="assignments" className="mt-6">
+            <AssignmentList />
           </TabsContent>
 
-          <TabsContent value="assignments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Member Plan Assignments</CardTitle>
-                <CardDescription>Manage diet and workout plan assignments for members</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Assignment management coming soon...</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="insights">
+          <TabsContent value="ai-insights" className="mt-6">
             <AIInsightsPanel />
           </TabsContent>
         </Tabs>

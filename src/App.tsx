@@ -53,6 +53,7 @@ import SystemSettings from "./pages/system/SystemSettings";
 import EmailSettings from "./pages/system/EmailSettings";
 import SMSSettings from "./pages/system/SMSSettings";
 import SystemBackup from "./pages/system/SystemBackup";
+import AISettings from "./pages/system/AISettings";
 import BranchManagement from "./pages/branches/BranchManagement";
 // New member pages
 import Goals from "./pages/member/Goals";
@@ -128,8 +129,9 @@ const App = () => (
                         />
                         
                         {/* System Management Routes - Super Admin only */}
+                        {/* System Management Routes - Super Admin only */}
                         <Route 
-                          path="/system-health" 
+                          path="/system/health" 
                           element={
                             <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
@@ -141,7 +143,7 @@ const App = () => (
                         
                         {/* System Settings Routes - Super Admin only */}
                         <Route 
-                          path="/system-settings" 
+                          path="/system/settings" 
                           element={
                             <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
@@ -151,7 +153,7 @@ const App = () => (
                           } 
                         />
                         <Route 
-                          path="/email-settings" 
+                          path="/system/email" 
                           element={
                             <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
@@ -161,7 +163,7 @@ const App = () => (
                           } 
                         />
                         <Route 
-                          path="/sms-settings" 
+                          path="/system/sms" 
                           element={
                             <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
@@ -171,11 +173,21 @@ const App = () => (
                           } 
                         />
                         <Route 
-                          path="/backup" 
+                          path="/system/backup" 
                           element={
                             <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <SystemBackup />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/system/ai-settings" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <AISettings />
                               </DashboardLayout>
                             </RouteGuard>
                           } 
@@ -249,6 +261,28 @@ const App = () => (
                           } 
                         />
                         <Route 
+                          path="/membership" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                              <DashboardLayout>
+                                <Navigate to="/membership/plans" replace />
+                              </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/membership/plans" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.MembershipPlans />
+                                </Suspense>
+                              </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
                           path="/membership/plans/create" 
                           element={
                             <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
@@ -268,6 +302,20 @@ const App = () => (
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.FinanceDashboard />
+                                </Suspense>
+                              </DashboardLayout>
+                            </PermissionGate>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/finance/reports" 
+                        element={
+                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                            <PermissionGate permission="finance.view">
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.FinanceReports />
                                 </Suspense>
                               </DashboardLayout>
                             </PermissionGate>

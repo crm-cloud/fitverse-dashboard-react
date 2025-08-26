@@ -1,6 +1,53 @@
 
 import { useState } from 'react';
-import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2, UserCheck, UserX } from 'lucide-react';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  MoreHorizontal, 
+  Edit, 
+  Trash2, 
+  UserCheck, 
+  UserX, 
+  Shield, 
+  UserCog, 
+  Users, 
+  User, 
+  Dumbbell,
+  Settings,
+  BarChart2,
+  FileText,
+  CreditCard,
+  Bell,
+  MessageSquare,
+  Calendar,
+  ClipboardList,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Star,
+  Award,
+  Activity,
+  Zap,
+  Target,
+  Trophy,
+  HeartPulse,
+  Stethoscope,
+  Pill,
+  Utensils,
+  Dumbbell as DumbbellIcon,
+  Clock as ClockIcon,
+  Calendar as CalendarIcon,
+  MessageSquare as MessageSquareIcon,
+  Bell as BellIcon,
+  Settings as SettingsIcon,
+  BarChart2 as BarChart2Icon,
+  FileText as FileTextIcon,
+  CreditCard as CreditCardIcon,
+  User as UserIcon,
+  Users as UsersIcon
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,11 +72,26 @@ import {
 import { PermissionGate } from '@/components/PermissionGate';
 import { mockUsersWithRoles } from '@/hooks/useRBAC';
 import { UserWithRoles } from '@/types/rbac';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function UserManagement() {
   const [users] = useState<UserWithRoles[]>(Object.values(mockUsersWithRoles));
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
+  const { toast } = useToast();
+
+  const handleEditUser = (user: UserWithRoles) => {
+    // In a real app, you would navigate to an edit page or open a modal
+    // For now, we'll show a toast notification
+    toast({
+      title: 'Edit User',
+      description: `Opening editor for ${user.name}`,
+      variant: 'default',
+    });
+    
+    // Example of how you might navigate to an edit page:
+    // navigate(`/users/${user.id}/edit`);
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -42,13 +104,54 @@ export default function UserManagement() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
+  const getRoleIcon = (roleId: string) => {
+    const icons: Record<string, JSX.Element> = {
+      'super-admin': <Shield className="w-3.5 h-3.5 mr-1.5" />,
+      'admin': <UserCog className="w-3.5 h-3.5 mr-1.5" />,
+      'team-manager': <Users className="w-3.5 h-3.5 mr-1.5" />,
+      'trainer': <DumbbellIcon className="w-3.5 h-3.5 mr-1.5" />,
+      'staff': <User className="w-3.5 h-3.5 mr-1.5" />,
+      'member': <UserIcon className="w-3.5 h-3.5 mr-1.5" />,
+      'billing': <CreditCard className="w-3.5 h-3.5 mr-1.5" />,
+      'reception': <ClipboardList className="w-3.5 h-3.5 mr-1.5" />,
+      'dietitian': <Utensils className="w-3.5 h-3.5 mr-1.5" />,
+      'physiotherapist': <Stethoscope className="w-3.5 h-3.5 mr-1.5" />,
+      'yoga-instructor': <Activity className="w-3.5 h-3.5 mr-1.5" />,
+      'pt-trainer': <Dumbbell className="w-3.5 h-3.5 mr-1.5" />,
+      'group-fitness': <Users className="w-3.5 h-3.5 mr-1.5" />,
+      'wellness-coach': <HeartPulse className="w-3.5 h-3.5 mr-1.5" />,
+      'sales': <BarChart2 className="w-3.5 h-3.5 mr-1.5" />,
+      'marketing': <MessageSquare className="w-3.5 h-3.5 mr-1.5" />,
+      'events': <Calendar className="w-3.5 h-3.5 mr-1.5" />,
+      'support': <Bell className="w-3.5 h-3.5 mr-1.5" />,
+      'inventory': <FileText className="w-3.5 h-3.5 mr-1.5" />,
+      'maintenance': <Settings className="w-3.5 h-3.5 mr-1.5" />
+    };
+    return icons[roleId] || <User className="w-3.5 h-3.5 mr-1.5" />;
+  };
+
   const getRoleColor = (roleId: string) => {
     const colors: Record<string, string> = {
       'super-admin': 'destructive',
       'admin': 'default',
-      'manager': 'secondary',
+      'team-manager': 'secondary',
       'trainer': 'outline',
-      'member': 'secondary'
+      'member': 'secondary',
+      'staff': 'outline',
+      'dietitian': 'secondary',
+      'physiotherapist': 'secondary',
+      'yoga-instructor': 'secondary',
+      'pt-trainer': 'secondary',
+      'group-fitness': 'secondary',
+      'wellness-coach': 'secondary',
+      'sales': 'secondary',
+      'marketing': 'secondary',
+      'events': 'secondary',
+      'support': 'secondary',
+      'inventory': 'secondary',
+      'maintenance': 'secondary',
+      'billing': 'secondary',
+      'reception': 'secondary'
     };
     return colors[roleId] || 'secondary';
   };
@@ -148,6 +251,7 @@ export default function UserManagement() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Roles</TableHead>
+                  <TableHead>Branch</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Login</TableHead>
@@ -158,12 +262,10 @@ export default function UserManagement() {
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
                           <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback className="text-xs">
-                            {getInitials(user.name)}
-                          </AvatarFallback>
+                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">{user.name}</div>
@@ -173,14 +275,32 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {user.roles.map((role) => (
-                          <Badge key={role.id} variant={getRoleColor(role.id) as any}>
+                        {user.roles.map(role => (
+                          <Badge 
+                            key={role.id} 
+                            variant={getRoleColor(role.id) as any}
+                            className="inline-flex items-center"
+                          >
+                            {getRoleIcon(role.id)}
                             {role.name}
                           </Badge>
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell>{user.department || 'N/A'}</TableCell>
+                    <TableCell>
+                      {user.assignedBranches?.includes('all') ? (
+                        <Badge variant="outline" className="text-xs">
+                          All Branches
+                        </Badge>
+                      ) : user.branchName ? (
+                        <div className="text-sm">{user.branchName}</div>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          Not Assigned
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{user.department}</TableCell>
                     <TableCell>
                       <Badge variant={user.isActive ? 'default' : 'secondary'}>
                         {user.isActive ? 'Active' : 'Inactive'}
@@ -208,7 +328,7 @@ export default function UserManagement() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <PermissionGate permission="users.edit">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditUser(user)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit User
                             </DropdownMenuItem>
