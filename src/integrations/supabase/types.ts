@@ -62,6 +62,96 @@ export type Database = {
         }
         Relationships: []
       }
+      branches: {
+        Row: {
+          address: Json
+          amenities: string[] | null
+          capacity: number
+          contact: Json
+          created_at: string
+          current_members: number
+          hours: Json
+          id: string
+          images: string[] | null
+          manager_id: string | null
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address: Json
+          amenities?: string[] | null
+          capacity?: number
+          contact: Json
+          created_at?: string
+          current_members?: number
+          hours: Json
+          id?: string
+          images?: string[] | null
+          manager_id?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: Json
+          amenities?: string[] | null
+          capacity?: number
+          contact?: Json
+          created_at?: string
+          current_members?: number
+          hours?: Json
+          id?: string
+          images?: string[] | null
+          manager_id?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      class_enrollments: {
+        Row: {
+          class_id: string
+          enrolled_at: string
+          id: string
+          member_id: string
+          notes: string | null
+          status: string | null
+        }
+        Insert: {
+          class_id: string
+          enrolled_at?: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          status?: string | null
+        }
+        Update: {
+          class_id?: string
+          enrolled_at?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "gym_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_enrollments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -91,6 +181,75 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      gym_classes: {
+        Row: {
+          branch_id: string | null
+          capacity: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string
+          enrolled_count: number | null
+          id: string
+          name: string
+          recurrence: Database["public"]["Enums"]["class_recurrence"] | null
+          start_time: string
+          status: Database["public"]["Enums"]["class_status"] | null
+          tags: Database["public"]["Enums"]["class_tag"][] | null
+          trainer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          capacity?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time: string
+          enrolled_count?: number | null
+          id?: string
+          name: string
+          recurrence?: Database["public"]["Enums"]["class_recurrence"] | null
+          start_time: string
+          status?: Database["public"]["Enums"]["class_status"] | null
+          tags?: Database["public"]["Enums"]["class_tag"][] | null
+          trainer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          capacity?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string
+          enrolled_count?: number | null
+          id?: string
+          name?: string
+          recurrence?: Database["public"]["Enums"]["class_recurrence"] | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["class_status"] | null
+          tags?: Database["public"]["Enums"]["class_tag"][] | null
+          trainer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_classes_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_classes_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       member_credits: {
         Row: {
@@ -201,6 +360,89 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          address: Json | null
+          branch_id: string | null
+          created_at: string
+          created_by: string | null
+          date_of_birth: string | null
+          email: string
+          emergency_contact: Json | null
+          full_name: string
+          gender: Database["public"]["Enums"]["gender"] | null
+          government_id: Json | null
+          id: string
+          joined_date: string
+          measurements: Json | null
+          membership_plan: string | null
+          membership_status:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          phone: string
+          profile_photo: string | null
+          trainer_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: Json | null
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          email: string
+          emergency_contact?: Json | null
+          full_name: string
+          gender?: Database["public"]["Enums"]["gender"] | null
+          government_id?: Json | null
+          id?: string
+          joined_date?: string
+          measurements?: Json | null
+          membership_plan?: string | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          phone: string
+          profile_photo?: string | null
+          trainer_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: Json | null
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          email?: string
+          emergency_contact?: Json | null
+          full_name?: string
+          gender?: Database["public"]["Enums"]["gender"] | null
+          government_id?: Json | null
+          id?: string
+          joined_date?: string
+          measurements?: Json | null
+          membership_plan?: string | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          phone?: string
+          profile_photo?: string | null
+          trainer_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
         ]
@@ -426,6 +668,54 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          branch_id: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          team_role: Database["public"]["Enums"]["team_role"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          branch_id?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          team_role?: Database["public"]["Enums"]["team_role"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          branch_id?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          team_role?: Database["public"]["Enums"]["team_role"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       progress_entries: {
         Row: {
           created_at: string
@@ -550,6 +840,190 @@ export type Database = {
         }
         Relationships: []
       }
+      trainer_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean | null
+          start_time: string
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          start_time: string
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_availability_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_certifications: {
+        Row: {
+          created_at: string
+          expiry_date: string | null
+          id: string
+          issue_date: string
+          issuing_organization: string
+          level: Database["public"]["Enums"]["certification_level"]
+          name: string
+          trainer_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          issue_date: string
+          issuing_organization: string
+          level: Database["public"]["Enums"]["certification_level"]
+          name: string
+          trainer_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string
+          issuing_organization?: string
+          level?: Database["public"]["Enums"]["certification_level"]
+          name?: string
+          trainer_id?: string
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_certifications_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_profiles: {
+        Row: {
+          avatar: string | null
+          bio: string | null
+          branch_id: string | null
+          completion_rate: number | null
+          created_at: string
+          date_of_birth: string | null
+          email: string
+          employee_id: string
+          experience: number | null
+          full_name: string
+          hourly_rate: number | null
+          id: string
+          is_active: boolean | null
+          join_date: string
+          languages: string[] | null
+          max_clients_per_day: number | null
+          max_clients_per_week: number | null
+          package_rates: Json | null
+          phone: string | null
+          punctuality_score: number | null
+          rating: number | null
+          specialties: Database["public"]["Enums"]["trainer_specialty"][] | null
+          status: Database["public"]["Enums"]["trainer_status"] | null
+          total_clients: number | null
+          total_sessions: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar?: string | null
+          bio?: string | null
+          branch_id?: string | null
+          completion_rate?: number | null
+          created_at?: string
+          date_of_birth?: string | null
+          email: string
+          employee_id: string
+          experience?: number | null
+          full_name: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          join_date?: string
+          languages?: string[] | null
+          max_clients_per_day?: number | null
+          max_clients_per_week?: number | null
+          package_rates?: Json | null
+          phone?: string | null
+          punctuality_score?: number | null
+          rating?: number | null
+          specialties?:
+            | Database["public"]["Enums"]["trainer_specialty"][]
+            | null
+          status?: Database["public"]["Enums"]["trainer_status"] | null
+          total_clients?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar?: string | null
+          bio?: string | null
+          branch_id?: string | null
+          completion_rate?: number | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string
+          employee_id?: string
+          experience?: number | null
+          full_name?: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          join_date?: string
+          languages?: string[] | null
+          max_clients_per_day?: number | null
+          max_clients_per_week?: number | null
+          package_rates?: Json | null
+          phone?: string | null
+          punctuality_score?: number | null
+          rating?: number | null
+          specialties?:
+            | Database["public"]["Enums"]["trainer_specialty"][]
+            | null
+          status?: Database["public"]["Enums"]["trainer_status"] | null
+          total_clients?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_profiles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_notifications: {
         Row: {
           announcement_id: string | null
@@ -585,6 +1059,30 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -600,16 +1098,80 @@ export type Database = {
       }
     }
     Enums: {
+      attendance_status: "checked-in" | "checked-out" | "no-show" | "late"
       bonus_type: "referral_signup" | "referral_membership" | "loyalty_points"
+      certification_level: "basic" | "intermediate" | "advanced" | "expert"
+      class_recurrence: "none" | "daily" | "weekly" | "monthly"
+      class_status: "scheduled" | "completed" | "cancelled"
+      class_tag:
+        | "strength"
+        | "cardio"
+        | "flexibility"
+        | "dance"
+        | "martial-arts"
+        | "water"
+        | "mind-body"
+      device_status: "online" | "offline" | "maintenance"
+      entry_method: "biometric" | "manual" | "card" | "mobile"
+      feedback_priority: "low" | "medium" | "high" | "urgent"
+      feedback_status: "pending" | "in-review" | "resolved" | "closed"
+      feedback_type:
+        | "facility"
+        | "trainer"
+        | "class"
+        | "equipment"
+        | "service"
+        | "general"
       freeze_status: "pending" | "approved" | "rejected" | "active"
+      gender: "male" | "female" | "other" | "prefer-not-to-say"
+      government_id_type: "aadhaar" | "pan" | "passport" | "voter-id"
+      invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
+      lead_priority: "low" | "medium" | "high" | "urgent"
+      lead_source:
+        | "website"
+        | "referral"
+        | "social"
+        | "walk-in"
+        | "phone"
+        | "email"
+        | "event"
+      lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
+      locker_status: "available" | "occupied" | "maintenance" | "reserved"
       membership_status: "active" | "expired" | "frozen" | "cancelled"
       notification_type: "announcement" | "system" | "membership" | "referral"
       order_status: "pending" | "completed" | "cancelled" | "refunded"
+      payment_method_type:
+        | "cash"
+        | "card"
+        | "bank_transfer"
+        | "digital_wallet"
+        | "other"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       redemption_type:
         | "pos_purchase"
         | "membership_extension"
         | "cash_equivalent"
+      team_role: "manager" | "trainer" | "staff"
+      trainer_specialty:
+        | "strength_training"
+        | "cardio"
+        | "yoga"
+        | "pilates"
+        | "crossfit"
+        | "martial_arts"
+        | "dance"
+        | "swimming"
+        | "rehabilitation"
+        | "nutrition"
+        | "weight_loss"
+        | "bodybuilding"
+        | "sports_performance"
+        | "senior_fitness"
+        | "youth_fitness"
+      trainer_status: "active" | "inactive" | "on_leave" | "busy"
+      transaction_status: "completed" | "pending" | "cancelled"
+      transaction_type: "income" | "expense"
+      user_role: "super-admin" | "admin" | "team" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -737,17 +1299,86 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      attendance_status: ["checked-in", "checked-out", "no-show", "late"],
       bonus_type: ["referral_signup", "referral_membership", "loyalty_points"],
+      certification_level: ["basic", "intermediate", "advanced", "expert"],
+      class_recurrence: ["none", "daily", "weekly", "monthly"],
+      class_status: ["scheduled", "completed", "cancelled"],
+      class_tag: [
+        "strength",
+        "cardio",
+        "flexibility",
+        "dance",
+        "martial-arts",
+        "water",
+        "mind-body",
+      ],
+      device_status: ["online", "offline", "maintenance"],
+      entry_method: ["biometric", "manual", "card", "mobile"],
+      feedback_priority: ["low", "medium", "high", "urgent"],
+      feedback_status: ["pending", "in-review", "resolved", "closed"],
+      feedback_type: [
+        "facility",
+        "trainer",
+        "class",
+        "equipment",
+        "service",
+        "general",
+      ],
       freeze_status: ["pending", "approved", "rejected", "active"],
+      gender: ["male", "female", "other", "prefer-not-to-say"],
+      government_id_type: ["aadhaar", "pan", "passport", "voter-id"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
+      lead_priority: ["low", "medium", "high", "urgent"],
+      lead_source: [
+        "website",
+        "referral",
+        "social",
+        "walk-in",
+        "phone",
+        "email",
+        "event",
+      ],
+      lead_status: ["new", "contacted", "qualified", "converted", "lost"],
+      locker_status: ["available", "occupied", "maintenance", "reserved"],
       membership_status: ["active", "expired", "frozen", "cancelled"],
       notification_type: ["announcement", "system", "membership", "referral"],
       order_status: ["pending", "completed", "cancelled", "refunded"],
+      payment_method_type: [
+        "cash",
+        "card",
+        "bank_transfer",
+        "digital_wallet",
+        "other",
+      ],
       payment_status: ["pending", "completed", "failed", "refunded"],
       redemption_type: [
         "pos_purchase",
         "membership_extension",
         "cash_equivalent",
       ],
+      team_role: ["manager", "trainer", "staff"],
+      trainer_specialty: [
+        "strength_training",
+        "cardio",
+        "yoga",
+        "pilates",
+        "crossfit",
+        "martial_arts",
+        "dance",
+        "swimming",
+        "rehabilitation",
+        "nutrition",
+        "weight_loss",
+        "bodybuilding",
+        "sports_performance",
+        "senior_fitness",
+        "youth_fitness",
+      ],
+      trainer_status: ["active", "inactive", "on_leave", "busy"],
+      transaction_status: ["completed", "pending", "cancelled"],
+      transaction_type: ["income", "expense"],
+      user_role: ["super-admin", "admin", "team", "member"],
     },
   },
 } as const
