@@ -15,8 +15,8 @@ export const mockClasses: GymClass[] = [
     id: 'class_001',
     name: 'Morning HIIT',
     description: 'High-intensity interval training to kickstart your day',
-    startTime: new Date('2024-01-20T06:00:00'),
-    endTime: new Date('2024-01-20T07:00:00'),
+    startTime: new Date(Date.now() + 86400000 * 1), // Tomorrow at 6 AM
+    endTime: new Date(Date.now() + 86400000 * 1 + 3600000), // +1 hour
     recurrence: 'daily',
     trainerId: 'trainer_001',
     trainerName: 'Mike Rodriguez',
@@ -34,8 +34,8 @@ export const mockClasses: GymClass[] = [
     id: 'class_002',
     name: 'Zumba Fitness',
     description: 'Fun dance workout that combines Latin rhythms with cardio',
-    startTime: new Date('2024-01-20T18:00:00'),
-    endTime: new Date('2024-01-20T19:00:00'),
+    startTime: new Date(Date.now() + 86400000 * 2 + 18 * 3600000), // Day after tomorrow at 6 PM
+    endTime: new Date(Date.now() + 86400000 * 2 + 19 * 3600000), // +1 hour
     recurrence: 'weekly',
     trainerId: 'trainer_002',
     trainerName: 'Sarah Wilson',
@@ -53,8 +53,8 @@ export const mockClasses: GymClass[] = [
     id: 'class_003',
     name: 'Yoga Flow',
     description: 'Gentle yoga session focusing on breath and movement',
-    startTime: new Date('2024-01-20T07:30:00'),
-    endTime: new Date('2024-01-20T08:30:00'),
+    startTime: new Date(Date.now() + 86400000 * 1 + 7.5 * 3600000), // Tomorrow at 7:30 AM
+    endTime: new Date(Date.now() + 86400000 * 1 + 8.5 * 3600000), // +1 hour
     recurrence: 'daily',
     trainerId: 'trainer_003',
     trainerName: 'David Chen',
@@ -72,8 +72,8 @@ export const mockClasses: GymClass[] = [
     id: 'class_004',
     name: 'CrossFit Challenge',
     description: 'Intense functional fitness workout',
-    startTime: new Date('2024-01-20T19:00:00'),
-    endTime: new Date('2024-01-20T20:00:00'),
+    startTime: new Date(Date.now() + 86400000 * 2 + 19 * 3600000), // Day after tomorrow at 7 PM
+    endTime: new Date(Date.now() + 86400000 * 2 + 20 * 3600000), // +1 hour
     recurrence: 'weekly',
     trainerId: 'trainer_004',
     trainerName: 'Lisa Thompson',
@@ -91,8 +91,8 @@ export const mockClasses: GymClass[] = [
     id: 'class_005',
     name: 'Swimming Basics',
     description: 'Learn basic swimming techniques and water safety',
-    startTime: new Date('2024-01-21T16:00:00'),
-    endTime: new Date('2024-01-21T17:00:00'),
+    startTime: new Date(Date.now() + 86400000 * 3 + 16 * 3600000), // 3 days from now at 4 PM
+    endTime: new Date(Date.now() + 86400000 * 3 + 17 * 3600000), // +1 hour
     recurrence: 'weekly',
     trainerId: 'trainer_001',
     trainerName: 'Mike Rodriguez',

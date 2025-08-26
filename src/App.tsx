@@ -45,7 +45,6 @@ import { TaskManagementPage } from "./pages/tasks/management";
 import { MemberFeedbackPage } from "./pages/member/feedback";
 import { TrainerManagementPage } from "./pages/trainers/management";
 import { MemberProfileSettings } from "./pages/member/ProfileSettings";
-import { MemberBilling } from "./pages/member/Billing";
 import { TrainerChangeRequest } from "./pages/member/TrainerChangeRequest";
 // New system pages
 import SystemHealth from "./pages/system/SystemHealth";
@@ -59,6 +58,7 @@ import BranchManagement from "./pages/branches/BranchManagement";
 import Goals from "./pages/member/Goals";
 import Help from "./pages/member/Help";
 import CheckIns from "./pages/member/CheckIns";
+import { MemberBilling } from "./pages/member/Billing";
 // New trainer pages
 import TrainerSchedulePage from "./pages/trainer/schedule";
 import TrainerClientsPage from "./pages/trainer/clients";
@@ -82,6 +82,9 @@ import { PlanCreatePage } from "./pages/membership/plans/create";
 import LockerManagement from "./pages/lockers/management";
 import AttendanceDashboard from "./pages/attendance/dashboard";
 import AttendanceDevicesPage from "./pages/attendance/devices";
+import MembershipPlans from './pages/membership/plans';
+import CheckoutPage from './pages/checkout';
+import MembershipSuccess from './pages/membership/success';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -652,6 +655,56 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['member']}>
                             <DashboardLayout>
                               <MemberFeedbackPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/trainer-request" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <TrainerChangeRequest />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/help" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <Help />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/billing" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberBilling />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/checkins" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <CheckIns />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/goals" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <Goals />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 

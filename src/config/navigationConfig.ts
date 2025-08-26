@@ -227,6 +227,7 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'classes',
     title: 'Classes & Training',
+    allowedRoles: ['super-admin', 'admin', 'team'],
     priority: 6,
     items: [
       {
@@ -467,14 +468,14 @@ export const navigationConfig: NavigationGroup[] = [
   },
   // Member-specific navigation
   {
-    id: 'member-dashboard',
-    title: 'My Dashboard',
+    id: 'member-fitness',
+    title: 'Fitness',
     allowedRoles: ['member'],
     priority: 1,
     items: [
       {
         id: 'member-classes',
-        title: 'Classes',
+        title: 'My Classes',
         url: '/member/classes',
         icon: Calendar,
         group: 'member',
@@ -489,16 +490,8 @@ export const navigationConfig: NavigationGroup[] = [
         memberOnly: true,
       },
       {
-        id: 'member-billing',
-        title: 'Billing',
-        url: '/member/billing',
-        icon: CreditCard,
-        group: 'member',
-        memberOnly: true,
-      },
-      {
         id: 'member-goals',
-        title: 'Goals',
+        title: 'My Goals',
         url: '/member/goals',
         icon: Target,
         group: 'member',
@@ -511,6 +504,22 @@ export const navigationConfig: NavigationGroup[] = [
         icon: Dumbbell,
         group: 'member',
         memberOnly: true,
+      }
+    ]
+  },
+  {
+    id: 'member-account',
+    title: 'Account',
+    allowedRoles: ['member'],
+    priority: 2,
+    items: [
+      {
+        id: 'member-billing',
+        title: 'Billing & Payments',
+        url: '/member/billing',
+        icon: CreditCard,
+        group: 'member',
+        memberOnly: true,
       },
       {
         id: 'member-feedback',
@@ -519,10 +528,18 @@ export const navigationConfig: NavigationGroup[] = [
         icon: MessageSquare,
         group: 'member',
         memberOnly: true,
-      },
+      }
+    ]
+  },
+  {
+    id: 'member-support',
+    title: 'Support',
+    allowedRoles: ['member'],
+    priority: 3,
+    items: [
       {
         id: 'member-help',
-        title: 'Help',
+        title: 'Help Center',
         url: '/member/help',
         icon: HelpCircle,
         group: 'member',
@@ -627,7 +644,7 @@ export const roleDefaultRoutes: Record<UserRole, string> = {
   'super-admin': '/dashboard',
   'admin': '/dashboard',
   'team': '/dashboard', 
-  'member': '/member/classes'
+  'member': '/dashboard'
 };
 
 // Helper functions for navigation filtering
