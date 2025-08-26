@@ -270,18 +270,6 @@ const App = () => (
                           } 
                         />
                         <Route 
-                          path="/membership/plans" 
-                          element={
-                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
-                              <DashboardLayout>
-                                <Suspense fallback={<PageLoadingState />}>
-                                  <lazyRoutes.MembershipPlans />
-                                </Suspense>
-                              </DashboardLayout>
-                            </ProtectedRoute>
-                          } 
-                        />
-                        <Route 
                           path="/membership/plans/create" 
                           element={
                             <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
