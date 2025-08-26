@@ -12,8 +12,8 @@ export interface MembershipPlan {
   description: string;
   features: string[];
   is_active: boolean;
-  created_at: string; // Changed to string to match Supabase
-  updated_at: string; // Changed to string to match Supabase
+  created_at: string;
+  updated_at: string;
 }
 
 export interface MembershipAssignment {

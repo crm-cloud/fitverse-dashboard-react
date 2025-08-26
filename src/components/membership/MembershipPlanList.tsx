@@ -46,12 +46,12 @@ export const MembershipPlanList = () => {
     }).format(amount);
   };
 
-  const formatDuration = (days: number) => {
-    if (days === 30) return '1 Month';
-    if (days === 90) return '3 Months';
-    if (days === 180) return '6 Months';
-    if (days === 365) return '1 Year';
-    return `${days} Days`;
+  const formatDuration = (months: number) => {
+    if (months === 1) return '1 Month';
+    if (months === 3) return '3 Months';
+    if (months === 6) return '6 Months';
+    if (months === 12) return '1 Year';
+    return `${months} Months`;
   };
 
   return (
@@ -78,8 +78,8 @@ export const MembershipPlanList = () => {
                 <TableHead>Plan Name</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Duration</TableHead>
-                <TableHead>Access Types</TableHead>
-                <TableHead>Classes</TableHead>
+                <TableHead>Features</TableHead>
+                <TableHead>Details</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -98,34 +98,30 @@ export const MembershipPlanList = () => {
                   <TableCell className="font-medium">
                     {formatCurrency(plan.price)}
                   </TableCell>
-                  <TableCell>{formatDuration(plan.duration)}</TableCell>
+                  <TableCell>{formatDuration(plan.duration_months)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {plan.accessTypes.slice(0, 2).map((access) => (
-                        <Badge key={access} variant="secondary" className="text-xs">
-                          {accessTypeLabels[access]}
+                      {plan.features.slice(0, 2).map((feature) => (
+                        <Badge key={feature} variant="secondary" className="text-xs">
+                          {feature}
                         </Badge>
                       ))}
-                      {plan.accessTypes.length > 2 && (
+                      {plan.features.length > 2 && (
                         <Badge variant="outline" className="text-xs">
-                          +{plan.accessTypes.length - 2}
+                          +{plan.features.length - 2}
                         </Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    {plan.classesAllowed === -1 ? (
-                      <Badge variant="default">Unlimited</Badge>
-                    ) : (
-                      <span>{plan.classesAllowed} classes</span>
-                    )}
+                    <span className="text-sm text-muted-foreground">Features included</span>
                   </TableCell>
                   <TableCell>
                     <Badge 
-                      variant={plan.isActive ? "default" : "secondary"}
-                      className={plan.isActive ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
+                      variant={plan.is_active ? "default" : "secondary"}
+                      className={plan.is_active ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
                     >
-                      {plan.isActive ? 'Active' : 'Inactive'}
+                      {plan.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

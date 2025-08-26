@@ -674,15 +674,15 @@ export const ConvertToMemberDialog = ({
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-muted-foreground">Duration:</span>
-                        <span className="ml-2">{selectedPlan.duration} days</span>
+                        <span className="ml-2">{selectedPlan.duration_months} months</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Price:</span>
                         <span className="ml-2">₹{selectedPlan.price}</span>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-muted-foreground">Access:</span>
-                        <span className="ml-2">{selectedPlan.accessTypes.join(', ')}</span>
+                        <span className="text-muted-foreground">Features:</span>
+                        <span className="ml-2 text-sm">{selectedPlan.features.join(', ')}</span>
                       </div>
                     </div>
                   </div>

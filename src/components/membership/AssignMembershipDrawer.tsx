@@ -87,7 +87,7 @@ export const AssignMembershipDrawer = ({
   // Recalculate values when dependencies change
   useEffect(() => {
     if (selectedPlan && watchedStartDate) {
-      const endDate = addDays(watchedStartDate, selectedPlan.duration);
+      const endDate = addDays(watchedStartDate, selectedPlan.duration_months * 30);
       const originalAmount = selectedPlan.price;
       
       let discountAmount = 0;
@@ -170,7 +170,7 @@ export const AssignMembershipDrawer = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockMembershipPlans.filter(plan => plan.isActive).map((plan) => (
+                      {mockMembershipPlans.filter(plan => plan.is_active).map((plan) => (
                         <SelectItem key={plan.id} value={plan.id}>
                           <div className="flex justify-between items-center w-full">
                             <span>{plan.name}</span>
@@ -195,19 +195,19 @@ export const AssignMembershipDrawer = ({
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <Label className="text-muted-foreground">Duration</Label>
-                      <p>{selectedPlan.duration} days</p>
+                      <p>{selectedPlan.duration_months} months</p>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground">Classes</Label>
-                      <p>{selectedPlan.classesAllowed === -1 ? 'Unlimited' : selectedPlan.classesAllowed}</p>
+                      <Label className="text-muted-foreground">Price</Label>
+                      <p>{formatCurrency(selectedPlan.price)}</p>
                     </div>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground">Access Types</Label>
+                    <Label className="text-muted-foreground">Features</Label>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedPlan.accessTypes.map((access) => (
-                        <Badge key={access} variant="secondary" className="text-xs">
-                          {accessTypeLabels[access]}
+                      {selectedPlan.features.map((feature) => (
+                        <Badge key={feature} variant="secondary" className="text-xs">
+                          {feature}
                         </Badge>
                       ))}
                     </div>
