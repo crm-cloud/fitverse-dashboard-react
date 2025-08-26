@@ -68,7 +68,7 @@ export function WorkoutPlanGenerator() {
       newDays.push({
         day: i + 1,
         name: `${split[dayInSplit]} Day ${Math.floor(i / split.length) + 1}`,
-        focus: split[dayInsplit],
+        focus: split[dayInSplit],
         exercises: [],
         duration: 60,
         notes: ''
@@ -163,7 +163,7 @@ export function WorkoutPlanGenerator() {
             id: `set-${dayIndex}-${exIndex}-${setIndex}`,
             reps: 8 + (setIndex * 2),
             weight: 20 + (exIndex * 5) + (setIndex * 2.5),
-            weightUnit: 'kg',
+            weightUnit: 'kg' as const,
             restTime: 60 + (setIndex * 15),
             isWarmup: setIndex === 0,
             notes: setIndex === 0 ? 'Warm-up set' : ''

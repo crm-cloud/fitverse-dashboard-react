@@ -51,7 +51,7 @@ export default function SystemSettings() {
                       <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-auto">
-                      {Intl.supportedValuesOf('timeZone').map((timezone) => (
+                      {['UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Asia/Tokyo'].map((timezone) => (
                         <SelectItem key={timezone} value={timezone}>
                           {timezone.replace(/_/g, ' ')}
                         </SelectItem>

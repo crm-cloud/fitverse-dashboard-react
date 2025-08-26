@@ -1,16 +1,15 @@
-import React from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
-import { Assignment } from '../../types/assignment';
+} from '@/components/ui/dropdown-menu';
+import { Assignment } from '@/types/assignment';
 
 export const columns = ({
   onEdit,
@@ -20,7 +19,7 @@ export const columns = ({
   onDelete: (id: string) => void;
 }): ColumnDef<Assignment>[] => [
   {
-    accessorKey: 'member',
+    accessorKey: 'memberName',
     header: ({ column }) => {
       return (
         <Button
@@ -28,24 +27,13 @@ export const columns = ({
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="p-0 hover:bg-transparent"
         >
-          Assignment
+          Member
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => (
-      <div className="flex flex-col space-y-1">
-        {row.original.isGlobal ? (
-          <Badge variant="outline" className="w-fit">
-            Global Assignment
-          </Badge>
-        ) : (
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">Member</span>
-            <span>{row.original.memberName}</span>
-          </div>
-        )}
-      </div>
+      <div className="font-medium">{row.original.memberName}</div>
     ),
   },
   {

@@ -8,13 +8,12 @@ export interface MembershipPlan {
   id: string;
   name: string;
   price: number;
-  duration: number; // in days
-  accessTypes: AccessType[];
-  classesAllowed: number; // -1 for unlimited
+  duration_months: number;
   description: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  features: string[];
+  is_active: boolean;
+  created_at: string; // Changed to string to match Supabase
+  updated_at: string; // Changed to string to match Supabase
 }
 
 export interface MembershipAssignment {

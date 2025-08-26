@@ -1,17 +1,7 @@
-import { api } from '@/lib/axios';
+import { supabase } from '@/integrations/supabase/client';
+import type { MembershipPlan } from '@/types/membership';
 
-export interface MembershipPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  billingCycle: 'month' | 'year';
-  features: string[];
-  isPopular: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+// Use the types from the membership types file instead of redefining
 
 export interface CreateCheckoutSessionParams {
   planId: string;
@@ -23,8 +13,14 @@ export interface CreateCheckoutSessionParams {
 export const membershipService = {
   async getAvailablePlans(): Promise<MembershipPlan[]> {
     try {
-      const { data } = await api.get<MembershipPlan[]>('/membership/plans');
-      return data;
+      const { data, error } = await supabase
+        .from('membership_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
     } catch (error) {
       console.error('Failed to fetch membership plans:', error);
       throw error;
@@ -33,8 +29,8 @@ export const membershipService = {
 
   async createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{ sessionId: string; url: string }> {
     try {
-      const { data } = await api.post<{ sessionId: string; url: string }>('/membership/checkout/session', params);
-      return data;
+      // This would typically call a Supabase edge function for payment processing
+      throw new Error('Payment processing not implemented yet');
     } catch (error) {
       console.error('Failed to create checkout session:', error);
       throw error;
@@ -43,7 +39,13 @@ export const membershipService = {
 
   async getPlanDetails(planId: string): Promise<MembershipPlan> {
     try {
-      const { data } = await api.get<MembershipPlan>(`/membership/plans/${planId}`);
+      const { data, error } = await supabase
+        .from('membership_plans')
+        .select('*')
+        .eq('id', planId)
+        .single();
+
+      if (error) throw error;
       return data;
     } catch (error) {
       console.error(`Failed to fetch plan ${planId}:`, error);
@@ -57,12 +59,30 @@ export const membershipService = {
     nextBillingDate: string;
   } | null> {
     try {
-      const { data } = await api.get('/membership/active');
-      return data;
-    } catch (error) {
-      if (error.response?.status === 404) {
-        return null; // No active membership
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('member_memberships')
+        .select(`
+          *,
+          membership_plans(*)
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null; // No active membership
+        throw error;
       }
+
+      return {
+        plan: data.membership_plans as MembershipPlan,
+        status: data.status as any,
+        nextBillingDate: data.end_date
+      };
+    } catch (error) {
       console.error('Failed to fetch active membership:', error);
       throw error;
     }
@@ -70,7 +90,12 @@ export const membershipService = {
 
   async cancelMembership(membershipId: string): Promise<void> {
     try {
-      await api.post(`/membership/${membershipId}/cancel`);
+      const { error } = await supabase
+        .from('member_memberships')
+        .update({ status: 'cancelled' })
+        .eq('id', membershipId);
+
+      if (error) throw error;
     } catch (error) {
       console.error('Failed to cancel membership:', error);
       throw error;
@@ -79,7 +104,8 @@ export const membershipService = {
 
   async updatePaymentMethod(membershipId: string, paymentMethodId: string): Promise<void> {
     try {
-      await api.post(`/membership/${membershipId}/payment-method`, { paymentMethodId });
+      // This would typically update payment method via a Supabase edge function
+      throw new Error('Payment method update not implemented yet');
     } catch (error) {
       console.error('Failed to update payment method:', error);
       throw error;

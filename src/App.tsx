@@ -78,13 +78,9 @@ import ReportsPage from "./pages/reports/index";
 import { BranchCreatePage } from "./pages/branches/create";
 import { UserCreatePage } from "./pages/users/create";
 import { RoleCreatePage } from "./pages/roles/create";
-import { PlanCreatePage } from "./pages/membership/plans/create";
 import LockerManagement from "./pages/lockers/management";
 import AttendanceDashboard from "./pages/attendance/dashboard";
 import AttendanceDevicesPage from "./pages/attendance/devices";
-import MembershipPlans from './pages/membership/plans';
-import CheckoutPage from './pages/checkout';
-import MembershipSuccess from './pages/membership/success';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -290,7 +286,7 @@ const App = () => (
                           element={
                             <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                               <DashboardLayout>
-                                <PlanCreatePage />
+                                <MembershipPlans />
                               </DashboardLayout>
                             </ProtectedRoute>
                           } 
@@ -444,7 +440,7 @@ const App = () => (
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                              <DashboardLayout>
-                               <AttendanceDashboard />
+                               <Dashboard />
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
@@ -454,7 +450,7 @@ const App = () => (
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                              <DashboardLayout>
-                               <AttendanceDevicesPage />
+                               <Dashboard />
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
@@ -494,7 +490,7 @@ const App = () => (
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                              <DashboardLayout>
-                               <LockerManagement />
+                               <Dashboard />
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
