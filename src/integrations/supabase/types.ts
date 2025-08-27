@@ -62,6 +62,149 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_records: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string | null
+          check_in_time: string
+          check_out_time: string | null
+          class_id: string | null
+          created_at: string
+          device_id: string | null
+          device_location: string | null
+          duration: number | null
+          entry_method: Database["public"]["Enums"]["entry_method"] | null
+          expected_check_in: string | null
+          id: string
+          is_late: boolean | null
+          location: Json | null
+          membership_id: string | null
+          notes: string | null
+          status: Database["public"]["Enums"]["attendance_status"] | null
+          updated_at: string
+          user_id: string
+          work_shift_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          check_in_time: string
+          check_out_time?: string | null
+          class_id?: string | null
+          created_at?: string
+          device_id?: string | null
+          device_location?: string | null
+          duration?: number | null
+          entry_method?: Database["public"]["Enums"]["entry_method"] | null
+          expected_check_in?: string | null
+          id?: string
+          is_late?: boolean | null
+          location?: Json | null
+          membership_id?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"] | null
+          updated_at?: string
+          user_id: string
+          work_shift_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          check_in_time?: string
+          check_out_time?: string | null
+          class_id?: string | null
+          created_at?: string
+          device_id?: string | null
+          device_location?: string | null
+          duration?: number | null
+          entry_method?: Database["public"]["Enums"]["entry_method"] | null
+          expected_check_in?: string | null
+          id?: string
+          is_late?: boolean | null
+          location?: Json | null
+          membership_id?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"] | null
+          updated_at?: string
+          user_id?: string
+          work_shift_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "gym_classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biometric_devices: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          is_active: boolean | null
+          last_sync: string | null
+          location: string | null
+          model: string | null
+          name: string
+          settings: Json | null
+          status: Database["public"]["Enums"]["device_status"] | null
+          total_records: number | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_sync?: string | null
+          location?: string | null
+          model?: string | null
+          name: string
+          settings?: Json | null
+          status?: Database["public"]["Enums"]["device_status"] | null
+          total_records?: number | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_sync?: string | null
+          location?: string | null
+          model?: string | null
+          name?: string
+          settings?: Json | null
+          status?: Database["public"]["Enums"]["device_status"] | null
+          total_records?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biometric_devices_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: Json
@@ -182,6 +325,134 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          admin_response: string | null
+          attachments: string[] | null
+          branch_id: string | null
+          category: string | null
+          created_at: string
+          description: string
+          id: string
+          is_anonymous: boolean | null
+          member_id: string | null
+          priority: Database["public"]["Enums"]["feedback_priority"] | null
+          rating: number | null
+          related_entity_id: string | null
+          related_entity_name: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["feedback_status"] | null
+          tags: string[] | null
+          title: string
+          type: Database["public"]["Enums"]["feedback_type"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_response?: string | null
+          attachments?: string[] | null
+          branch_id?: string | null
+          category?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          is_anonymous?: boolean | null
+          member_id?: string | null
+          priority?: Database["public"]["Enums"]["feedback_priority"] | null
+          rating?: number | null
+          related_entity_id?: string | null
+          related_entity_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["feedback_status"] | null
+          tags?: string[] | null
+          title: string
+          type: Database["public"]["Enums"]["feedback_type"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_response?: string | null
+          attachments?: string[] | null
+          branch_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          is_anonymous?: boolean | null
+          member_id?: string | null
+          priority?: Database["public"]["Enums"]["feedback_priority"] | null
+          rating?: number | null
+          related_entity_id?: string | null
+          related_entity_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["feedback_status"] | null
+          tags?: string[] | null
+          title?: string
+          type?: Database["public"]["Enums"]["feedback_type"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_responses: {
+        Row: {
+          created_at: string
+          feedback_id: string
+          id: string
+          is_public: boolean | null
+          message: string
+          responder_id: string
+          responder_name: string
+          responder_role: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_id: string
+          id?: string
+          is_public?: boolean | null
+          message: string
+          responder_id: string
+          responder_name: string
+          responder_role: string
+        }
+        Update: {
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          is_public?: boolean | null
+          message?: string
+          responder_id?: string
+          responder_name?: string
+          responder_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_responses_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_classes: {
         Row: {
           branch_id: string | null
@@ -247,6 +518,421 @@ export type Database = {
             columns: ["trainer_id"]
             isOneToOne: false
             referencedRelation: "trainer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_items: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          name: string
+          quantity: number
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          name: string
+          quantity?: number
+          total: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          name?: string
+          quantity?: number
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          date: string
+          discount: number
+          due_date: string
+          id: string
+          invoice_number: string
+          notes: string | null
+          status: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal: number
+          tax: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name: string
+          date?: string
+          discount?: number
+          due_date: string
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal?: number
+          tax?: number
+          total: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          date?: string
+          discount?: number
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_notes: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          lead_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          lead_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_tasks: {
+        Row: {
+          assigned_to: string
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string
+          id: string
+          lead_id: string
+          priority: Database["public"]["Enums"]["lead_priority"] | null
+          title: string
+          type: string | null
+        }
+        Insert: {
+          assigned_to: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date: string
+          id?: string
+          lead_id: string
+          priority?: Database["public"]["Enums"]["lead_priority"] | null
+          title: string
+          type?: string | null
+        }
+        Update: {
+          assigned_to?: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          lead_id?: string
+          priority?: Database["public"]["Enums"]["lead_priority"] | null
+          title?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          conversion_date: string | null
+          created_at: string
+          email: string
+          estimated_value: number | null
+          first_name: string
+          id: string
+          interested_programs: string[] | null
+          last_contact_date: string | null
+          last_name: string
+          message: string | null
+          next_follow_up_date: string | null
+          phone: string
+          priority: Database["public"]["Enums"]["lead_priority"] | null
+          referred_by: string | null
+          source: Database["public"]["Enums"]["lead_source"]
+          status: Database["public"]["Enums"]["lead_status"] | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          conversion_date?: string | null
+          created_at?: string
+          email: string
+          estimated_value?: number | null
+          first_name: string
+          id?: string
+          interested_programs?: string[] | null
+          last_contact_date?: string | null
+          last_name: string
+          message?: string | null
+          next_follow_up_date?: string | null
+          phone: string
+          priority?: Database["public"]["Enums"]["lead_priority"] | null
+          referred_by?: string | null
+          source: Database["public"]["Enums"]["lead_source"]
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          conversion_date?: string | null
+          created_at?: string
+          email?: string
+          estimated_value?: number | null
+          first_name?: string
+          id?: string
+          interested_programs?: string[] | null
+          last_contact_date?: string | null
+          last_name?: string
+          message?: string | null
+          next_follow_up_date?: string | null
+          phone?: string
+          priority?: Database["public"]["Enums"]["lead_priority"] | null
+          referred_by?: string | null
+          source?: Database["public"]["Enums"]["lead_source"]
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      locker_assignments: {
+        Row: {
+          assigned_date: string
+          created_at: string
+          expiration_date: string | null
+          id: string
+          locker_id: string
+          member_id: string
+          monthly_fee: number
+          notes: string | null
+          release_date: string | null
+          status: string | null
+        }
+        Insert: {
+          assigned_date?: string
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          locker_id: string
+          member_id: string
+          monthly_fee: number
+          notes?: string | null
+          release_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          assigned_date?: string
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          locker_id?: string
+          member_id?: string
+          monthly_fee?: number
+          notes?: string | null
+          release_date?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locker_assignments_locker_id_fkey"
+            columns: ["locker_id"]
+            isOneToOne: false
+            referencedRelation: "lockers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "locker_assignments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locker_sizes: {
+        Row: {
+          created_at: string
+          dimensions: string
+          id: string
+          monthly_fee: number
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          dimensions: string
+          id?: string
+          monthly_fee?: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          dimensions?: string
+          id?: string
+          monthly_fee?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      lockers: {
+        Row: {
+          assigned_date: string | null
+          assigned_member_id: string | null
+          branch_id: string | null
+          created_at: string
+          expiration_date: string | null
+          id: string
+          monthly_fee: number | null
+          name: string
+          notes: string | null
+          number: string
+          release_date: string | null
+          size_id: string | null
+          status: Database["public"]["Enums"]["locker_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_date?: string | null
+          assigned_member_id?: string | null
+          branch_id?: string | null
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          monthly_fee?: number | null
+          name: string
+          notes?: string | null
+          number: string
+          release_date?: string | null
+          size_id?: string | null
+          status?: Database["public"]["Enums"]["locker_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_date?: string | null
+          assigned_member_id?: string | null
+          branch_id?: string | null
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          monthly_fee?: number | null
+          name?: string
+          notes?: string | null
+          number?: string
+          release_date?: string | null
+          size_id?: string | null
+          status?: Database["public"]["Enums"]["locker_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lockers_assigned_member_id_fkey"
+            columns: ["assigned_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lockers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lockers_size_id_fkey"
+            columns: ["size_id"]
+            isOneToOne: false
+            referencedRelation: "locker_sizes"
             referencedColumns: ["id"]
           },
         ]
@@ -623,6 +1309,30 @@ export type Database = {
           total_amount?: number
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["payment_method_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["payment_method_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: Database["public"]["Enums"]["payment_method_type"]
         }
         Relationships: []
       }
@@ -1024,6 +1734,119 @@ export type Database = {
           },
         ]
       }
+      transaction_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["transaction_type"]
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["transaction_type"]
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          branch_id: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string
+          id: string
+          member_id: string | null
+          payment_method_id: string | null
+          reference: string | null
+          status: Database["public"]["Enums"]["transaction_status"] | null
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          branch_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description: string
+          id?: string
+          member_id?: string | null
+          payment_method_id?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"] | null
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          branch_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string
+          id?: string
+          member_id?: string | null
+          payment_method_id?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"] | null
+          type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_notifications: {
         Row: {
           announcement_id: string | null
@@ -1083,6 +1906,68 @@ export type Database = {
         }
         Relationships: []
       }
+      work_shifts: {
+        Row: {
+          branch_id: string | null
+          break_duration: number | null
+          created_at: string
+          days: string[] | null
+          end_time: string
+          grace_period: number | null
+          id: string
+          is_active: boolean | null
+          late_threshold: number | null
+          maximum_hours: number | null
+          minimum_hours: number | null
+          name: string
+          start_time: string
+          updated_at: string
+          user_ids: string[] | null
+        }
+        Insert: {
+          branch_id?: string | null
+          break_duration?: number | null
+          created_at?: string
+          days?: string[] | null
+          end_time: string
+          grace_period?: number | null
+          id?: string
+          is_active?: boolean | null
+          late_threshold?: number | null
+          maximum_hours?: number | null
+          minimum_hours?: number | null
+          name: string
+          start_time: string
+          updated_at?: string
+          user_ids?: string[] | null
+        }
+        Update: {
+          branch_id?: string | null
+          break_duration?: number | null
+          created_at?: string
+          days?: string[] | null
+          end_time?: string
+          grace_period?: number | null
+          id?: string
+          is_active?: boolean | null
+          late_threshold?: number | null
+          maximum_hours?: number | null
+          minimum_hours?: number | null
+          name?: string
+          start_time?: string
+          updated_at?: string
+          user_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_shifts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1098,6 +1983,12 @@ export type Database = {
       }
     }
     Enums: {
+      assignment_status:
+        | "scheduled"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "no_show"
       attendance_status: "checked-in" | "checked-out" | "no-show" | "late"
       bonus_type: "referral_signup" | "referral_membership" | "loyalty_points"
       certification_level: "basic" | "intermediate" | "advanced" | "expert"
@@ -1112,7 +2003,22 @@ export type Database = {
         | "water"
         | "mind-body"
       device_status: "online" | "offline" | "maintenance"
+      email_template_type:
+        | "welcome"
+        | "membership_renewal"
+        | "payment_reminder"
+        | "class_reminder"
+        | "birthday"
+        | "promotional"
+        | "system_notification"
+      employment_type: "full_time" | "part_time" | "contract" | "intern"
       entry_method: "biometric" | "manual" | "card" | "mobile"
+      equipment_condition: "excellent" | "good" | "fair" | "poor"
+      equipment_status:
+        | "operational"
+        | "maintenance"
+        | "out_of_order"
+        | "retired"
       feedback_priority: "low" | "medium" | "high" | "urgent"
       feedback_status: "pending" | "in-review" | "resolved" | "closed"
       feedback_type:
@@ -1137,9 +2043,12 @@ export type Database = {
         | "event"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
       locker_status: "available" | "occupied" | "maintenance" | "reserved"
+      maintenance_status: "pending" | "in_progress" | "completed" | "cancelled"
+      maintenance_type: "routine" | "repair" | "deep_cleaning" | "calibration"
       membership_status: "active" | "expired" | "frozen" | "cancelled"
       notification_type: "announcement" | "system" | "membership" | "referral"
       order_status: "pending" | "completed" | "cancelled" | "refunded"
+      package_status: "active" | "paused" | "expired" | "cancelled"
       payment_method_type:
         | "cash"
         | "card"
@@ -1147,10 +2056,24 @@ export type Database = {
         | "digital_wallet"
         | "other"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      plan_difficulty: "beginner" | "intermediate" | "advanced" | "expert"
+      plan_status: "draft" | "active" | "archived"
       redemption_type:
         | "pos_purchase"
         | "membership_extension"
         | "cash_equivalent"
+      session_type:
+        | "personal_training"
+        | "group_class"
+        | "consultation"
+        | "assessment"
+      sms_template_type:
+        | "welcome"
+        | "appointment_reminder"
+        | "payment_due"
+        | "class_cancelled"
+        | "promotional"
+        | "otp_verification"
       team_role: "manager" | "trainer" | "staff"
       trainer_specialty:
         | "strength_training"
@@ -1299,6 +2222,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      assignment_status: [
+        "scheduled",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
       attendance_status: ["checked-in", "checked-out", "no-show", "late"],
       bonus_type: ["referral_signup", "referral_membership", "loyalty_points"],
       certification_level: ["basic", "intermediate", "advanced", "expert"],
@@ -1314,7 +2244,24 @@ export const Constants = {
         "mind-body",
       ],
       device_status: ["online", "offline", "maintenance"],
+      email_template_type: [
+        "welcome",
+        "membership_renewal",
+        "payment_reminder",
+        "class_reminder",
+        "birthday",
+        "promotional",
+        "system_notification",
+      ],
+      employment_type: ["full_time", "part_time", "contract", "intern"],
       entry_method: ["biometric", "manual", "card", "mobile"],
+      equipment_condition: ["excellent", "good", "fair", "poor"],
+      equipment_status: [
+        "operational",
+        "maintenance",
+        "out_of_order",
+        "retired",
+      ],
       feedback_priority: ["low", "medium", "high", "urgent"],
       feedback_status: ["pending", "in-review", "resolved", "closed"],
       feedback_type: [
@@ -1341,9 +2288,12 @@ export const Constants = {
       ],
       lead_status: ["new", "contacted", "qualified", "converted", "lost"],
       locker_status: ["available", "occupied", "maintenance", "reserved"],
+      maintenance_status: ["pending", "in_progress", "completed", "cancelled"],
+      maintenance_type: ["routine", "repair", "deep_cleaning", "calibration"],
       membership_status: ["active", "expired", "frozen", "cancelled"],
       notification_type: ["announcement", "system", "membership", "referral"],
       order_status: ["pending", "completed", "cancelled", "refunded"],
+      package_status: ["active", "paused", "expired", "cancelled"],
       payment_method_type: [
         "cash",
         "card",
@@ -1352,10 +2302,26 @@ export const Constants = {
         "other",
       ],
       payment_status: ["pending", "completed", "failed", "refunded"],
+      plan_difficulty: ["beginner", "intermediate", "advanced", "expert"],
+      plan_status: ["draft", "active", "archived"],
       redemption_type: [
         "pos_purchase",
         "membership_extension",
         "cash_equivalent",
+      ],
+      session_type: [
+        "personal_training",
+        "group_class",
+        "consultation",
+        "assessment",
+      ],
+      sms_template_type: [
+        "welcome",
+        "appointment_reminder",
+        "payment_due",
+        "class_cancelled",
+        "promotional",
+        "otp_verification",
       ],
       team_role: ["manager", "trainer", "staff"],
       trainer_specialty: [
