@@ -2802,6 +2802,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_role: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
+      is_admin_user: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
+      is_staff_or_above: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       assignment_status:
