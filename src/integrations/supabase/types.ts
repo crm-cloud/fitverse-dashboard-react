@@ -14,6 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string
+          created_at: string | null
+          criteria: Json
+          description: string
+          icon_url: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          points_value: number | null
+          rarity: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          criteria: Json
+          description: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          points_value?: number | null
+          rarity?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          criteria?: Json
+          description?: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          points_value?: number | null
+          rarity?: string | null
+        }
+        Relationships: []
+      }
+      ai_insights: {
+        Row: {
+          applied_at: string | null
+          branch_id: string | null
+          confidence_score: number | null
+          created_at: string | null
+          data_sources: string[] | null
+          description: string
+          effectiveness_score: number | null
+          expires_at: string | null
+          id: string
+          insight_type: string
+          is_applied: boolean | null
+          recommendation_data: Json | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          branch_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          data_sources?: string[] | null
+          description: string
+          effectiveness_score?: number | null
+          expires_at?: string | null
+          id?: string
+          insight_type: string
+          is_applied?: boolean | null
+          recommendation_data?: Json | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          branch_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          data_sources?: string[] | null
+          description?: string
+          effectiveness_score?: number | null
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          is_applied?: boolean | null
+          recommendation_data?: Json | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_insights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      analytics_events: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          event_category: string
+          event_name: string
+          id: string
+          properties: Json | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          event_category: string
+          event_name: string
+          id?: string
+          properties?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          properties?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           branch_ids: string[] | null
@@ -205,6 +358,74 @@ export type Database = {
           },
         ]
       }
+      branch_analytics: {
+        Row: {
+          branch_id: string
+          churned_members: number | null
+          created_at: string | null
+          equipment_utilization: number | null
+          id: string
+          member_satisfaction_avg: number | null
+          membership_revenue: number | null
+          month_year: string
+          new_members: number | null
+          peak_capacity_usage: number | null
+          retail_revenue: number | null
+          total_check_ins: number | null
+          total_members: number | null
+          total_revenue: number | null
+          trainer_utilization: number | null
+          training_revenue: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id: string
+          churned_members?: number | null
+          created_at?: string | null
+          equipment_utilization?: number | null
+          id?: string
+          member_satisfaction_avg?: number | null
+          membership_revenue?: number | null
+          month_year: string
+          new_members?: number | null
+          peak_capacity_usage?: number | null
+          retail_revenue?: number | null
+          total_check_ins?: number | null
+          total_members?: number | null
+          total_revenue?: number | null
+          trainer_utilization?: number | null
+          training_revenue?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string
+          churned_members?: number | null
+          created_at?: string | null
+          equipment_utilization?: number | null
+          id?: string
+          member_satisfaction_avg?: number | null
+          membership_revenue?: number | null
+          month_year?: string
+          new_members?: number | null
+          peak_capacity_usage?: number | null
+          retail_revenue?: number | null
+          total_check_ins?: number | null
+          total_members?: number | null
+          total_revenue?: number | null
+          trainer_utilization?: number | null
+          training_revenue?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_analytics_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: Json
@@ -324,6 +545,41 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      dashboard_metrics: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          id: string
+          metric_date: string | null
+          metric_name: string
+          metric_value: number
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          metric_date?: string | null
+          metric_name: string
+          metric_value: number
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          metric_date?: string | null
+          metric_name?: string
+          metric_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_metrics_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       diet_plans: {
         Row: {
@@ -533,6 +789,56 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipment_analytics: {
+        Row: {
+          created_at: string | null
+          downtime_hours: number | null
+          equipment_id: string
+          id: string
+          maintenance_cost: number | null
+          member_satisfaction: number | null
+          month_year: string
+          repair_incidents: number | null
+          updated_at: string | null
+          usage_hours: number | null
+          utilization_rate: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          downtime_hours?: number | null
+          equipment_id: string
+          id?: string
+          maintenance_cost?: number | null
+          member_satisfaction?: number | null
+          month_year: string
+          repair_incidents?: number | null
+          updated_at?: string | null
+          usage_hours?: number | null
+          utilization_rate?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          downtime_hours?: number | null
+          equipment_id?: string
+          id?: string
+          maintenance_cost?: number | null
+          member_satisfaction?: number | null
+          month_year?: string
+          repair_incidents?: number | null
+          updated_at?: string | null
+          usage_hours?: number | null
+          utilization_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_analytics_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
             referencedColumns: ["id"]
           },
         ]
@@ -1228,6 +1534,107 @@ export type Database = {
           },
         ]
       }
+      member_achievements: {
+        Row: {
+          achievement_id: string
+          created_at: string | null
+          earned_date: string | null
+          id: string
+          progress_data: Json | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string | null
+          earned_date?: string | null
+          id?: string
+          progress_data?: Json | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string | null
+          earned_date?: string | null
+          id?: string
+          progress_data?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      member_analytics: {
+        Row: {
+          avg_session_duration: number | null
+          check_ins_count: number | null
+          classes_attended: number | null
+          created_at: string | null
+          favorite_workout_type: string | null
+          feedback_submitted: number | null
+          id: string
+          month_year: string
+          peak_usage_hours: number[] | null
+          personal_training_sessions: number | null
+          referrals_made: number | null
+          revenue_generated: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avg_session_duration?: number | null
+          check_ins_count?: number | null
+          classes_attended?: number | null
+          created_at?: string | null
+          favorite_workout_type?: string | null
+          feedback_submitted?: number | null
+          id?: string
+          month_year: string
+          peak_usage_hours?: number[] | null
+          personal_training_sessions?: number | null
+          referrals_made?: number | null
+          revenue_generated?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avg_session_duration?: number | null
+          check_ins_count?: number | null
+          classes_attended?: number | null
+          created_at?: string | null
+          favorite_workout_type?: string | null
+          feedback_submitted?: number | null
+          id?: string
+          month_year?: string
+          peak_usage_hours?: number[] | null
+          personal_training_sessions?: number | null
+          referrals_made?: number | null
+          revenue_generated?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       member_credits: {
         Row: {
           balance: number | null
@@ -1644,6 +2051,71 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          achievement_notifications: boolean | null
+          class_reminders: boolean | null
+          created_at: string | null
+          email_notifications: boolean | null
+          id: string
+          marketing_emails: boolean | null
+          payment_reminders: boolean | null
+          preferred_contact_time_end: string | null
+          preferred_contact_time_start: string | null
+          push_notifications: boolean | null
+          sms_notifications: boolean | null
+          social_notifications: boolean | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+          workout_reminders: boolean | null
+        }
+        Insert: {
+          achievement_notifications?: boolean | null
+          class_reminders?: boolean | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          marketing_emails?: boolean | null
+          payment_reminders?: boolean | null
+          preferred_contact_time_end?: string | null
+          preferred_contact_time_start?: string | null
+          push_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          social_notifications?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+          workout_reminders?: boolean | null
+        }
+        Update: {
+          achievement_notifications?: boolean | null
+          class_reminders?: boolean | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          marketing_emails?: boolean | null
+          payment_reminders?: boolean | null
+          preferred_contact_time_end?: string | null
+          preferred_contact_time_start?: string | null
+          push_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          social_notifications?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+          workout_reminders?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -1883,6 +2355,60 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "member_goals"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      progress_photos: {
+        Row: {
+          created_at: string | null
+          goal_id: string | null
+          id: string
+          is_public: boolean | null
+          measurements: Json | null
+          notes: string | null
+          photo_type: string | null
+          photo_url: string
+          taken_date: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          goal_id?: string | null
+          id?: string
+          is_public?: boolean | null
+          measurements?: Json | null
+          notes?: string | null
+          photo_type?: string | null
+          photo_url: string
+          taken_date?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          goal_id?: string | null
+          id?: string
+          is_public?: boolean | null
+          measurements?: Json | null
+          notes?: string | null
+          photo_type?: string | null
+          photo_url?: string
+          taken_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_photos_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "member_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_photos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -2153,6 +2679,65 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      trainer_analytics: {
+        Row: {
+          avg_session_rating: number | null
+          cancellation_rate: number | null
+          created_at: string | null
+          id: string
+          members_trained: number | null
+          month_year: string
+          new_members_acquired: number | null
+          punctuality_score: number | null
+          retention_rate: number | null
+          sessions_conducted: number | null
+          specialties_demand: Json | null
+          total_revenue: number | null
+          trainer_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avg_session_rating?: number | null
+          cancellation_rate?: number | null
+          created_at?: string | null
+          id?: string
+          members_trained?: number | null
+          month_year: string
+          new_members_acquired?: number | null
+          punctuality_score?: number | null
+          retention_rate?: number | null
+          sessions_conducted?: number | null
+          specialties_demand?: Json | null
+          total_revenue?: number | null
+          trainer_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avg_session_rating?: number | null
+          cancellation_rate?: number | null
+          created_at?: string | null
+          id?: string
+          members_trained?: number | null
+          month_year?: string
+          new_members_acquired?: number | null
+          punctuality_score?: number | null
+          retention_rate?: number | null
+          sessions_conducted?: number | null
+          specialties_demand?: Json | null
+          total_revenue?: number | null
+          trainer_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_analytics_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
             referencedColumns: ["user_id"]
           },
         ]
