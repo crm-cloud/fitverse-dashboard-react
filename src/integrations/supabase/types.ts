@@ -325,6 +325,218 @@ export type Database = {
         }
         Relationships: []
       }
+      diet_plans: {
+        Row: {
+          branch_id: string | null
+          calorie_target: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          dietary_restrictions: string[] | null
+          difficulty: Database["public"]["Enums"]["plan_difficulty"]
+          duration_weeks: number | null
+          id: string
+          is_template: boolean | null
+          macros: Json | null
+          meal_plan: Json | null
+          name: string
+          status: Database["public"]["Enums"]["plan_status"] | null
+          target_goals: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          calorie_target?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          dietary_restrictions?: string[] | null
+          difficulty: Database["public"]["Enums"]["plan_difficulty"]
+          duration_weeks?: number | null
+          id?: string
+          is_template?: boolean | null
+          macros?: Json | null
+          meal_plan?: Json | null
+          name: string
+          status?: Database["public"]["Enums"]["plan_status"] | null
+          target_goals?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          calorie_target?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          dietary_restrictions?: string[] | null
+          difficulty?: Database["public"]["Enums"]["plan_difficulty"]
+          duration_weeks?: number | null
+          id?: string
+          is_template?: boolean | null
+          macros?: Json | null
+          meal_plan?: Json | null
+          name?: string
+          status?: Database["public"]["Enums"]["plan_status"] | null
+          target_goals?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_plans_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diet_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          body: string
+          branch_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          type: Database["public"]["Enums"]["email_template_type"]
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          body: string
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          type: Database["public"]["Enums"]["email_template_type"]
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          body?: string
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          type?: Database["public"]["Enums"]["email_template_type"]
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      equipment: {
+        Row: {
+          branch_id: string | null
+          brand: string | null
+          category: string
+          condition: Database["public"]["Enums"]["equipment_condition"] | null
+          created_at: string | null
+          current_value: number | null
+          id: string
+          images: string[] | null
+          last_maintenance_date: string | null
+          location: string | null
+          maintenance_schedule: Json | null
+          model: string | null
+          name: string
+          next_maintenance_date: string | null
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          serial_number: string | null
+          specifications: Json | null
+          status: Database["public"]["Enums"]["equipment_status"] | null
+          updated_at: string | null
+          warranty_expiry: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          brand?: string | null
+          category: string
+          condition?: Database["public"]["Enums"]["equipment_condition"] | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          images?: string[] | null
+          last_maintenance_date?: string | null
+          location?: string | null
+          maintenance_schedule?: Json | null
+          model?: string | null
+          name: string
+          next_maintenance_date?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          specifications?: Json | null
+          status?: Database["public"]["Enums"]["equipment_status"] | null
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          brand?: string | null
+          category?: string
+          condition?: Database["public"]["Enums"]["equipment_condition"] | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          images?: string[] | null
+          last_maintenance_date?: string | null
+          location?: string | null
+          maintenance_schedule?: Json | null
+          model?: string | null
+          name?: string
+          next_maintenance_date?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          specifications?: Json | null
+          status?: Database["public"]["Enums"]["equipment_status"] | null
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           admin_response: string | null
@@ -937,6 +1149,85 @@ export type Database = {
           },
         ]
       }
+      maintenance_records: {
+        Row: {
+          after_photos: string[] | null
+          before_photos: string[] | null
+          completed_date: string | null
+          cost: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          equipment_id: string
+          id: string
+          notes: string | null
+          parts_used: Json | null
+          scheduled_date: string
+          status: Database["public"]["Enums"]["maintenance_status"] | null
+          technician_id: string | null
+          type: Database["public"]["Enums"]["maintenance_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          after_photos?: string[] | null
+          before_photos?: string[] | null
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          equipment_id: string
+          id?: string
+          notes?: string | null
+          parts_used?: Json | null
+          scheduled_date: string
+          status?: Database["public"]["Enums"]["maintenance_status"] | null
+          technician_id?: string | null
+          type: Database["public"]["Enums"]["maintenance_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          after_photos?: string[] | null
+          before_photos?: string[] | null
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          equipment_id?: string
+          id?: string
+          notes?: string | null
+          parts_used?: Json | null
+          scheduled_date?: string
+          status?: Database["public"]["Enums"]["maintenance_status"] | null
+          technician_id?: string | null
+          type?: Database["public"]["Enums"]["maintenance_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "maintenance_records_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_records_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       member_credits: {
         Row: {
           balance: number | null
@@ -957,6 +1248,70 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      member_diet_plans: {
+        Row: {
+          assigned_by: string | null
+          created_at: string | null
+          diet_plan_id: string
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          progress: Json | null
+          start_date: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string | null
+          diet_plan_id: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          progress?: Json | null
+          start_date?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string | null
+          diet_plan_id?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          progress?: Json | null
+          start_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_diet_plans_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_diet_plans_diet_plan_id_fkey"
+            columns: ["diet_plan_id"]
+            isOneToOne: false
+            referencedRelation: "diet_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_diet_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       member_goals: {
         Row: {
@@ -1046,6 +1401,70 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_workout_plans: {
+        Row: {
+          assigned_by: string | null
+          created_at: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          progress: Json | null
+          start_date: string | null
+          updated_at: string | null
+          user_id: string
+          workout_plan_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          progress?: Json | null
+          start_date?: string | null
+          updated_at?: string | null
+          user_id: string
+          workout_plan_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          progress?: Json | null
+          start_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+          workout_plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_workout_plans_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_workout_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_workout_plans_workout_plan_id_fkey"
+            columns: ["workout_plan_id"]
+            isOneToOne: false
+            referencedRelation: "workout_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -1550,6 +1969,279 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_templates: {
+        Row: {
+          branch_id: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["sms_template_type"]
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          branch_id?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["sms_template_type"]
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          branch_id?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: Database["public"]["Enums"]["sms_template_type"]
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_templates_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      system_settings: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_encrypted: boolean | null
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_encrypted?: boolean | null
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_encrypted?: boolean | null
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          bank_details: Json | null
+          branch_id: string | null
+          certifications: string[] | null
+          created_at: string | null
+          department: string
+          documents: Json | null
+          emergency_contact: Json | null
+          employee_id: string
+          employment_type: Database["public"]["Enums"]["employment_type"] | null
+          hire_date: string
+          hourly_rate: number | null
+          id: string
+          is_active: boolean | null
+          last_review_date: string | null
+          manager_id: string | null
+          next_review_date: string | null
+          performance_rating: number | null
+          position: string
+          salary: number | null
+          skills: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bank_details?: Json | null
+          branch_id?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          department: string
+          documents?: Json | null
+          emergency_contact?: Json | null
+          employee_id: string
+          employment_type?:
+            | Database["public"]["Enums"]["employment_type"]
+            | null
+          hire_date?: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_review_date?: string | null
+          manager_id?: string | null
+          next_review_date?: string | null
+          performance_rating?: number | null
+          position: string
+          salary?: number | null
+          skills?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bank_details?: Json | null
+          branch_id?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          department?: string
+          documents?: Json | null
+          emergency_contact?: Json | null
+          employee_id?: string
+          employment_type?:
+            | Database["public"]["Enums"]["employment_type"]
+            | null
+          hire_date?: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_review_date?: string | null
+          manager_id?: string | null
+          next_review_date?: string | null
+          performance_rating?: number | null
+          position?: string
+          salary?: number | null
+          skills?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      trainer_assignments: {
+        Row: {
+          completed_exercises: Json | null
+          created_at: string | null
+          created_by: string | null
+          duration_minutes: number | null
+          id: string
+          location: string | null
+          member_feedback: string | null
+          member_goals: string[] | null
+          member_id: string
+          notes: string | null
+          rating: number | null
+          scheduled_date: string
+          session_plan: Json | null
+          session_type: Database["public"]["Enums"]["session_type"] | null
+          status: Database["public"]["Enums"]["assignment_status"] | null
+          trainer_id: string
+          trainer_notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_exercises?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          duration_minutes?: number | null
+          id?: string
+          location?: string | null
+          member_feedback?: string | null
+          member_goals?: string[] | null
+          member_id: string
+          notes?: string | null
+          rating?: number | null
+          scheduled_date: string
+          session_plan?: Json | null
+          session_type?: Database["public"]["Enums"]["session_type"] | null
+          status?: Database["public"]["Enums"]["assignment_status"] | null
+          trainer_id: string
+          trainer_notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_exercises?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          duration_minutes?: number | null
+          id?: string
+          location?: string | null
+          member_feedback?: string | null
+          member_goals?: string[] | null
+          member_id?: string
+          notes?: string | null
+          rating?: number | null
+          scheduled_date?: string
+          session_plan?: Json | null
+          session_type?: Database["public"]["Enums"]["session_type"] | null
+          status?: Database["public"]["Enums"]["assignment_status"] | null
+          trainer_id?: string
+          trainer_notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "trainer_assignments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "trainer_assignments_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       trainer_availability: {
         Row: {
           created_at: string
@@ -1629,6 +2321,69 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trainer_profiles"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_packages: {
+        Row: {
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          member_id: string
+          package_name: string
+          price_per_session: number
+          purchase_date: string | null
+          status: Database["public"]["Enums"]["package_status"] | null
+          total_amount: number
+          total_sessions: number
+          trainer_id: string
+          updated_at: string | null
+          used_sessions: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          member_id: string
+          package_name: string
+          price_per_session: number
+          purchase_date?: string | null
+          status?: Database["public"]["Enums"]["package_status"] | null
+          total_amount: number
+          total_sessions: number
+          trainer_id: string
+          updated_at?: string | null
+          used_sessions?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          member_id?: string
+          package_name?: string
+          price_per_session?: number
+          purchase_date?: string | null
+          status?: Database["public"]["Enums"]["package_status"] | null
+          total_amount?: number
+          total_sessions?: number
+          trainer_id?: string
+          updated_at?: string | null
+          used_sessions?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_packages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "trainer_packages_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1965,6 +2720,72 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "branches"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_plans: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty: Database["public"]["Enums"]["plan_difficulty"]
+          duration_weeks: number | null
+          equipment_needed: string[] | null
+          exercises: Json | null
+          id: string
+          is_template: boolean | null
+          name: string
+          status: Database["public"]["Enums"]["plan_status"] | null
+          target_goals: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty: Database["public"]["Enums"]["plan_difficulty"]
+          duration_weeks?: number | null
+          equipment_needed?: string[] | null
+          exercises?: Json | null
+          id?: string
+          is_template?: boolean | null
+          name: string
+          status?: Database["public"]["Enums"]["plan_status"] | null
+          target_goals?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty?: Database["public"]["Enums"]["plan_difficulty"]
+          duration_weeks?: number | null
+          equipment_needed?: string[] | null
+          exercises?: Json | null
+          id?: string
+          is_template?: boolean | null
+          name?: string
+          status?: Database["public"]["Enums"]["plan_status"] | null
+          target_goals?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_plans_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
