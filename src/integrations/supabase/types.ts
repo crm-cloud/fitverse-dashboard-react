@@ -2915,7 +2915,14 @@ export type Database = {
       trainer_status: "active" | "inactive" | "on_leave" | "busy"
       transaction_status: "completed" | "pending" | "cancelled"
       transaction_type: "income" | "expense"
-      user_role: "super-admin" | "admin" | "team" | "member"
+      user_role:
+        | "super-admin"
+        | "admin"
+        | "team"
+        | "member"
+        | "manager"
+        | "staff"
+        | "trainer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3165,7 +3172,15 @@ export const Constants = {
       trainer_status: ["active", "inactive", "on_leave", "busy"],
       transaction_status: ["completed", "pending", "cancelled"],
       transaction_type: ["income", "expense"],
-      user_role: ["super-admin", "admin", "team", "member"],
+      user_role: [
+        "super-admin",
+        "admin",
+        "team",
+        "member",
+        "manager",
+        "staff",
+        "trainer",
+      ],
     },
   },
 } as const
