@@ -1,185 +1,74 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { Eye, EyeOff, Dumbbell, Shield, Users, User } from 'lucide-react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { UserRole } from '@/types/auth';
-import { useToast } from '@/hooks/use-toast';
+import { Eye, EyeOff, Loader2, Dumbbell } from 'lucide-react';
 
-const roleConfig = {
-  'super-admin': {
-    icon: Shield,
-    color: 'bg-red-600',
-    title: 'Super Admin',
-    description: 'Full system administration access',
-    email: 'superadmin@gymfit.com',
-    teamRole: undefined
-  },
-  admin: {
-    icon: Shield,
-    color: 'bg-destructive',
-    title: 'Admin Portal',
-    description: 'Full system access and management',
-    email: 'admin@gymfit.com',
-    teamRole: undefined
-  },
-  manager: {
-    icon: Users,
-    color: 'bg-blue-600',
-    title: 'Manager Portal',
-    description: 'Operational management and oversight',
-    email: 'manager@gymfit.com',
-    teamRole: 'manager'
-  },
-  staff: {
-    icon: User,
-    color: 'bg-green-600',
-    title: 'Staff Portal',
-    description: 'Daily operations and member support',
-    email: 'staff@gymfit.com',
-    teamRole: 'staff'
-  },
-  trainer: {
-    icon: Users,
-    color: 'bg-primary',
-    title: 'Trainer Portal',
-    description: 'Manage classes and member interactions',
-    email: 'trainer@gymfit.com',
-    teamRole: 'trainer'
-  },
-  member: {
-    icon: User,
-    color: 'bg-success',
-    title: 'Member Portal',
-    description: 'Track your fitness journey',
-    email: 'member@gymfit.com',
-    teamRole: undefined
-  }
-};
-
-export default function Login() {
+const Login = () => {
   const { authState, login } = useAuth();
-  const { toast } = useToast();
-  const [selectedRole, setSelectedRole] = useState<keyof typeof roleConfig | null>(null);
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const location = useLocation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Redirect if already authenticated
   if (authState.isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const from = location.state?.from?.pathname || '/dashboard';
+    return <Navigate to={from} replace />;
   }
 
-  const handleRoleSelect = (role: keyof typeof roleConfig) => {
-    setSelectedRole(role);
-    setCredentials({ email: roleConfig[role].email, password: 'demo123' });
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRole) return;
-
     setIsLoading(true);
+    
     try {
-      const config = roleConfig[selectedRole];
-      const userRole: UserRole = config.teamRole ? 'team' : selectedRole as UserRole;
-      await login({ ...credentials, role: userRole });
-      toast({
-        title: 'Welcome to GymFit Pro!',
-        description: `Logged in as ${config.title}`,
-      });
+      await login({ email, password });
     } catch (error) {
-      toast({
-        title: 'Login Failed',
-        description: 'Please check your credentials and try again.',
-        variant: 'destructive',
-      });
+      // Error is handled by the auth hook
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!selectedRole) {
-    return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-glow mb-6">
-              <Dumbbell className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Welcome to GymFit Pro
-            </h1>
-            <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Choose your role to access the appropriate dashboard
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {(Object.entries(roleConfig) as [keyof typeof roleConfig, typeof roleConfig.admin][]).map(([role, config]) => {
-              const IconComponent = config.icon;
-              return (
-                <Card 
-                  key={role}
-                  className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-strong bg-white/95 backdrop-blur border-0"
-                  onClick={() => handleRoleSelect(role)}
-                >
-                  <CardHeader className="text-center pb-4">
-                    <div className={`inline-flex items-center justify-center w-12 h-12 ${config.color} rounded-full mx-auto mb-4`}>
-                      <IconComponent className="w-6 h-6 text-white" />
-                    </div>
-                    <CardTitle className="text-lg">{config.title}</CardTitle>
-                    <CardDescription className="text-sm">{config.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <Button className="w-full" variant="outline" size="sm">
-                      Continue
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const selectedConfig = roleConfig[selectedRole];
-  const IconComponent = selectedConfig.icon;
-
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-white/95 backdrop-blur border-0 shadow-strong">
         <CardHeader className="text-center">
-          <div className={`inline-flex items-center justify-center w-12 h-12 ${selectedConfig.color} rounded-full mx-auto mb-4`}>
-            <IconComponent className="w-6 h-6 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mx-auto mb-6">
+            <Dumbbell className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl">{selectedConfig.title}</CardTitle>
-          <CardDescription>{selectedConfig.description}</CardDescription>
+          <CardTitle className="text-2xl font-bold">Welcome to GymFit</CardTitle>
+          <CardDescription>
+            Sign in to your account to continue
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                value={credentials.email}
-                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  value={credentials.password}
-                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <Button
@@ -189,35 +78,45 @@ export default function Login() {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setSelectedRole(null)}
-              >
-                Back
-              </Button>
-              <Button type="submit" className="flex-1" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </Button>
           </form>
           
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground text-center">
-              <strong>Demo Credentials:</strong><br />
-              Email: {selectedConfig.email}<br />
-              Password: demo123
-              {selectedConfig.teamRole && <><br />Team Role: {selectedConfig.teamRole}</>}
+          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+            <h3 className="font-semibold mb-2">Getting Started</h3>
+            <div className="space-y-1 text-sm">
+              <p><strong>Step 1:</strong> Create a Supabase account</p>
+              <p><strong>Step 2:</strong> Sign up with your email & password</p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Authentication is now powered by Supabase for enhanced security.
             </p>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
+
+export default Login;
