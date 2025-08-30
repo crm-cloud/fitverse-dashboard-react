@@ -92,23 +92,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (userId: string): Promise<User | null> => {
     try {
-      // First get the user profile
+      // First try to get the user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return null;
+      }
 
-      // Then get branch info if branch_id exists
+      // If no profile exists, create one (fallback in case trigger didn't work)
+      if (!profile) {
+        const { data: authUser } = await supabase.auth.getUser();
+        if (authUser.user) {
+          const newProfile = {
+            user_id: userId,
+            email: authUser.user.email || '',
+            full_name: authUser.user.user_metadata?.full_name || authUser.user.email?.split('@')[0] || 'User',
+            role: 'member' as const,
+            is_active: true
+          };
+
+          const { data: createdProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert([newProfile])
+            .select('*')
+            .single();
+
+          if (createError) {
+            console.error('Error creating profile:', createError);
+            return null;
+          }
+
+          return {
+            id: createdProfile.user_id,
+            email: createdProfile.email,
+            name: createdProfile.full_name,
+            role: createdProfile.role as UserRole,
+            teamRole: createdProfile.team_role,
+            avatar: createdProfile.avatar_url,
+            phone: createdProfile.phone,
+            joinDate: createdProfile.created_at?.split('T')[0],
+            branchId: createdProfile.branch_id,
+            branchName: undefined
+          };
+        }
+        return null;
+      }
+
+      // Get branch info if branch_id exists
       let branchName = undefined;
-      if (profile?.branch_id) {
+      if (profile.branch_id) {
         const { data: branch } = await supabase
           .from('branches')
           .select('name')
           .eq('id', profile.branch_id)
-          .single();
+          .maybeSingle();
         branchName = branch?.name;
       }
 
