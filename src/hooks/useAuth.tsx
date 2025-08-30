@@ -92,18 +92,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (userId: string): Promise<User | null> => {
     try {
-      const { data: profile, error } = await supabase
+      // First get the user profile
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          branches!branch_id (
-            name
-          )
-        `)
+        .select('*')
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Then get branch info if branch_id exists
+      let branchName = undefined;
+      if (profile?.branch_id) {
+        const { data: branch } = await supabase
+          .from('branches')
+          .select('name')
+          .eq('id', profile.branch_id)
+          .single();
+        branchName = branch?.name;
+      }
 
       return {
         id: profile.user_id,
@@ -115,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         phone: profile.phone,
         joinDate: profile.created_at?.split('T')[0],
         branchId: profile.branch_id,
-        branchName: profile.branches?.[0]?.name
+        branchName: branchName
       };
     } catch (error) {
       console.error('Error fetching user profile:', error);

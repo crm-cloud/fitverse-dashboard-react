@@ -1047,6 +1047,7 @@ export type Database = {
           invoice_id: string
           name: string
           quantity: number
+          Tax: number | null
           total: number
           unit_price: number
         }
@@ -1056,6 +1057,7 @@ export type Database = {
           invoice_id: string
           name: string
           quantity?: number
+          Tax?: number | null
           total: number
           unit_price: number
         }
@@ -1065,6 +1067,7 @@ export type Database = {
           invoice_id?: string
           name?: string
           quantity?: number
+          Tax?: number | null
           total?: number
           unit_price?: number
         }
@@ -2315,7 +2318,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       progress_entries: {
         Row: {
