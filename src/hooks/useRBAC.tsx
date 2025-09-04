@@ -2,6 +2,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Permission, RoleDefinition, UserWithRoles, AuditLog, type RBACContext as RBACContextType } from '@/types/rbac';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { UserRole } from '@/types/auth';
 
 // Updated role definitions with role-specific permissions
 const mockRoles: Record<string, RoleDefinition> = {
@@ -21,6 +23,7 @@ const mockRoles: Record<string, RoleDefinition> = {
       'team.view', 'team.create', 'team.edit', 'team.delete',
       'classes.view', 'classes.create', 'classes.edit', 'classes.delete', 'classes.schedule',
       'equipment.view', 'equipment.create', 'equipment.edit', 'equipment.delete',
+      'lockers.view', 'lockers.create', 'lockers.edit', 'lockers.delete', 'lockers.assign', 'lockers.release',
       'finance.view', 'finance.create', 'finance.edit', 'finance.process',
       'analytics.view', 'reports.view', 'reports.export',
       'settings.view', 'settings.edit',
@@ -28,7 +31,8 @@ const mockRoles: Record<string, RoleDefinition> = {
       'pos.view', 'pos.process',
       'leads.view', 'leads.create', 'leads.edit', 'leads.delete', 'leads.assign', 'leads.export',
       'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process',
-      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond',
+      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond', 'feedback.export',
+      'staff.view', 'staff.create', 'staff.edit', 'staff.delete',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
       'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
       'notifications.view', 'notifications.send',
@@ -37,7 +41,11 @@ const mockRoles: Record<string, RoleDefinition> = {
       'sms.logs.view', 'sms.logs.export', 'sms.analytics.view',
       'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
       'trainer.workouts.create', 'trainer.workouts.assign', 'trainer.progress.track', 'trainer.earnings.view',
-      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report'
+      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report',
+      'attendance.view', 'attendance.create', 'attendance.edit', 'attendance.delete', 'attendance.export',
+      'attendance.checkin.manual', 'attendance.checkout.manual', 'attendance.approve', 'attendance.reports.view',
+      'devices.view', 'devices.create', 'devices.edit', 'devices.delete', 'devices.sync', 'devices.settings',
+      'devices.maintenance', 'devices.restart', 'devices.logs.view'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -173,6 +181,21 @@ const mockRoles: Record<string, RoleDefinition> = {
 
 // Updated mock users with role-specific assignments
 const mockUsersWithRoles: Record<string, UserWithRoles> = {
+  'rajat.lekhari@hotmail.com': {
+    id: 'rajat-lekhari',
+    email: 'rajat.lekhari@hotmail.com',
+    name: 'Rajat Lekhari',
+    role: 'super-admin',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    department: 'System Administration',
+    phone: '+1 (555) 000-0001',
+    joinDate: '2022-01-01',
+    roles: [mockRoles['super-admin']],
+    isActive: true,
+    lastLogin: new Date(),
+    createdBy: 'system',
+    assignedBranches: ['all']
+  },
   'superadmin@gymfit.com': {
     id: '0',
     email: 'superadmin@gymfit.com',
@@ -285,18 +308,112 @@ export const useRBAC = () => {
   return context;
 };
 
+// Role to permission mapping for database roles
+const getRolePermissions = (role: UserRole, teamRole?: string): Permission[] => {
+  switch (role) {
+    case 'super-admin':
+      return mockRoles['super-admin'].permissions;
+    case 'admin':
+      return mockRoles['admin'].permissions;
+    case 'team':
+      switch (teamRole) {
+        case 'manager':
+          return mockRoles['team-manager'].permissions;
+        case 'trainer':
+          return mockRoles['team-trainer'].permissions;
+        case 'staff':
+          return mockRoles['team-staff'].permissions;
+        default:
+          return [];
+      }
+    case 'member':
+      return mockRoles['member'].permissions;
+    default:
+      return [];
+  }
+};
+
+const getUserRoleDefinition = (role: UserRole, teamRole?: string): RoleDefinition => {
+  switch (role) {
+    case 'super-admin':
+      return mockRoles['super-admin'];
+    case 'admin':
+      return mockRoles['admin'];
+    case 'team':
+      switch (teamRole) {
+        case 'manager':
+          return mockRoles['team-manager'];
+        case 'trainer':
+          return mockRoles['team-trainer'];
+        case 'staff':
+          return mockRoles['team-staff'];
+        default:
+          return mockRoles['member']; // fallback
+      }
+    case 'member':
+      return mockRoles['member'];
+    default:
+      return mockRoles['member'];
+  }
+};
+
 export const RBACProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
   const [currentUser, setCurrentUser] = useState<UserWithRoles | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
   useEffect(() => {
-    if (authState.user) {
-      const userWithRoles = mockUsersWithRoles[authState.user.email];
-      setCurrentUser(userWithRoles || null);
-    } else {
-      setCurrentUser(null);
-    }
+    const loadUserWithRoles = async () => {
+      if (!authState.user) {
+        setCurrentUser(null);
+        return;
+      }
+
+      // First try to get from mock data
+      const mockUser = mockUsersWithRoles[authState.user.email];
+      if (mockUser) {
+        setCurrentUser(mockUser);
+        return;
+      }
+
+      // If not in mock data, create from Supabase profile
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', authState.user.id)
+          .maybeSingle();
+
+        if (profile) {
+          const roleDefinition = getUserRoleDefinition(profile.role as UserRole, profile.team_role);
+          const userWithRoles: UserWithRoles = {
+            id: profile.user_id,
+            email: profile.email,
+            name: profile.full_name,
+            role: profile.role as UserRole,
+            teamRole: profile.team_role as 'manager' | 'staff' | 'trainer' | undefined,
+            avatar: profile.avatar_url,
+            phone: profile.phone,
+            joinDate: profile.created_at?.split('T')[0],
+            branchId: profile.branch_id,
+            branchName: authState.user.branchName,
+            roles: [roleDefinition],
+            isActive: profile.is_active,
+            lastLogin: new Date(),
+            assignedBranches: (profile.role === 'super-admin' || profile.role === 'admin') ? ['all'] : [profile.branch_id].filter(Boolean),
+            primaryBranchId: profile.branch_id
+          };
+          setCurrentUser(userWithRoles);
+        } else {
+          setCurrentUser(null);
+        }
+      } catch (error) {
+        console.error('Error loading user roles:', error);
+        setCurrentUser(null);
+      }
+    };
+
+    loadUserWithRoles();
   }, [authState.user]);
 
   const getUserPermissions = (): Permission[] => {
