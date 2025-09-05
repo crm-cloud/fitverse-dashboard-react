@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Search, Filter, X } from 'lucide-react';
 import { LockerFilters as LockerFiltersType } from '@/types/locker';
-import { mockLockerSizes } from '@/mock/lockers';
+import { mockLockerSizes } from '@/utils/mockData';
 
 interface LockerFiltersProps {
   filters: LockerFiltersType;

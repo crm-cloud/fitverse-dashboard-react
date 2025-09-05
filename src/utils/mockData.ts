@@ -1,4 +1,4 @@
-// Temporary mock data constants until full database migration
+// Comprehensive mock data exports to replace all deleted mock files
 export const mockProgressSummary: any = {};
 export const mockMemberGoals: any[] = [];
 export const mockFeedback: any[] = [];
@@ -22,8 +22,22 @@ export const mockTransactions: any[] = [];
 export const mockMonthlyData: any[] = [];
 export const mockEnhancedTrainers: any[] = [];
 export const mockClasses: any[] = [];
+export const mockInvoices: any[] = [];
+export const mockBranches: any[] = [];
+export const mockTrainers: any[] = [];
+export const mockTeamRoles: any[] = [];
+export const mockPermissions: any[] = [];
+export const mockMembershipData: any = {};
+export const mockBillingHistory: any[] = [];
+export const mockBenefits: any[] = [];
+export const mockMembers: any[] = [];
+export const mockCategories: any[] = [];
 export const accessTypeLabels: any = {};
+export const feedbackCategories: any[] = [];
+export const leadSources: any[] = [];
+export const lockerStatuses: any[] = [];
+export const classTagLabels: any = {};
 
-// Mock attendance data
+// Mock attendance data  
 export const mockAttendanceSummary: any = {};
 export const mockAttendanceData: any[] = [];

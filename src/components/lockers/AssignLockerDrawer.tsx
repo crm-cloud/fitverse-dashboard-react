@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Key, User } from 'lucide-react';
 import { Locker } from '@/types/locker';
-import { mockLockers } from '@/mock/lockers';
+import { mockLockers } from '@/utils/mockData';
 import { LockerStatusBadge } from './LockerStatusBadge';
 
 interface AssignLockerDrawerProps {

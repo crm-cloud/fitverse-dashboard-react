@@ -15,7 +15,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { MemberFormData, Gender, GovernmentIdType } from '@/types/member';
-import { mockBranches, mockTrainers } from '@/mock/members';
+import { useBranches } from '@/hooks/useBranches';
+import { useTrainers } from '@/hooks/useTrainers';
 import { validateGovernmentId, getIdValidationMessage } from '@/utils/idValidation';
 
 const memberFormSchema = z.object({
@@ -59,6 +60,8 @@ interface MemberFormProps {
 
 export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const { branches } = useBranches();
+  const { data: trainers } = useTrainers();
 
   const form = useForm<z.infer<typeof memberFormSchema>>({
     resolver: zodResolver(memberFormSchema),
@@ -609,7 +612,7 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {mockBranches.map((branch) => (
+                        {branches.map((branch) => (
                           <SelectItem key={branch.id} value={branch.id}>
                             {branch.name}
                           </SelectItem>
@@ -635,7 +638,7 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="unassigned">No trainer assigned</SelectItem>
-                        {mockTrainers.map((trainer) => (
+                        {trainers?.map((trainer) => (
                           <SelectItem key={trainer.id} value={trainer.id}>
                             {trainer.name}
                           </SelectItem>

@@ -17,7 +17,7 @@ import { useRBAC } from '@/hooks/useRBAC';
 import { MeasurementRecorderDrawer } from './MeasurementRecorderDrawer';
 import { ProgressCharts } from './ProgressCharts';
 import { MeasurementHistory } from '@/types/member-progress';
-import { mockMeasurementHistory, mockAttendanceRecords, mockProgressSummary } from '@/mock/member-progress';
+import { mockMeasurementHistory, mockAttendanceRecords, mockProgressSummary } from '@/utils/mockData';
 
 interface MemberProfileCardProps {
   member: Member;

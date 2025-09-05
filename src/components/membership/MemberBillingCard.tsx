@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Invoice, PaymentStatus } from '@/types/membership';
-import { mockInvoices } from '@/mock/membership';
+import { mockInvoices } from '@/utils/mockData';
 import { PaymentRecorderDrawer } from './PaymentRecorderDrawer';
 
 interface MemberBillingCardProps {

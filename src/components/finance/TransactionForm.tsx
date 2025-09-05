@@ -40,7 +40,7 @@ import {
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { mockTransactionCategories, mockPaymentMethods } from '@/mock/finance';
+import { mockTransactionCategories, mockPaymentMethods } from '@/utils/mockData';
 
 const transactionSchema = z.object({
   date: z.string().min(1, 'Date is required'),

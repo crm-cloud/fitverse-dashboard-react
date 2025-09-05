@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { MemberFilters, MembershipStatus } from '@/types/member';
-import { mockBranches } from '@/mock/members';
+import { useBranches } from '@/hooks/useBranches';
 
 interface MemberFiltersProps {
   filters: MemberFilters;
@@ -49,7 +49,7 @@ export const MemberFiltersComponent = ({ filters, onFiltersChange }: MemberFilte
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Branches</SelectItem>
-              {mockBranches.map((branch) => (
+              {branches.map((branch) => (
                 <SelectItem key={branch.id} value={branch.id}>
                   {branch.name}
                 </SelectItem>

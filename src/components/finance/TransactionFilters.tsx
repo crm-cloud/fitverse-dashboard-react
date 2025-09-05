@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockTransactionCategories, mockPaymentMethods } from '@/mock/finance';
+import { mockTransactionCategories, mockPaymentMethods } from '@/utils/mockData';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,

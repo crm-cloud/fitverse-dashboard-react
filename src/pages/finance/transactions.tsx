@@ -5,7 +5,7 @@ import { TransactionTable } from '@/components/finance/TransactionTable';
 import { TransactionForm } from '@/components/finance/TransactionForm';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { mockTransactions } from '@/mock/finance';
+import { mockTransactions } from '@/utils/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { PermissionGate } from '@/components/PermissionGate';
 

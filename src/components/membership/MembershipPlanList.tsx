@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MembershipPlan } from '@/types/membership';
-import { mockMembershipPlans, accessTypeLabels } from '@/mock/membership';
+import { mockMembershipPlans, accessTypeLabels } from '@/utils/mockData';
 import { useToast } from '@/hooks/use-toast';
 
 export const MembershipPlanList = () => {

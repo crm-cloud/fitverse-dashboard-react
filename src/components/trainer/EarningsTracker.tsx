@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
-import { mockTrainerAssignments } from '@/mock/trainer-assignments';
+import { mockTrainerAssignments } from '@/utils/mockData';
 import { 
   DollarSign,
   TrendingUp,

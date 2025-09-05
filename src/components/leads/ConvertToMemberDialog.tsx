@@ -26,8 +26,8 @@ import { cn } from '@/lib/utils';
 import { Lead } from '@/types/lead';
 import { MemberFormData, Gender, GovernmentIdType } from '@/types/member';
 import { MembershipPlan } from '@/types/membership';
-import { mockBranches } from '@/mock/members';
-import { mockMembershipPlans } from '@/mock/membership';
+import { useBranches } from '@/hooks/useBranches';
+import { useMembershipPlans } from '@/hooks/useSupabaseQuery';
 import { useToast } from '@/hooks/use-toast';
 
 const conversionSchema = z.object({
@@ -144,7 +144,7 @@ export const ConvertToMemberDialog = ({
   };
 
   const bmi = calculateBMI(watchedHeight, watchedWeight);
-  const selectedPlan = mockMembershipPlans.find(plan => plan.id === selectedPlanId);
+  const selectedPlan = membershipPlans?.find(plan => plan.id === selectedPlanId);
 
   const handleSubmit = async (data: z.infer<typeof conversionSchema>) => {
     if (!lead) return;
@@ -589,7 +589,7 @@ export const ConvertToMemberDialog = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {mockBranches.map((branch) => (
+                            {branches.map((branch) => (
                               <SelectItem key={branch.id} value={branch.id}>
                                 {branch.name}
                               </SelectItem>
@@ -614,7 +614,7 @@ export const ConvertToMemberDialog = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {mockMembershipPlans.map((plan) => (
+                            {membershipPlans?.map((plan) => (
                               <SelectItem key={plan.id} value={plan.id}>
                                 {plan.name} - ₹{plan.price}
                               </SelectItem>
