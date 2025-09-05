@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, Apple, Clock, Users, Star } from 'lucide-react';
-import { mockDietPlans } from '@/mock/diet-workout';
+import { mockDietPlans } from '@/utils/mockData';
 import { DietPlan } from '@/types/diet-workout';
 
 interface DietPlanListProps {

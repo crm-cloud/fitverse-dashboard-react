@@ -6,7 +6,6 @@ import { ManagerDashboard } from '@/components/dashboards/ManagerDashboard';
 import { StaffDashboard } from '@/components/dashboards/StaffDashboard';
 import { TrainerDashboard } from '@/components/dashboards/TrainerDashboard';
 import { MemberDashboard } from '@/components/dashboards/MemberDashboard';
-import { mockMembers } from '@/mock/members';
 
 export default function Dashboard() {
   const { authState } = useAuth();
@@ -38,7 +37,7 @@ export default function Dashboard() {
           );
       }
     case 'member':
-      const member = mockMembers.find(m => m.email === authState.user?.email);
+      const member = { id: authState.user.id, fullName: authState.user.email || 'Member', profilePhoto: null };
       if (!member) {
         return (
           <div className="text-center py-20">

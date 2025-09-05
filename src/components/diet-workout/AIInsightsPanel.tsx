@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Brain, TrendingUp, AlertTriangle, CheckCircle, Lightbulb } from 'lucide-react';
-import { mockAIInsights } from '@/mock/diet-workout';
+import { mockAIInsights } from '@/utils/mockData';
 
 export const AIInsightsPanel = () => {
   const getPriorityIcon = (priority: string) => {

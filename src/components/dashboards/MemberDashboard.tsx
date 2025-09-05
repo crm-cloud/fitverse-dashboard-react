@@ -19,8 +19,8 @@ import {
   Clock,
   MapPin
 } from 'lucide-react';
-import { mockProgressSummary, mockMemberGoals } from '@/mock/member-progress';
-import { mockFeedback } from '@/mock/feedback';
+import { mockProgressSummary, mockMemberGoals } from '@/utils/mockData';
+import { mockFeedback } from '@/utils/mockData';
 import { useAuth } from '@/hooks/useAuth';
 import { useRBAC } from '@/hooks/useRBAC';
 import { PermissionGate } from '@/components/PermissionGate';

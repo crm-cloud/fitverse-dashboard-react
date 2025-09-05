@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Calendar, 
@@ -22,10 +25,47 @@ import {
 
 export const SuperAdminDashboard = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isCheckingServer, setIsCheckingServer] = useState(false);
-  const [isManagingUsers, setIsManagingUsers] = useState(false);
-  const [isViewingAnalytics, setIsViewingAnalytics] = useState(false);
+  
+  // Fetch real data from database
+  const { data: branches } = useSupabaseQuery(
+    ['branches'],
+    async () => {
+      const { data, error } = await supabase.from('branches').select('*');
+      if (error) throw error;
+      return data;
+    }
+  );
+
+  const { data: users } = useSupabaseQuery(
+    ['profiles'],
+    async () => {
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (error) throw error;
+      return data;
+    }
+  );
+
+  const { data: memberships } = useSupabaseQuery(
+    ['member_memberships'],
+    async () => {
+      const { data, error } = await supabase
+        .from('member_memberships')
+        .select('*, membership_plans(*)')
+        .eq('status', 'active');
+      if (error) throw error;
+      return data;
+    }
+  );
+
+  // Calculate metrics
+  const totalBranches = branches?.length || 0;
+  const activeBranches = branches?.filter(b => b.status === 'active').length || 0;
+  const totalUsers = users?.length || 0;
+  const activeUsers = users?.filter(u => u.is_active).length || 0;
+  const totalRevenue = memberships?.reduce((sum, m) => sum + (m.payment_amount || 0), 0) || 0;
 
   const handleBackup = async () => {
     try {
@@ -70,15 +110,11 @@ export const SuperAdminDashboard = () => {
   };
 
   const handleUserRoles = () => {
-    setIsManagingUsers(true);
-    // In a real app, this would navigate to the user management page
-    window.location.href = '/users';
+    navigate('/users');
   };
 
   const handleAnalytics = () => {
-    setIsViewingAnalytics(true);
-    // In a real app, this would navigate to the analytics page
-    window.location.href = '/analytics';
+    navigate('/analytics');
   };
 
   return (
@@ -108,11 +144,11 @@ export const SuperAdminDashboard = () => {
           <CardTitle className="text-sm font-medium text-white/90">Total Branches</CardTitle>
           <div className="flex items-center gap-2">
             <Database className="w-4 h-4" />
-            <span className="text-2xl font-bold">12</span>
+            <span className="text-2xl font-bold">{totalBranches}</span>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-white/70">3 new this quarter</p>
+          <p className="text-xs text-white/70">{activeBranches} active branches</p>
         </CardContent>
       </Card>
       
@@ -121,11 +157,11 @@ export const SuperAdminDashboard = () => {
           <CardTitle className="text-sm font-medium text-white/90">Global Revenue</CardTitle>
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4" />
-            <span className="text-2xl font-bold">$2.4M</span>
+            <span className="text-2xl font-bold">${totalRevenue.toLocaleString()}</span>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-white/70">+15% from last month</p>
+          <p className="text-xs text-white/70">From active memberships</p>
         </CardContent>
       </Card>
       
@@ -134,11 +170,11 @@ export const SuperAdminDashboard = () => {
           <CardTitle className="text-sm font-medium text-muted-foreground">Active Users</CardTitle>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-success" />
-            <span className="text-2xl font-bold text-foreground">5,247</span>
+            <span className="text-2xl font-bold text-foreground">{activeUsers.toLocaleString()}</span>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-muted-foreground">Across all branches</p>
+          <p className="text-xs text-muted-foreground">{totalUsers} total users</p>
         </CardContent>
       </Card>
     </div>
@@ -189,28 +225,18 @@ export const SuperAdminDashboard = () => {
             <Button 
               variant="outline" 
               onClick={handleUserRoles}
-              disabled={isManagingUsers}
               className="h-20 flex flex-col gap-2"
             >
-              {isManagingUsers ? (
-                <Loader2 className="w-6 h-6 animate-spin" />
-              ) : (
-                <Users className="w-6 h-6" />
-              )}
+              <Users className="w-6 h-6" />
               <span className="text-sm">User Roles</span>
             </Button>
             
             <Button 
               variant="outline" 
               onClick={handleAnalytics}
-              disabled={isViewingAnalytics}
               className="h-20 flex flex-col gap-2"
             >
-              {isViewingAnalytics ? (
-                <Loader2 className="w-6 h-6 animate-spin" />
-              ) : (
-                <TrendingUp className="w-6 h-6" />
-              )}
+              <TrendingUp className="w-6 h-6" />
               <span className="text-sm">Analytics</span>
             </Button>
           </div>

@@ -9,7 +9,6 @@ import { RBACProvider } from "@/hooks/useRBAC";
 import { BranchContextProvider } from "@/hooks/useBranchContext";
 import { CartProvider } from "@/hooks/useCart";
 import { ThemeProvider } from "@/hooks/useTheme";
-import { BranchProvider } from "@/hooks/useBranches";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PermissionGate } from "@/components/PermissionGate";
 import { RouteGuard } from "@/components/RouteGuard";
@@ -106,12 +105,11 @@ const App = () => (
         <AuthProvider>
           <RBACProvider>
             <BranchContextProvider>
-              <BranchProvider>
-                <CartProvider>
-                  <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
+              <CartProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
                       <Routes>
                         <Route path="/" element={<PublicHome />} />
                         <Route path="/login" element={<Login />} />
@@ -839,12 +837,11 @@ const App = () => (
                   </BrowserRouter>
                 </TooltipProvider>
               </CartProvider>
-            </BranchProvider>
-          </BranchContextProvider>
-        </RBACProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+            </BranchContextProvider>
+          </RBACProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   </ErrorBoundary>
 );
 

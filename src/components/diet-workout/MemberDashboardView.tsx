@@ -17,7 +17,7 @@ import {
   Heart,
   Zap
 } from 'lucide-react';
-import { mockPlanAssignments, mockAIInsights } from '@/mock/diet-workout';
+import { mockPlanAssignments, mockAIInsights } from '@/utils/mockData';
 
 interface MemberDashboardViewProps {
   memberId: string;

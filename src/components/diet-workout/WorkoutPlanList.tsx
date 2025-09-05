@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, Dumbbell, Clock, Users, Star, Timer } from 'lucide-react';
-import { mockWorkoutPlans } from '@/mock/diet-workout';
+import { mockWorkoutPlans } from '@/utils/mockData';
 
 interface WorkoutPlanListProps {
   canCreate: boolean;

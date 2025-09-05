@@ -7,13 +7,13 @@ import { Switch } from '@/components/ui/switch';
 import { DataTable } from '@/components/ui/data-table';
 import { DeviceForm } from './DeviceForm';
 import { DeviceSettingsDialog } from './DeviceSettingsDialog';
-import { mockBiometricDevices } from '@/mock/attendance';
+const [devices, setDevices] = useState<BiometricDevice[]>([]);
 import { BiometricDevice } from '@/types/attendance';
 import { toast } from '@/hooks/use-toast';
 import { PermissionGate } from '@/components/PermissionGate';
 
 export const DeviceManagement = () => {
-  const [devices, setDevices] = useState<BiometricDevice[]>(mockBiometricDevices);
+  const [devices, setDevices] = useState<BiometricDevice[]>([]);
   const [showDeviceForm, setShowDeviceForm] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<BiometricDevice | null>(null);

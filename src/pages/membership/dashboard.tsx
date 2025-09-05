@@ -1,12 +1,11 @@
 import { MemberDashboard } from '@/components/membership/MemberDashboard';
 import { useAuth } from '@/hooks/useAuth';
-import { mockMembers } from '@/mock/members';
 
 export const MemberDashboardPage = () => {
   const { authState } = useAuth();
   
-  // Find member data based on logged in user
-  const member = mockMembers.find(m => m.email === authState.user?.email);
+  // Find member data based on logged in user  
+  const member = { id: authState.user?.id, fullName: authState.user?.email || 'Member', profilePhoto: null };
 
   if (!member) {
     return (

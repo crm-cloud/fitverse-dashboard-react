@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { GymClass, ClassTag } from '@/types/class';
-import { classTagLabels } from '@/mock/classes';
+import { classTagLabels } from '@/hooks/useClasses';
 import { useRBAC } from '@/hooks/useRBAC';
 
 interface ClassCardProps {
