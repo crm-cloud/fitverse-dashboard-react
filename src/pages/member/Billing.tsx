@@ -6,8 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { mockMembers } from '@/mock/members';
-import { mockMembershipAssignments, mockInvoices, mockPayments } from '@/mock/membership';
+import { mockMembers, mockMembershipAssignments, mockInvoices, mockPayments } from '@/utils/mockData';
 import { format } from 'date-fns';
 import { PaymentStatus } from '@/types/membership';
 

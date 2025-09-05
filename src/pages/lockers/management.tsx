@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Key, BarChart3, Users, AlertTriangle } from 'lucide-react';
 import { Locker, LockerFilters as LockerFiltersType } from '@/types/locker';
-import { mockLockers, mockLockerSummary, mockLockerAssignments } from '@/mock/lockers';
+import { mockLockers, mockLockerSummary, mockLockerAssignments } from '@/utils/mockData';
 import { LockerCard } from '@/components/lockers/LockerCard';
 import { LockerFilters } from '@/components/lockers/LockerFilters';
 import { LockerForm } from '@/components/lockers/LockerForm';

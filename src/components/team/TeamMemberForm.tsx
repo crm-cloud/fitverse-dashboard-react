@@ -66,7 +66,7 @@ export const TeamMemberForm = ({ open, onOpenChange, member, onSubmit }: TeamMem
       name: member?.name || '',
       email: member?.email || '',
       phone: member?.phone || '',
-      role: member?.role || 'staff',
+      role: (member?.role as "manager" | "trainer" | "staff") || 'staff',
       branchId: member?.branchId || (authState.user?.role !== 'admin' ? branches[0]?.id || '' : ''),
       status: member?.status || 'active',
       avatar: member?.avatar || '',

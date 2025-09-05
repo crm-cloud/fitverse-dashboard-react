@@ -16,7 +16,7 @@ import {
   Calendar,
   Filter
 } from 'lucide-react';
-import { mockFinancialSummary, mockMonthlyData, mockTransactions } from '@/mock/finance';
+import { mockFinancialSummary, mockMonthlyData, mockTransactions } from '@/utils/mockData';
 import { MonthlyTrendChart } from '@/components/finance/MonthlyTrendChart';
 import { CategoryBreakdownChart } from '@/components/finance/CategoryBreakdownChart';
 import { useToast } from '@/hooks/use-toast';

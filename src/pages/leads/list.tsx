@@ -10,7 +10,7 @@ import { PermissionGate } from '@/components/PermissionGate';
 import { useToast } from '@/hooks/use-toast';
 import { Lead, LeadFilters as LeadFiltersType } from '@/types/lead';
 import { MemberFormData } from '@/types/member';
-import { mockLeads, mockLeadStats } from '@/mock/leads';
+import { mockLeads, mockLeadStats } from '@/utils/mockData';
 import { processLeadConversion } from '@/utils/leadConversion';
 
 export const LeadListPage = () => {

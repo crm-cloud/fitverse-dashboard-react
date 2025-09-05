@@ -8,8 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Plus, Star, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { mockFeedback, mockFeedbackStats } from '@/mock/feedback';
-import { mockMembers } from '@/mock/members';
+import { mockFeedback, mockFeedbackStats, mockMembers } from '@/utils/mockData';
 
 export const MemberFeedbackPage = () => {
   const { authState } = useAuth();

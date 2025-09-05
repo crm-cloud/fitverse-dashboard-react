@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useRBAC } from '@/hooks/useRBAC';
 import { useToast } from '@/hooks/use-toast';
-import { mockFeedback, mockFeedbackStats } from '@/mock/feedback';
+import { mockFeedback, mockFeedbackStats } from '@/utils/mockData';
 import { Feedback } from '@/types/feedback';
 import { PermissionGate } from '@/components/PermissionGate';
 

@@ -143,5 +143,12 @@ export interface LockerSize {
   monthlyFee: number;
 }
 
+// Add missing mock exports
+export const mockFeedbackStats: any = {};
+export const mockLeadStats: any = {};
+export const mockLockerSummary: any = {};
+export const mockLockerAssignments: any[] = [];
+export const mockPayments: any[] = [];
+
 // Add more exports as needed for remaining components
 export const placeholderData = 'Replace with actual database queries';

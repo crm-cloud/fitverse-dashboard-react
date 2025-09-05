@@ -14,7 +14,7 @@ import {
   FileText,
   CreditCard
 } from 'lucide-react';
-import { mockFinancialSummary, mockMonthlyData, mockTransactions } from '@/mock/finance';
+import { mockFinancialSummary, mockMonthlyData, mockTransactions } from '@/utils/mockData';
 import { FinanceOverviewCards } from '@/components/finance/FinanceOverviewCards';
 import { MonthlyTrendChart } from '@/components/finance/MonthlyTrendChart';
 import { CategoryBreakdownChart } from '@/components/finance/CategoryBreakdownChart';

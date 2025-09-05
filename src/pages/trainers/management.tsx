@@ -9,7 +9,7 @@ import { NotificationCenter } from '@/components/trainer/NotificationCenter';
 import { TrainerBookingInterface } from '@/components/trainer/TrainerBookingInterface';
 import { TrainerDashboard } from '@/components/trainer/TrainerDashboard';
 import { TrainerUtilizationDashboard } from '@/components/trainer/TrainerUtilizationDashboard';
-import { enhancedTrainers } from '@/mock/enhanced-trainers';
+import { enhancedTrainers } from '@/utils/mockData';
 import { 
   Settings, 
   Bell, 
