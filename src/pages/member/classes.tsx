@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
 import { ClassCard } from '@/components/classes/ClassCard';
-import { mockClasses, mockClassEnrollments } from '@/mock/classes';
+import { mockClasses, mockMembers, mockClassEnrollments } from '@/utils/mockData';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { mockMembers } from '@/mock/members';
 
 export const MemberClassesPage = () => {
   const { authState } = useAuth();

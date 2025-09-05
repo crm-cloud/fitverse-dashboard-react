@@ -13,7 +13,7 @@ import {
   mockAttendanceRecords, 
   mockAttendanceSummary, 
   generateMockAttendanceRecords 
-} from '@/mock/attendance';
+} from '@/utils/mockData';
 import { toast } from '@/hooks/use-toast';
 
 export const AttendanceDashboard = () => {

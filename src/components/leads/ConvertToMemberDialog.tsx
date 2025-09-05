@@ -26,8 +26,8 @@ import { cn } from '@/lib/utils';
 import { Lead } from '@/types/lead';
 import { MemberFormData, Gender, GovernmentIdType } from '@/types/member';
 import { MembershipPlan } from '@/types/membership';
+import { mockMembershipPlans, mockMembers } from '@/utils/mockData';
 import { useBranches } from '@/hooks/useBranches';
-import { useMembershipPlans } from '@/hooks/useSupabaseQuery';
 import { useToast } from '@/hooks/use-toast';
 
 const conversionSchema = z.object({
@@ -98,6 +98,8 @@ export const ConvertToMemberDialog = ({
 }: ConvertToMemberDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { branches } = useBranches();
+  const membershipPlans = mockMembershipPlans;
 
   const form = useForm<z.infer<typeof conversionSchema>>({
     resolver: zodResolver(conversionSchema),

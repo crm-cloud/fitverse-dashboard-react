@@ -9,8 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTrainerUtilization } from '@/hooks/useTrainerUtilization';
 import { useBranchContext } from '@/hooks/useBranchContext';
-import { mockTrainers } from '@/mock/trainers';
-import { mockTrainerUtilization } from '@/mock/trainer-utilization';
+import { mockTrainers, mockTrainerUtilization } from '@/utils/mockData';
 import { 
   BarChart3, 
   TrendingUp, 

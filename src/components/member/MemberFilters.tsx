@@ -17,6 +17,8 @@ const membershipStatusOptions: { value: MembershipStatus; label: string }[] = [
 ];
 
 export const MemberFiltersComponent = ({ filters, onFiltersChange }: MemberFiltersProps) => {
+  const { branches } = useBranches();
+  
   const updateFilter = (key: keyof MemberFilters, value: string | undefined) => {
     onFiltersChange({
       ...filters,

@@ -10,8 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { mockTrainerAssignments } from '@/mock/trainer-assignments';
-import { mockTrainers } from '@/mock/trainers';
+import { mockTrainerAssignments, mockTrainers } from '@/utils/mockData';
 import { 
   Calendar as CalendarIcon,
   Clock,

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Search, ShoppingBag } from 'lucide-react';
-import { mockProducts } from '@/mock/products';
+import { mockProducts } from '@/utils/mockData';
 import { ProductCard } from '@/components/store/ProductCard';
 import { ShoppingCartSheet } from '@/components/store/ShoppingCart';
 import { CheckoutDialog } from '@/components/store/CheckoutDialog';

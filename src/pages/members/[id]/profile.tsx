@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MemberProfileCard } from '@/components/member/MemberProfileCard';
-import { mockMembers } from '@/mock/members';
+import { mockMembers } from '@/utils/mockData';
 import { useRBAC } from '@/hooks/useRBAC';
 
 export const MemberProfilePage = () => {

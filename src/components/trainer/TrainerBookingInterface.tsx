@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { TrainerCard } from './TrainerCard';
-import { enhancedTrainers } from '@/mock/enhanced-trainers';
+import { enhancedTrainers } from '@/utils/mockData';
 import { TrainerSpecialty } from '@/types/trainer';
 import { 
   Calendar as CalendarIcon,

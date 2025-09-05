@@ -6,7 +6,7 @@ import { TeamMemberForm } from '@/components/team/TeamMemberForm';
 import { TeamMemberTable } from '@/components/team/TeamMemberTable';
 import { TeamFiltersComponent, TeamFilters } from '@/components/team/TeamFilters';
 import { PermissionGate } from '@/components/PermissionGate';
-import { mockTeamMembers, TeamMember } from '@/mock/teams';
+import { mockTeamMembers, TeamMember } from '@/utils/mockData';
 import { useAuth } from '@/hooks/useAuth';
 import { useBranches } from '@/hooks/useBranches';
 import { useRBAC } from '@/hooks/useRBAC';

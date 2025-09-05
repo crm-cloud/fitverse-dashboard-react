@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { mockMembers } from '@/mock/members';
+import { mockMembers } from '@/utils/mockData';
 
 export const MemberProfileSettings = () => {
   const navigate = useNavigate();

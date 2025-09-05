@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { mockMembershipAssignments, mockInvoices } from '@/mock/membership';
+import { mockMembershipAssignments, mockInvoices } from '@/utils/mockData';
 import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
 import { MembershipFormData } from '@/types/membership';
 import { useToast } from '@/hooks/use-toast';

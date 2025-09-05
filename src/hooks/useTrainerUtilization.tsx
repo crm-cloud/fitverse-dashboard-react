@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { TrainerProfile, TrainerAssignment } from '@/types/trainer';
 import { TrainerUtilizationMetrics, TrainerUtilizationTracker, UtilizationConfig } from '@/utils/trainerUtilization';
-import { mockTrainers } from '@/mock/trainers';
+import { mockTrainers } from '@/utils/mockData';
 
 const DEFAULT_UTILIZATION_CONFIG: UtilizationConfig = {
   maxDailySessions: 8,

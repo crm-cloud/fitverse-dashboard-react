@@ -128,7 +128,7 @@ export const EarningsTracker = ({ trainerId }: EarningsTrackerProps) => {
   const paymentMethodData = Object.entries(paymentMethods).map(([method, amount]) => ({
     name: method.replace('_', ' ').toUpperCase(),
     value: amount,
-    percentage: (amount / totalEarnings * 100).toFixed(1)
+    percentage: ((Number(amount) / Number(totalEarnings)) * 100).toFixed(1)
   }));
 
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088fe'];
@@ -433,7 +433,7 @@ export const EarningsTracker = ({ trainerId }: EarningsTrackerProps) => {
                       <span className="font-medium">{method.name}</span>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">{formatCurrency(method.value)}</div>
+                      <div className="font-bold">{formatCurrency(Number(method.value) || 0)}</div>
                       <div className="text-sm text-muted-foreground">{method.percentage}%</div>
                     </div>
                   </div>

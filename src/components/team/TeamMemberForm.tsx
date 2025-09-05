@@ -32,7 +32,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBranches } from '@/hooks/useBranches';
 import { useRBAC } from '@/hooks/useRBAC';
 import { useToast } from '@/hooks/use-toast';
-import { TeamMember, getTeamMemberByEmail } from '@/mock/teams';
+import { TeamMember, getTeamMemberByEmail } from '@/utils/mockData';
 
 const teamMemberSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),

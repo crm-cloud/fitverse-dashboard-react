@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MoreHorizontal, Eye, Edit, UserX, Key } from 'lucide-react';
 import { format } from 'date-fns';
-import { TeamMember } from '@/mock/teams';
+import { TeamMember } from '@/utils/mockData';
 import { useRBAC } from '@/hooks/useRBAC';
 import { PermissionGate } from '@/components/PermissionGate';
 

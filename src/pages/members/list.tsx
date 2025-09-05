@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MemberFiltersComponent } from '@/components/member/MemberFilters';
 import { MemberTable } from '@/components/member/MemberTable';
 import { MemberFilters } from '@/types/member';
-import { mockMembers } from '@/mock/members';
+import { mockMembers } from '@/utils/mockData';
 import { useRBAC } from '@/hooks/useRBAC';
 
 const ITEMS_PER_PAGE = 10;

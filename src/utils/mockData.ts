@@ -41,3 +41,107 @@ export const classTagLabels: any = {};
 // Mock attendance data  
 export const mockAttendanceSummary: any = {};
 export const mockAttendanceData: any[] = [];
+
+// Add missing exports to mockData
+export const mockMembershipAssignments: any[] = [];
+export const mockOrders: any[] = [];
+export const mockClassEnrollments: any[] = [];
+export const mockMemberships: any[] = [];
+export const mockPaymentHistory: any[] = [];
+export const mockFinanceCategories: any[] = [];
+export const mockFinancialSummary: any = {};
+
+export const generateMockAttendanceRecords = (count: number) => [];
+
+// Team Member types and utilities
+export enum TeamMemberRole {
+  ADMIN = 'admin',
+  MANAGER = 'manager', 
+  TRAINER = 'trainer',
+  RECEPTIONIST = 'receptionist',
+  CLEANER = 'cleaner',
+  MAINTENANCE = 'maintenance'
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: TeamMemberRole;
+  department?: string;
+  status: 'active' | 'inactive';
+  avatar?: string;
+  branchName: string;
+  branchId: string;
+  createdAt: Date;
+  lastLogin?: Date;
+}
+
+export const getTeamMemberByEmail = (email: string): TeamMember | undefined => {
+  return mockTeamMembers.find(member => member.email === email);
+};
+
+export const enhancedTrainers = mockEnhancedTrainers;
+
+// Export enums and types
+export enum FeedbackType {
+  GENERAL = 'general',
+  TRAINER = 'trainer',
+  EQUIPMENT = 'equipment',
+  FACILITY = 'facility',
+  CLASS = 'class'
+}
+
+export enum FeedbackStatus {
+  PENDING = 'pending',
+  IN_PROGRESS = 'in-progress',
+  RESOLVED = 'resolved',
+  CLOSED = 'closed'
+}
+
+export enum FeedbackPriority {
+  LOW = 'low',
+  MEDIUM = 'medium', 
+  HIGH = 'high',
+  URGENT = 'urgent'
+}
+
+export enum LeadStatus {
+  NEW = 'new',
+  CONTACTED = 'contacted',
+  QUALIFIED = 'qualified',
+  CONVERTED = 'converted',
+  LOST = 'lost'
+}
+
+export enum LeadSource {
+  WEBSITE = 'website',
+  REFERRAL = 'referral',
+  SOCIAL_MEDIA = 'social-media',
+  WALK_IN = 'walk-in',
+  ADVERTISEMENT = 'advertisement'
+}
+
+export enum LeadPriority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high'
+}
+
+export enum LockerStatus {
+  AVAILABLE = 'available',
+  OCCUPIED = 'occupied',
+  MAINTENANCE = 'maintenance',
+  OUT_OF_ORDER = 'out-of-order'
+}
+
+export interface LockerSize {
+  id: string;
+  name: string;
+  dimensions: string;
+  monthlyFee: number;
+}
+
+// Add more exports as needed for remaining components
+export const placeholderData = 'Replace with actual database queries';

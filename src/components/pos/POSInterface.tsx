@@ -10,8 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Search, Plus, Minus, Trash2, CreditCard, Banknote, Smartphone, User, Receipt } from 'lucide-react';
-import { mockProducts, mockOrders } from '@/mock/products';
-import { mockMembers } from '@/mock/members';
+import { mockProducts, mockOrders, mockMembers } from '@/utils/mockData';
 import { Product, CartItem, PaymentMethod, Order } from '@/types/product';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';

@@ -7,8 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { ClassCard } from '@/components/classes/ClassCard';
 import { ClassFilters } from '@/types/class';
-import { mockClasses, mockClassEnrollments } from '@/mock/classes';
-import { mockBranches, mockTrainers } from '@/mock/members';
+import { mockClasses, mockClassEnrollments, mockBranches, mockTrainers } from '@/utils/mockData';
 import { useRBAC } from '@/hooks/useRBAC';
 import { useToast } from '@/hooks/use-toast';
 

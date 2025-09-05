@@ -8,8 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { mockMembers } from '@/mock/members';
-import { mockTrainers } from '@/mock/trainers';
+import { mockMembers, mockTrainers } from '@/utils/mockData';
 import { format } from 'date-fns';
 
 interface TrainerChangeRequest {

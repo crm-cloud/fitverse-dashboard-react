@@ -8,8 +8,7 @@ import { TrainerSchedule } from './TrainerSchedule';
 import { ClientManagement } from './ClientManagement';
 import { EarningsTracker } from './EarningsTracker';
 import { useToast } from '@/hooks/use-toast';
-import { mockTrainers } from '@/mock/trainers';
-import { mockTrainerAssignments } from '@/mock/trainer-assignments';
+import { mockTrainers, mockTrainerAssignments } from '@/utils/mockData';
 import { 
   Calendar,
   Users,

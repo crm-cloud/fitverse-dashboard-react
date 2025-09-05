@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
-import { mockProducts } from '@/mock/products';
+import { mockProducts } from '@/utils/mockData';
 import { Product, ProductCategory } from '@/types/product';
 import { useToast } from '@/hooks/use-toast';
 
