@@ -29,7 +29,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
-    isLoading: true
+    isLoading: true,
+    error: null
   });
 
   useEffect(() => {
@@ -44,13 +45,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setAuthState({
             user: userData,
             isAuthenticated: true,
-            isLoading: false
+            isLoading: false,
+            error: null
           });
         } else {
           setAuthState({
             user: null,
             isAuthenticated: false,
-            isLoading: false
+            isLoading: false,
+            error: null
           });
         }
       } catch (error) {
@@ -58,7 +61,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAuthState({
           user: null,
           isAuthenticated: false,
-          isLoading: false
+          isLoading: false,
+          error: error.message
         });
       }
     };
@@ -73,13 +77,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setAuthState({
             user: userData,
             isAuthenticated: true,
-            isLoading: false
+            isLoading: false,
+            error: null
           });
         } else if (event === 'SIGNED_OUT') {
           setAuthState({
             user: null,
             isAuthenticated: false,
-            isLoading: false
+            isLoading: false,
+            error: null
           });
         }
       }
@@ -173,7 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
-    setAuthState(prev => ({ ...prev, isLoading: true }));
+    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -181,31 +187,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password: credentials.password
       });
 
-      if (error) throw error;
-
-      if (data.user) {
-        const userData = await fetchUserProfile(data.user.id);
-        setAuthState({
-          user: userData,
-          isAuthenticated: true,
-          isLoading: false
-        });
-        
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
-        });
+      if (error) {
+        throw error;
       }
+
+      if (!data?.user) {
+        throw new Error('No user data received');
+      }
+
+      const userData = await fetchUserProfile(data.user.id);
+      
+      if (!userData) {
+        throw new Error('Failed to load user profile');
+      }
+
+      setAuthState({
+        user: userData,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
+      });
+      
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
     } catch (error: any) {
+      const errorMessage = error.message || 'Login failed';
+      
       setAuthState({
         user: null,
         isAuthenticated: false,
-        isLoading: false
+        isLoading: false,
+        error: errorMessage
       });
       
       toast({
         title: "Login failed",
-        description: error.message || "Invalid credentials",
+        description: errorMessage,
         variant: "destructive"
       });
       

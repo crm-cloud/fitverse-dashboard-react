@@ -14,6 +14,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Redirect if already authenticated
   if (authState.isAuthenticated) {
@@ -23,12 +24,13 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
     
     try {
       await login({ email, password });
-    } catch (error) {
-      // Error is handled by the auth hook
+    } catch (error: any) {
+      setError(error.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }
@@ -47,6 +49,16 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+          {authState.error && !error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {authState.error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
