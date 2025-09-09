@@ -70,38 +70,60 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PermissionGate } from '@/components/PermissionGate';
-import { mockUsersWithRoles } from '@/hooks/useRBAC';
-import { UserWithRoles } from '@/types/rbac';
+import { useProfiles } from '@/hooks/useProfiles';
 import { useToast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function UserManagement() {
-  const [users] = useState<UserWithRoles[]>(Object.values(mockUsersWithRoles));
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const { toast } = useToast();
+  const { data: profiles, isLoading } = useProfiles();
+  
+  const users = profiles || [];
 
-  const handleEditUser = (user: UserWithRoles) => {
-    // In a real app, you would navigate to an edit page or open a modal
-    // For now, we'll show a toast notification
-    toast({
-      title: 'Edit User',
-      description: `Opening editor for ${user.name}`,
-      variant: 'default',
-    });
-    
-    // Example of how you might navigate to an edit page:
-    // navigate(`/users/${user.id}/edit`);
+  const handleEditUser = (user: any) => {
+    navigate(`/users/${user.user_id}/edit`);
+  };
+
+  const handleDeleteUser = async (user: any) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: false })
+        .eq('user_id', user.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `User ${user.full_name} has been deactivated`,
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to deactivate user',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleViewDetails = (user: any) => {
+    navigate(`/users/${user.user_id}/profile`);
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === 'all' || user.roles.some(role => role.id === selectedRole);
+    const matchesSearch = user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
     return matchesSearch && matchesRole;
   });
 
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
   };
 
   const getRoleIcon = (roleId: string) => {
@@ -182,7 +204,7 @@ export default function UserManagement() {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.length}</div>
+            <div className="text-2xl font-bold">{isLoading ? '...' : users.length}</div>
             <p className="text-xs text-muted-foreground">+2 from last month</p>
           </CardContent>
         </Card>
@@ -192,7 +214,7 @@ export default function UserManagement() {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.isActive).length}</div>
+            <div className="text-2xl font-bold">{isLoading ? '...' : users.filter(u => u.is_active).length}</div>
             <p className="text-xs text-muted-foreground">98% active rate</p>
           </CardContent>
         </Card>
@@ -203,7 +225,7 @@ export default function UserManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter(u => u.roles.some(r => r.id === 'admin' || r.id === 'super-admin')).length}
+              {isLoading ? '...' : users.filter(u => u.role === 'admin' || u.role === 'super-admin').length}
             </div>
             <p className="text-xs text-muted-foreground">System admins</p>
           </CardContent>
@@ -260,58 +282,58 @@ export default function UserManagement() {
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.user_id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                          <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                          <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{user.name}</div>
+                          <div className="font-medium">{user.full_name}</div>
                           <div className="text-sm text-muted-foreground">{user.email}</div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.roles.map(role => (
-                          <Badge 
-                            key={role.id} 
-                            variant={getRoleColor(role.id) as any}
-                            className="inline-flex items-center"
-                          >
-                            {getRoleIcon(role.id)}
-                            {role.name}
-                          </Badge>
-                        ))}
-                      </div>
+                      <Badge 
+                        variant={getRoleColor(user.role) as any}
+                        className="inline-flex items-center"
+                      >
+                        {getRoleIcon(user.role)}
+                        {user.role}
+                      </Badge>
+                      {user.team_role && (
+                        <Badge variant="outline" className="ml-2">
+                          {user.team_role}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
-                      {user.assignedBranches?.includes('all') ? (
+                      {user.role === 'super-admin' || user.role === 'admin' ? (
                         <Badge variant="outline" className="text-xs">
                           All Branches
                         </Badge>
-                      ) : user.branchName ? (
-                        <div className="text-sm">{user.branchName}</div>
+                      ) : user.branches?.name ? (
+                        <div className="text-sm">{user.branches.name}</div>
                       ) : (
                         <Badge variant="secondary" className="text-xs">
                           Not Assigned
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>{user.department}</TableCell>
+                    <TableCell>{user.department || 'Not specified'}</TableCell>
                     <TableCell>
-                      <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                        {user.isActive ? 'Active' : 'Inactive'}
+                      <Badge variant={user.is_active ? 'default' : 'secondary'}>
+                        {user.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {user.lastLogin ? (
+                      {user.last_login_at ? (
                         <div className="text-sm">
-                          {user.lastLogin.toLocaleDateString()}
+                          {new Date(user.last_login_at).toLocaleDateString()}
                           <div className="text-xs text-muted-foreground">
-                            {user.lastLogin.toLocaleTimeString()}
+                            {new Date(user.last_login_at).toLocaleTimeString()}
                           </div>
                         </div>
                       ) : (
@@ -327,6 +349,10 @@ export default function UserManagement() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                            <User className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
                           <PermissionGate permission="users.edit">
                             <DropdownMenuItem onClick={() => handleEditUser(user)}>
                               <Edit className="mr-2 h-4 w-4" />
@@ -335,9 +361,12 @@ export default function UserManagement() {
                           </PermissionGate>
                           <DropdownMenuSeparator />
                           <PermissionGate permission="users.delete">
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => handleDeleteUser(user)}
+                            >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete User
+                              Deactivate User
                             </DropdownMenuItem>
                           </PermissionGate>
                         </DropdownMenuContent>

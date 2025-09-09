@@ -1,5 +1,8 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useBranches } from '@/hooks/useBranches';
+import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,9 +28,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export default function BranchManagement() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const { data: branches = [], isLoading } = useBranches();
 
-  const branches = [
+  const mockBranches = [
     {
       id: 'branch_1',
       name: 'Downtown Branch',
@@ -72,11 +78,26 @@ export default function BranchManagement() {
     }
   ];
 
-  const filteredBranches = branches.filter(branch =>
-    branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    branch.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    branch.manager.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Use real branches if available, otherwise fall back to mock data
+  const displayBranches = branches.length > 0 ? branches : mockBranches;
+  
+  const filteredBranches = displayBranches.filter(branch => {
+    const name = branch.name?.toLowerCase() || '';
+    const address = branch.address?.city?.toLowerCase() || '';
+    return name.includes(searchQuery.toLowerCase()) || address.includes(searchQuery.toLowerCase());
+  });
+
+  const handleEditBranch = (branch: any) => {
+    navigate(`/branches/${branch.id}/edit`);
+  };
+
+  const handleViewDetails = (branch: any) => {
+    navigate(`/branches/${branch.id}/details`);
+  };
+
+  const handleManageStaff = (branch: any) => {
+    navigate(`/branches/${branch.id}/staff`);
+  };
 
   return (
     <div className="space-y-6">
@@ -97,7 +118,7 @@ export default function BranchManagement() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Branches</CardTitle>
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-primary" />
-              <span className="text-2xl font-bold text-foreground">{branches.length}</span>
+              <span className="text-2xl font-bold text-foreground">{isLoading ? '...' : displayBranches.length}</span>
             </div>
           </CardHeader>
           <CardContent>
@@ -111,7 +132,7 @@ export default function BranchManagement() {
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-secondary" />
               <span className="text-2xl font-bold text-foreground">
-                {branches.reduce((sum, branch) => sum + branch.members, 0)}
+                {isLoading ? '...' : displayBranches.reduce((sum, branch) => sum + (branch.current_members || branch.members || 0), 0)}
               </span>
             </div>
           </CardHeader>
@@ -126,7 +147,7 @@ export default function BranchManagement() {
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-accent" />
               <span className="text-2xl font-bold text-foreground">
-                {branches.reduce((sum, branch) => sum + branch.staff, 0)}
+                {isLoading ? '...' : displayBranches.reduce((sum, branch) => sum + (branch.staff || 0), 0)}
               </span>
             </div>
           </CardHeader>
@@ -191,51 +212,65 @@ export default function BranchManagement() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditBranch(branch)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit Branch
                         </DropdownMenuItem>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Manage Staff</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewDetails(branch)}>
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleManageStaff(branch)}>
+                          Manage Staff
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2 text-sm">
-                    <p className="text-muted-foreground">{branch.address}</p>
+                    <p className="text-muted-foreground">
+                      {typeof branch.address === 'string' ? branch.address : 
+                       branch.address?.street ? `${branch.address.street}, ${branch.address.city}, ${branch.address.state}` : 
+                       'Address not available'}
+                    </p>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Phone className="w-3 h-3" />
-                      {branch.phone}
+                      {typeof branch.contact === 'string' ? branch.contact : 
+                       branch.contact?.phone || branch.phone || 'Phone not available'}
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Mail className="w-3 h-3" />
-                      {branch.email}
+                      {typeof branch.contact === 'string' ? branch.contact : 
+                       branch.contact?.email || branch.email || 'Email not available'}
                     </div>
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Manager</span>
-                      <span className="text-sm font-medium">{branch.manager}</span>
+                      <span className="text-sm font-medium">{branch.manager || branch.manager_id || 'Not assigned'}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Members</span>
-                      <Badge variant="secondary">{branch.members}</Badge>
+                      <Badge variant="secondary">{branch.current_members || branch.members || 0}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Staff</span>
-                      <Badge variant="outline">{branch.staff}</Badge>
+                      <span className="text-sm text-muted-foreground">Capacity</span>
+                      <Badge variant="outline">{branch.capacity || 'Not set'}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Revenue</span>
-                      <span className="text-sm font-medium text-green-600">{branch.revenue}</span>
+                      <span className="text-sm text-muted-foreground">Status</span>
+                      <Badge variant={branch.status === 'active' ? 'default' : 'secondary'}>
+                        {branch.status || 'Unknown'}
+                      </Badge>
                     </div>
                   </div>
                   
                   <div className="flex justify-between items-center pt-2">
                     <Badge variant="secondary">{branch.status}</Badge>
-                    <Button size="sm" variant="outline">View Details</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleViewDetails(branch)}>
+                      View Details
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
