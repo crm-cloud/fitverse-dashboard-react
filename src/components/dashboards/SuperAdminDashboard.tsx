@@ -30,7 +30,7 @@ export const SuperAdminDashboard = () => {
   const [isCheckingServer, setIsCheckingServer] = useState(false);
   
   // Fetch real data from database
-  const { data: branches } = useSupabaseQuery(
+  const { data: branches, isLoading: branchesLoading } = useSupabaseQuery(
     ['branches'],
     async () => {
       const { data, error } = await supabase.from('branches').select('*');
@@ -39,7 +39,7 @@ export const SuperAdminDashboard = () => {
     }
   );
 
-  const { data: users } = useSupabaseQuery(
+  const { data: users, isLoading: usersLoading } = useSupabaseQuery(
     ['profiles'],
     async () => {
       const { data, error } = await supabase.from('profiles').select('*');
@@ -48,7 +48,7 @@ export const SuperAdminDashboard = () => {
     }
   );
 
-  const { data: memberships } = useSupabaseQuery(
+  const { data: memberships, isLoading: membershipsLoading } = useSupabaseQuery(
     ['member_memberships'],
     async () => {
       const { data, error } = await supabase
@@ -60,12 +60,38 @@ export const SuperAdminDashboard = () => {
     }
   );
 
+  const { data: leads, isLoading: leadsLoading } = useSupabaseQuery(
+    ['leads'],
+    async () => {
+      const { data, error } = await supabase.from('leads').select('*');
+      if (error) throw error;
+      return data;
+    }
+  );
+
+  const { data: membershipPlans, isLoading: plansLoading } = useSupabaseQuery(
+    ['membership_plans'],
+    async () => {
+      const { data, error } = await supabase
+        .from('membership_plans')
+        .select('*')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data;
+    }
+  );
+
   // Calculate metrics
   const totalBranches = branches?.length || 0;
   const activeBranches = branches?.filter(b => b.status === 'active').length || 0;
   const totalUsers = users?.length || 0;
   const activeUsers = users?.filter(u => u.is_active).length || 0;
   const totalRevenue = memberships?.reduce((sum, m) => sum + (m.payment_amount || 0), 0) || 0;
+  const totalLeads = leads?.length || 0;
+  const newLeads = leads?.filter(l => l.status === 'new').length || 0;
+  const totalPlans = membershipPlans?.length || 0;
+  
+  const isLoading = branchesLoading || usersLoading || membershipsLoading || leadsLoading || plansLoading;
 
   const handleBackup = async () => {
     try {
@@ -125,7 +151,7 @@ export const SuperAdminDashboard = () => {
     </div>
     
     {/* System Status Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-white/90">System Health</CardTitle>
@@ -144,7 +170,9 @@ export const SuperAdminDashboard = () => {
           <CardTitle className="text-sm font-medium text-white/90">Total Branches</CardTitle>
           <div className="flex items-center gap-2">
             <Database className="w-4 h-4" />
-            <span className="text-2xl font-bold">{totalBranches}</span>
+            <span className="text-2xl font-bold">
+              {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : totalBranches}
+            </span>
           </div>
         </CardHeader>
         <CardContent>
@@ -157,7 +185,9 @@ export const SuperAdminDashboard = () => {
           <CardTitle className="text-sm font-medium text-white/90">Global Revenue</CardTitle>
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4" />
-            <span className="text-2xl font-bold">${totalRevenue.toLocaleString()}</span>
+            <span className="text-2xl font-bold">
+              {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : `$${totalRevenue.toLocaleString()}`}
+            </span>
           </div>
         </CardHeader>
         <CardContent>
@@ -170,11 +200,43 @@ export const SuperAdminDashboard = () => {
           <CardTitle className="text-sm font-medium text-muted-foreground">Active Users</CardTitle>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-success" />
-            <span className="text-2xl font-bold text-foreground">{activeUsers.toLocaleString()}</span>
+            <span className="text-2xl font-bold text-foreground">
+              {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : activeUsers.toLocaleString()}
+            </span>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground">{totalUsers} total users</p>
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-white/90">Leads</CardTitle>
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span className="text-2xl font-bold">
+              {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : totalLeads}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-white/70">{newLeads} new leads</p>
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-white/90">Membership Plans</CardTitle>
+          <div className="flex items-center gap-2">
+            <Trophy className="w-4 h-4" />
+            <span className="text-2xl font-bold">
+              {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : totalPlans}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-white/70">Active plans available</p>
         </CardContent>
       </Card>
     </div>
