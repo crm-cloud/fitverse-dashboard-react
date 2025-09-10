@@ -434,6 +434,7 @@ export type Database = {
           contact: Json
           created_at: string
           current_members: number
+          gym_id: string | null
           hours: Json
           id: string
           images: string[] | null
@@ -449,6 +450,7 @@ export type Database = {
           contact: Json
           created_at?: string
           current_members?: number
+          gym_id?: string | null
           hours: Json
           id?: string
           images?: string[] | null
@@ -464,6 +466,7 @@ export type Database = {
           contact?: Json
           created_at?: string
           current_members?: number
+          gym_id?: string | null
           hours?: Json
           id?: string
           images?: string[] | null
@@ -472,7 +475,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "branches_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       class_enrollments: {
         Row: {
@@ -1039,6 +1050,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      gym_usage: {
+        Row: {
+          api_calls: number | null
+          branch_count: number | null
+          created_at: string
+          gym_id: string
+          id: string
+          member_count: number | null
+          month_year: string
+          storage_used: number | null
+          trainer_count: number | null
+        }
+        Insert: {
+          api_calls?: number | null
+          branch_count?: number | null
+          created_at?: string
+          gym_id: string
+          id?: string
+          member_count?: number | null
+          month_year: string
+          storage_used?: number | null
+          trainer_count?: number | null
+        }
+        Update: {
+          api_calls?: number | null
+          branch_count?: number | null
+          created_at?: string
+          gym_id?: string
+          id?: string
+          member_count?: number | null
+          month_year?: string
+          storage_used?: number | null
+          trainer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_usage_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gyms: {
+        Row: {
+          billing_address: Json | null
+          billing_email: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          max_branches: number | null
+          max_members: number | null
+          max_trainers: number | null
+          name: string
+          settings: Json | null
+          status: string
+          subscription_plan: string
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: Json | null
+          billing_email?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          max_branches?: number | null
+          max_members?: number | null
+          max_trainers?: number | null
+          name: string
+          settings?: Json | null
+          status?: string
+          subscription_plan?: string
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: Json | null
+          billing_email?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          max_branches?: number | null
+          max_members?: number | null
+          max_trainers?: number | null
+          name?: string
+          settings?: Json | null
+          status?: string
+          subscription_plan?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       invoice_items: {
         Row: {
@@ -1768,6 +1871,87 @@ export type Database = {
         }
         Relationships: []
       }
+      member_measurements: {
+        Row: {
+          arms: number | null
+          blood_pressure_diastolic: number | null
+          blood_pressure_systolic: number | null
+          bmi: number | null
+          body_fat_percentage: number | null
+          chest: number | null
+          created_at: string | null
+          height: number | null
+          hips: number | null
+          id: string
+          measured_by: string | null
+          measured_date: string | null
+          member_id: string | null
+          muscle_mass: number | null
+          notes: string | null
+          resting_heart_rate: number | null
+          thighs: number | null
+          waist: number | null
+          weight: number | null
+        }
+        Insert: {
+          arms?: number | null
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          bmi?: number | null
+          body_fat_percentage?: number | null
+          chest?: number | null
+          created_at?: string | null
+          height?: number | null
+          hips?: number | null
+          id?: string
+          measured_by?: string | null
+          measured_date?: string | null
+          member_id?: string | null
+          muscle_mass?: number | null
+          notes?: string | null
+          resting_heart_rate?: number | null
+          thighs?: number | null
+          waist?: number | null
+          weight?: number | null
+        }
+        Update: {
+          arms?: number | null
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          bmi?: number | null
+          body_fat_percentage?: number | null
+          chest?: number | null
+          created_at?: string | null
+          height?: number | null
+          hips?: number | null
+          id?: string
+          measured_by?: string | null
+          measured_date?: string | null
+          member_id?: string | null
+          muscle_mass?: number | null
+          notes?: string | null
+          resting_heart_rate?: number | null
+          thighs?: number | null
+          waist?: number | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_measurements_measured_by_fkey"
+            columns: ["measured_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_measurements_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_memberships: {
         Row: {
           created_at: string
@@ -2280,6 +2464,7 @@ export type Database = {
           date_of_birth: string | null
           email: string
           full_name: string
+          gym_id: string | null
           id: string
           is_active: boolean
           phone: string | null
@@ -2295,6 +2480,7 @@ export type Database = {
           date_of_birth?: string | null
           email: string
           full_name: string
+          gym_id?: string | null
           id?: string
           is_active?: boolean
           phone?: string | null
@@ -2310,6 +2496,7 @@ export type Database = {
           date_of_birth?: string | null
           email?: string
           full_name?: string
+          gym_id?: string | null
           id?: string
           is_active?: boolean
           phone?: string | null
@@ -2324,6 +2511,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
             referencedColumns: ["id"]
           },
         ]
@@ -2559,6 +2753,45 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_branches: number
+          max_members: number
+          max_trainers: number
+          name: string
+          price: number
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_branches?: number
+          max_members?: number
+          max_trainers?: number
+          name: string
+          price: number
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_branches?: number
+          max_members?: number
+          max_trainers?: number
+          name?: string
+          price?: number
+        }
+        Relationships: []
       }
       system_settings: {
         Row: {
@@ -2920,6 +3153,83 @@ export type Database = {
           },
         ]
       }
+      trainer_change_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          current_trainer_id: string | null
+          description: string | null
+          id: string
+          member_id: string | null
+          reason: string
+          rejection_reason: string | null
+          requested_trainer_id: string | null
+          status: string | null
+          updated_at: string | null
+          urgency: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          current_trainer_id?: string | null
+          description?: string | null
+          id?: string
+          member_id?: string | null
+          reason: string
+          rejection_reason?: string | null
+          requested_trainer_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          current_trainer_id?: string | null
+          description?: string | null
+          id?: string
+          member_id?: string | null
+          reason?: string
+          rejection_reason?: string | null
+          requested_trainer_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_change_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "trainer_change_requests_current_trainer_id_fkey"
+            columns: ["current_trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_change_requests_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_change_requests_requested_trainer_id_fkey"
+            columns: ["requested_trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trainer_packages: {
         Row: {
           created_at: string | null
@@ -3081,6 +3391,71 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_utilization: {
+        Row: {
+          average_rating: number | null
+          average_session_value: number | null
+          booked_hours: number | null
+          cancelled_sessions: number | null
+          completed_sessions: number | null
+          created_at: string | null
+          date: string
+          id: string
+          no_show_sessions: number | null
+          period: string
+          punctuality_score: number | null
+          scheduled_sessions: number | null
+          total_available_hours: number | null
+          total_revenue: number | null
+          trainer_id: string | null
+          utilization_rate: number | null
+        }
+        Insert: {
+          average_rating?: number | null
+          average_session_value?: number | null
+          booked_hours?: number | null
+          cancelled_sessions?: number | null
+          completed_sessions?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          no_show_sessions?: number | null
+          period: string
+          punctuality_score?: number | null
+          scheduled_sessions?: number | null
+          total_available_hours?: number | null
+          total_revenue?: number | null
+          trainer_id?: string | null
+          utilization_rate?: number | null
+        }
+        Update: {
+          average_rating?: number | null
+          average_session_value?: number | null
+          booked_hours?: number | null
+          cancelled_sessions?: number | null
+          completed_sessions?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          no_show_sessions?: number | null
+          period?: string
+          punctuality_score?: number | null
+          scheduled_sessions?: number | null
+          total_available_hours?: number | null
+          total_revenue?: number | null
+          trainer_id?: string | null
+          utilization_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_utilization_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3398,6 +3773,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_gym_id: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
       get_user_role: {
         Args: { user_uuid: string }
         Returns: string
@@ -3407,6 +3786,10 @@ export type Database = {
         Returns: boolean
       }
       is_staff_or_above: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
+      is_super_admin: {
         Args: { user_uuid: string }
         Returns: boolean
       }
