@@ -5,7 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { Eye, EyeOff, Loader2, Dumbbell } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Dumbbell, ArrowRight } from 'lucide-react';
+
+// Import gym poster image
+import gymPoster from '@/assets/gym-poster.jpg';
 
 const Login = () => {
   const { authState, login } = useAuth();
@@ -37,48 +40,122 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white/95 backdrop-blur border-0 shadow-strong">
-        <CardHeader className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mx-auto mb-6">
-            <Dumbbell className="w-8 h-8 text-primary-foreground" />
+    <div className="min-h-screen flex relative bg-gray-50">
+      {/* Background Pattern */}
+      <div 
+        className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-5"
+        style={{
+          backgroundSize: '200px 200px',
+          backgroundRepeat: 'repeat',
+        }}
+      />
+      {/* Left Side - Gym Poster */}
+      <div className="hidden lg:flex w-3/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
+        <img 
+          src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1075&q=80" 
+          alt="Gym Interior" 
+          className="w-full h-full object-cover transform scale-110 transition-transform duration-1000 hover:scale-100"
+        />
+        <div className="absolute inset-0 flex flex-col justify-end p-12 z-20 text-white">
+          <div className="max-w-md">
+            <div className="w-16 h-1 bg-white mb-6 ml-0"></div>
+            <h1 className="text-5xl font-bold mb-6 leading-tight pr-12">Transform Your Body, Transform Your Life</h1>
+            <p className="text-lg opacity-90 mb-8">Join thousands of members achieving their fitness goals with our expert trainers and state-of-the-art facilities.</p>
+            <div className="flex items-center space-x-4">
+              <div className="w-3 h-3 rounded-full bg-white"></div>
+              <span className="text-sm font-medium">Expert Trainers</span>
+              <div className="w-3 h-3 rounded-full bg-white/50"></div>
+              <span className="text-sm font-medium">Modern Equipment</span>
+            </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome to GymFit</CardTitle>
-          <CardDescription>
-            Sign in to your account to continue
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        </div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div className="w-full lg:w-2/5 flex items-center justify-center p-6 sm:p-8">
+        <Card className="w-full max-w-sm border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+          <CardHeader className="text-center pb-2">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-2xl mx-auto mb-6 shadow-lg">
+              <Dumbbell className="w-10 h-10 text-white" strokeWidth={2.5} />
+            </div>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              Welcome Back
+            </CardTitle>
+            <CardDescription className="mt-2 text-gray-500">
+              Sign in to access your dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm">{error}</p>
+                </div>
+              </div>
             </div>
           )}
           {authState.error && !error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              {authState.error}
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm">{authState.error}</p>
+                </div>
+              </div>
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                </div>
+                <Input
+                  id="email"
+                  type="email"
+                  className="pl-10 py-6 text-base"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+                <a href="#" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                  Forgot password?
+                </a>
+              </div>
               <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  className="pl-10 py-6 text-base"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -87,46 +164,42 @@ const Login = () => {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400 hover:text-gray-500"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </Button>
               </div>
             </div>
             
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </Button>
-          </form>
-          
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <h3 className="font-semibold mb-2">Getting Started</h3>
-            <div className="space-y-1 text-sm">
-              <p><strong>Step 1:</strong> Create a Supabase account</p>
-              <p><strong>Step 2:</strong> Sign up with your email & password</p>
+            <div className="pt-2">
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-base font-medium bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-md hover:shadow-lg transform transition-all duration-200 hover:-translate-y-0.5" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin text-white" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </>
+                )}
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Authentication is now powered by Supabase for enhanced security.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </form>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-white/30 to-primary/5 z-0" />
     </div>
   );
 };
