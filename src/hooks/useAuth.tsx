@@ -11,7 +11,7 @@ const AuthContext = createContext<{
   logout: () => void;
   signUp: (email: string, password: string, userData: any) => Promise<void>;
 }>({
-  authState: { user: null, isAuthenticated: false, isLoading: true },
+  authState: { user: null, isAuthenticated: false, isLoading: true, error: null },
   login: async () => {},
   logout: () => {},
   signUp: async () => {}
@@ -266,7 +266,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setAuthState({
         user: null,
         isAuthenticated: false,
-        isLoading: false
+        isLoading: false,
+        error: null
       });
 
       toast({
