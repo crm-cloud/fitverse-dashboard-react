@@ -190,11 +190,37 @@ const App = () => (
                           } 
                         />
                         
-                         {/* Branch Management Routes - Super Admin only */}
+                         {/* SaaS Management Routes - Super Admin only */}
+                       <Route 
+                         path="/gyms" 
+                         element={
+                           <RouteGuard allowedRoles={['super-admin']}>
+                             <DashboardLayout>
+                               <Suspense fallback={<PageLoadingState />}>
+                                 <lazyRoutes.GymManagement />
+                               </Suspense>
+                             </DashboardLayout>
+                           </RouteGuard>
+                         } 
+                       />
+                       <Route 
+                         path="/subscription-plans" 
+                         element={
+                           <RouteGuard allowedRoles={['super-admin']}>
+                             <DashboardLayout>
+                               <Suspense fallback={<PageLoadingState />}>
+                                 <lazyRoutes.SubscriptionPlans />
+                               </Suspense>
+                             </DashboardLayout>
+                           </RouteGuard>
+                         } 
+                       />
+
+                         {/* Branch Management Routes - Gym Admins */}
                        <Route 
                          path="/branches" 
                          element={
-                           <ProtectedRoute allowedRoles={['super-admin']}>
+                           <ProtectedRoute allowedRoles={['admin', 'manager']}>
                              <DashboardLayout>
                                <BranchManagement />
                              </DashboardLayout>
@@ -215,16 +241,16 @@ const App = () => (
                            </ProtectedRoute>
                          } 
                         />
-                        <Route 
-                          path="/branches/create" 
-                          element={
-                            <ProtectedRoute allowedRoles={['super-admin']}>
-                              <DashboardLayout>
-                                <BranchCreatePage />
-                              </DashboardLayout>
-                            </ProtectedRoute>
-                          } 
-                        />
+                         <Route 
+                           path="/branches/create" 
+                           element={
+                             <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                               <DashboardLayout>
+                                 <BranchCreatePage />
+                               </DashboardLayout>
+                             </ProtectedRoute>
+                           } 
+                         />
                         <Route 
                           path="/users/create" 
                           element={

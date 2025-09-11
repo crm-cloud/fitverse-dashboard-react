@@ -135,9 +135,33 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
+    id: 'saas-management',
+    title: 'SaaS Management',
+    allowedRoles: ['super-admin'],
+    priority: 2,
+    items: [
+      {
+        id: 'gyms',
+        title: 'Gyms',
+        url: '/gyms',
+        icon: Building,
+        group: 'saas-management',
+        allowedRoles: ['super-admin'],
+      },
+      {
+        id: 'subscription-plans',
+        title: 'Subscription Plans',
+        url: '/subscription-plans',
+        icon: CreditCard,
+        group: 'saas-management',
+        allowedRoles: ['super-admin'],
+      }
+    ]
+  },
+  {
     id: 'branch-management',
     title: 'Branch Management',
-    allowedRoles: ['super-admin', 'admin'],
+    allowedRoles: ['admin', 'manager'],
     requiredPermissions: ['branches.view'],
     priority: 3,
     items: [
@@ -147,6 +171,7 @@ export const navigationConfig: NavigationGroup[] = [
         url: '/branches',
         icon: Building,
         group: 'branch-management',
+        allowedRoles: ['admin', 'manager'],
         requiredPermissions: ['branches.view'],
       },
       {
@@ -155,6 +180,7 @@ export const navigationConfig: NavigationGroup[] = [
         url: '/branches/create',
         icon: Building,
         group: 'branch-management',
+        allowedRoles: ['admin', 'manager'],
         requiredPermissions: ['branches.create'],
       }
     ]
@@ -643,6 +669,9 @@ export const navigationConfig: NavigationGroup[] = [
 export const roleDefaultRoutes: Record<UserRole, string> = {
   'super-admin': '/dashboard',
   'admin': '/dashboard',
+  'manager': '/dashboard',
+  'staff': '/dashboard',
+  'trainer': '/dashboard',
   'team': '/dashboard', 
   'member': '/dashboard'
 };

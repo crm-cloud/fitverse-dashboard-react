@@ -1,8 +1,10 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBranches } from '@/hooks/useBranches';
-import { useToast } from '@/components/ui/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,62 +31,63 @@ import {
 
 export default function BranchManagement() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { authState } = useAuth();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: branches = [], isLoading } = useBranches();
 
-  const mockBranches = [
-    {
-      id: 'branch_1',
-      name: 'Downtown Branch',
-      address: '123 Main St, Downtown',
-      city: 'New York',
-      state: 'NY',
-      phone: '+1 (555) 123-4567',
-      email: 'downtown@gymfit.com',
-      manager: 'Robert Kim',
-      members: 450,
-      staff: 12,
-      status: 'active',
-      revenue: '$125,000'
+  // Get branches based on user role
+  const { data: branches = [], isLoading } = useQuery({
+    queryKey: ['branches'],
+    queryFn: async () => {
+      let query = supabase.from('branches').select(`
+        *,
+        profiles!branches_manager_id_fkey(full_name)
+      `);
+
+      // Super admins see all branches, gym admins see only their gym's branches
+      if (authState.user?.role !== 'super-admin' && authState.user?.gym_id) {
+        query = query.eq('gym_id', authState.user.gym_id);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
     },
-    {
-      id: 'branch_2',
-      name: 'Uptown Fitness',
-      address: '456 Oak Ave, Uptown',
-      city: 'New York',
-      state: 'NY',
-      phone: '+1 (555) 234-5678',
-      email: 'uptown@gymfit.com',
-      manager: 'Sarah Johnson',
-      members: 320,
-      staff: 8,
-      status: 'active',
-      revenue: '$89,000'
+    enabled: !!authState.user,
+  });
+
+  const deleteBranch = useMutation({
+    mutationFn: async (branchId: string) => {
+      const { error } = await supabase
+        .from('branches')
+        .update({ status: 'inactive' })
+        .eq('id', branchId);
+      
+      if (error) throw error;
     },
-    {
-      id: 'branch_3',
-      name: 'Westside Gym',
-      address: '789 Pine St, Westside',
-      city: 'Los Angeles',
-      state: 'CA',
-      phone: '+1 (555) 345-6789',
-      email: 'westside@gymfit.com',
-      manager: 'Mike Rodriguez',
-      members: 280,
-      staff: 10,
-      status: 'active',
-      revenue: '$72,000'
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Branch has been deactivated successfully."
+      });
+      queryClient.invalidateQueries({ queryKey: ['branches'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
     }
-  ];
-
-  // Use real branches if available, otherwise fall back to mock data
-  const displayBranches = branches.length > 0 ? branches : mockBranches;
+  });
   
-  const filteredBranches = displayBranches.filter(branch => {
+  const filteredBranches = branches.filter(branch => {
     const name = branch.name?.toLowerCase() || '';
-    const address = branch.address?.city?.toLowerCase() || '';
-    return name.includes(searchQuery.toLowerCase()) || address.includes(searchQuery.toLowerCase());
+    const address = branch.address as any;
+    const addressStr = address?.city ? 
+      `${address.city} ${address.state}`.toLowerCase() : '';
+    return name.includes(searchQuery.toLowerCase()) || addressStr.includes(searchQuery.toLowerCase());
   });
 
   const handleEditBranch = (branch: any) => {
@@ -97,6 +100,12 @@ export default function BranchManagement() {
 
   const handleManageStaff = (branch: any) => {
     navigate(`/branches/${branch.id}/staff`);
+  };
+
+  const handleDeleteBranch = (branch: any) => {
+    if (confirm(`Are you sure you want to deactivate ${branch.name}?`)) {
+      deleteBranch.mutate(branch.id);
+    }
   };
 
   return (
@@ -118,7 +127,7 @@ export default function BranchManagement() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Branches</CardTitle>
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-primary" />
-              <span className="text-2xl font-bold text-foreground">{isLoading ? '...' : displayBranches.length}</span>
+              <span className="text-2xl font-bold text-foreground">{isLoading ? '...' : branches.length}</span>
             </div>
           </CardHeader>
           <CardContent>
@@ -132,7 +141,7 @@ export default function BranchManagement() {
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-secondary" />
               <span className="text-2xl font-bold text-foreground">
-                {isLoading ? '...' : displayBranches.reduce((sum, branch) => sum + (branch.current_members || branch.members || 0), 0)}
+                {isLoading ? '...' : branches.reduce((sum, branch) => sum + (branch.current_members || 0), 0)}
               </span>
             </div>
           </CardHeader>
@@ -147,7 +156,7 @@ export default function BranchManagement() {
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-accent" />
               <span className="text-2xl font-bold text-foreground">
-                {isLoading ? '...' : displayBranches.reduce((sum, branch) => sum + (branch.staff || 0), 0)}
+                {isLoading ? '...' : 0}
               </span>
             </div>
           </CardHeader>
@@ -202,7 +211,10 @@ export default function BranchManagement() {
                       </CardTitle>
                       <CardDescription className="flex items-center gap-1 mt-1">
                         <MapPin className="w-3 h-3" />
-                        {branch.city}, {branch.state}
+                        {(() => {
+                          const address = branch.address as any;
+                          return address?.city ? `${address.city}, ${address.state}` : 'Location not set';
+                        })()}
                       </CardDescription>
                     </div>
                     <DropdownMenu>
@@ -222,6 +234,14 @@ export default function BranchManagement() {
                         <DropdownMenuItem onClick={() => handleManageStaff(branch)}>
                           Manage Staff
                         </DropdownMenuItem>
+                        {authState.user?.role === 'super-admin' && (
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteBranch(branch)}
+                            className="text-destructive"
+                          >
+                            Deactivate
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -229,30 +249,41 @@ export default function BranchManagement() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2 text-sm">
                     <p className="text-muted-foreground">
-                      {typeof branch.address === 'string' ? branch.address : 
-                       branch.address?.street ? `${branch.address.street}, ${branch.address.city}, ${branch.address.state}` : 
-                       'Address not available'}
+                      {(() => {
+                        const address = branch.address as any;
+                        return address?.street ? 
+                          `${address.street}, ${address.city}, ${address.state}` : 
+                          'Address not available';
+                      })()}
                     </p>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Phone className="w-3 h-3" />
-                      {typeof branch.contact === 'string' ? branch.contact : 
-                       branch.contact?.phone || branch.phone || 'Phone not available'}
+                      {(() => {
+                        const contact = branch.contact as any;
+                        return contact?.phone || 'Phone not available';
+                      })()}
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Mail className="w-3 h-3" />
-                      {typeof branch.contact === 'string' ? branch.contact : 
-                       branch.contact?.email || branch.email || 'Email not available'}
+                      {(() => {
+                        const contact = branch.contact as any;
+                        return contact?.email || 'Email not available';
+                      })()}
                     </div>
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Manager</span>
-                      <span className="text-sm font-medium">{branch.manager || branch.manager_id || 'Not assigned'}</span>
+                      <span className="text-sm font-medium">
+                        {Array.isArray(branch.profiles) && branch.profiles.length > 0 
+                          ? branch.profiles[0].full_name 
+                          : 'Not assigned'}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Members</span>
-                      <Badge variant="secondary">{branch.current_members || branch.members || 0}</Badge>
+                      <Badge variant="secondary">{branch.current_members || 0}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Capacity</span>
@@ -307,18 +338,25 @@ export default function BranchManagement() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {branches.map((branch) => (
-                    <div key={branch.id} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{branch.name}</p>
-                        <p className="text-sm text-muted-foreground">{branch.members} members</p>
+                  {filteredBranches.length > 0 ? (
+                    filteredBranches.map((branch) => (
+                      <div key={branch.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{branch.name}</p>
+                          <p className="text-sm text-muted-foreground">{branch.current_members || 0} members</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium text-green-600">-</p>
+                          <p className="text-xs text-muted-foreground">Analytics coming soon</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-green-600">{branch.revenue}</p>
-                        <p className="text-xs text-muted-foreground">Monthly</p>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <Building2 className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground">No branches found</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>

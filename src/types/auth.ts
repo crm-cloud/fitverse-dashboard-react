@@ -1,5 +1,5 @@
 
-export type UserRole = 'super-admin' | 'admin' | 'team' | 'member';
+export type UserRole = 'super-admin' | 'admin' | 'manager' | 'staff' | 'trainer' | 'team' | 'member';
 
 export interface User {
   id: string;
@@ -10,10 +10,13 @@ export interface User {
   department?: string;
   phone?: string;
   joinDate?: string;
+  // Multi-tenant fields
+  gym_id?: string;
+  gymName?: string;
   // Branch-specific fields
   branchId?: string;
   branchName?: string;
-  // Team role specialization
+  // Team role specialization (for backwards compatibility)
   teamRole?: 'manager' | 'staff' | 'trainer';
 }
 

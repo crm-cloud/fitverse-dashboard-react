@@ -1,7 +1,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './useAuth';
-import { useBranches } from './useBranches';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BranchContextType {
   currentBranchId: string | null;
@@ -22,40 +23,63 @@ export const useBranchContext = () => {
 
 export const BranchContextProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
-  const { selectedBranch } = useBranches();
   const [currentBranchId, setCurrentBranchId] = useState<string | null>(null);
 
+  // Get user's accessible branches based on their gym
+  const { data: branches = [] } = useQuery({
+    queryKey: ['user-branches', authState.user?.gym_id],
+    queryFn: async () => {
+      if (!authState.user?.gym_id) return [];
+      
+      const { data, error } = await supabase
+        .from('branches')
+        .select('id, name, status')
+        .eq('gym_id', authState.user.gym_id)
+        .eq('status', 'active');
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!authState.user?.gym_id,
+  });
+
   useEffect(() => {
-    if (authState.user) {
-      // Set current branch based on user's primary branch or selected branch
-      const branchId = authState.user.branchId || selectedBranch?.id || null;
+    if (authState.user && branches.length > 0) {
+      // Set current branch based on user's primary branch or first available branch
+      const branchId = authState.user.branchId || branches[0]?.id || null;
       setCurrentBranchId(branchId);
     } else {
       setCurrentBranchId(null);
     }
-  }, [authState.user, selectedBranch]);
+  }, [authState.user, branches]);
 
   const canAccessBranch = (branchId: string): boolean => {
     if (!authState.user) return false;
     
-    // Super Admin can access all branches
+    // Super Admin can access all branches across all gyms
     if (authState.user.role === 'super-admin') return true;
     
-    // Admin can access all branches
-    if (authState.user.role === 'admin') return true;
+    // Gym Admin/Manager can access all branches within their gym
+    if (['admin', 'manager'].includes(authState.user.role) && authState.user.gym_id) {
+      return branches.some(branch => branch.id === branchId);
+    }
     
-    // Team and Member can only access their assigned branch
-    return authState.user.branchId === branchId;
+    // Staff and trainers can only access their assigned branch or gym branches
+    if (['staff', 'trainer'].includes(authState.user.role)) {
+      return branches.some(branch => branch.id === branchId);
+    }
+    
+    return false;
   };
 
   const getAccessibleBranches = (): string[] => {
     if (!authState.user) return [];
     
-    if (authState.user.role === 'super-admin' || authState.user.role === 'admin') {
-      return ['all']; // Indicates access to all branches
-    }
+    // Super admins can access all branches (handled separately in components)
+    if (authState.user.role === 'super-admin') return ['all'];
     
-    return authState.user.branchId ? [authState.user.branchId] : [];
+    // Return branch IDs that the user can access within their gym
+    return branches.map(branch => branch.id);
   };
 
   return (
