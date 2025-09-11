@@ -10,15 +10,39 @@ const mockRoles: Record<string, RoleDefinition> = {
   'super-admin': {
     id: 'super-admin',
     name: 'Super Administrator',
-    description: 'Complete system access across all branches',
+    description: 'Platform owner with SaaS management access',
     color: '#dc2626',
     isSystem: true,
     scope: 'global',
     permissions: [
+      // Platform-level system management
       'system.view', 'system.manage', 'system.backup', 'system.restore',
-      'branches.view', 'branches.create', 'branches.edit', 'branches.delete',
+      // SaaS gym management (not branch-specific)
       'users.view', 'users.create', 'users.edit', 'users.delete', 'users.export',
       'roles.view', 'roles.create', 'roles.edit', 'roles.delete',
+      // Global analytics and reporting
+      'analytics.view', 'reports.view', 'reports.export',
+      // Platform settings only
+      'settings.view', 'settings.edit',
+      // Global announcements
+      'notifications.view', 'notifications.send'
+    ],
+    createdAt: new Date('2023-01-01'),
+    updatedAt: new Date('2023-01-01')
+  },
+  'admin': {
+    id: 'admin',
+    name: 'Administrator',
+    description: 'Full gym operational access across branches',
+    color: '#ea580c',
+    isSystem: true,
+    scope: 'global',
+    permissions: [
+      // Branch management
+      'branches.view', 'branches.create', 'branches.edit', 'branches.delete',
+      // User management within gym
+      'users.view', 'users.create', 'users.edit', 'users.export',
+      // Full operational permissions
       'members.view', 'members.create', 'members.edit', 'members.delete', 'members.export',
       'team.view', 'team.create', 'team.edit', 'team.delete',
       'classes.view', 'classes.create', 'classes.edit', 'classes.delete', 'classes.schedule',
@@ -31,56 +55,24 @@ const mockRoles: Record<string, RoleDefinition> = {
       'pos.view', 'pos.process',
       'leads.view', 'leads.create', 'leads.edit', 'leads.delete', 'leads.assign', 'leads.export',
       'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process',
-      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond', 'feedback.export',
-      'staff.view', 'staff.create', 'staff.edit', 'staff.delete',
-      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
-      'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
-      'notifications.view', 'notifications.send',
-      'sms.view', 'sms.send', 'sms.templates.view', 'sms.templates.create', 'sms.templates.edit', 'sms.templates.delete',
-      'sms.settings.view', 'sms.settings.edit', 'sms.providers.view', 'sms.providers.create', 'sms.providers.edit', 'sms.providers.delete',
-      'sms.logs.view', 'sms.logs.export', 'sms.analytics.view',
-      'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
-      'trainer.workouts.create', 'trainer.workouts.assign', 'trainer.progress.track', 'trainer.earnings.view',
-      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report',
-      'attendance.view', 'attendance.create', 'attendance.edit', 'attendance.delete', 'attendance.export',
-      'attendance.checkin.manual', 'attendance.checkout.manual', 'attendance.approve', 'attendance.reports.view',
-      'devices.view', 'devices.create', 'devices.edit', 'devices.delete', 'devices.sync', 'devices.settings',
-      'devices.maintenance', 'devices.restart', 'devices.logs.view'
-    ],
-    createdAt: new Date('2023-01-01'),
-    updatedAt: new Date('2023-01-01')
-  },
-  'admin': {
-    id: 'admin',
-    name: 'Administrator',
-    description: 'Full operational access across all branches',
-    color: '#ea580c',
-    isSystem: true,
-    scope: 'global',
-    permissions: [
-      'branches.view',
-      'users.view', 'users.create', 'users.edit', 'users.export',
-      'members.view', 'members.create', 'members.edit', 'members.delete', 'members.export',
-      'team.view', 'team.create', 'team.edit', 'team.delete',
-      'classes.view', 'classes.create', 'classes.edit', 'classes.delete', 'classes.schedule',
-      'equipment.view', 'equipment.create', 'equipment.edit', 'equipment.delete',
-      'finance.view', 'finance.create', 'finance.edit', 'finance.process',
-      'analytics.view', 'reports.view', 'reports.export',
-      'settings.view', 'settings.edit',
-      'products.view', 'products.create', 'products.edit', 'products.delete',
-      'pos.view', 'pos.process',
-      'leads.view', 'leads.create', 'leads.edit', 'leads.delete', 'leads.assign', 'leads.export',
-      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process',
       'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond',
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
       'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
       'notifications.view', 'notifications.send',
+      // Branch communication settings (not super-admin)
       'sms.view', 'sms.send', 'sms.templates.view', 'sms.templates.create', 'sms.templates.edit', 'sms.templates.delete',
       'sms.settings.view', 'sms.settings.edit', 'sms.providers.view', 'sms.providers.edit',
       'sms.logs.view', 'sms.logs.export', 'sms.analytics.view',
+      // Trainer management
       'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
       'trainer.workouts.create', 'trainer.workouts.assign', 'trainer.progress.track', 'trainer.earnings.view',
-      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report'
+      // Staff operations
+      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report',
+      // Attendance and device management
+      'attendance.view', 'attendance.create', 'attendance.edit', 'attendance.delete', 'attendance.export',
+      'attendance.checkin.manual', 'attendance.checkout.manual', 'attendance.approve', 'attendance.reports.view',
+      'devices.view', 'devices.create', 'devices.edit', 'devices.delete', 'devices.sync', 'devices.settings',
+      'devices.maintenance', 'devices.restart', 'devices.logs.view'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')

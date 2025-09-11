@@ -88,7 +88,7 @@ export const navigationConfig: NavigationGroup[] = [
     title: 'User Management',
     allowedRoles: ['super-admin', 'admin'],
     requiredPermissions: ['users.view'],
-    priority: 2,
+    priority: 4,
     items: [
       {
         id: 'users-list',
@@ -159,11 +159,37 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
+    id: 'platform-analytics',
+    title: 'Platform Analytics',
+    allowedRoles: ['super-admin'],
+    priority: 3,
+    items: [
+      {
+        id: 'platform-analytics',
+        title: 'Platform Analytics',
+        url: '/analytics',
+        icon: BarChart3,
+        group: 'platform-analytics',
+        allowedRoles: ['super-admin'],
+        requiredPermissions: ['analytics.view'],
+      },
+      {
+        id: 'platform-reports',
+        title: 'Platform Reports',
+        url: '/reports',
+        icon: FileText,
+        group: 'platform-analytics',
+        allowedRoles: ['super-admin'],
+        requiredPermissions: ['reports.view'],
+      }
+    ]
+  },
+  {
     id: 'branch-management',
     title: 'Branch Management',
-    allowedRoles: ['admin', 'manager'],
+    allowedRoles: ['admin', 'team'],
     requiredPermissions: ['branches.view'],
-    priority: 3,
+    priority: 5,
     items: [
       {
         id: 'branches',
@@ -171,7 +197,8 @@ export const navigationConfig: NavigationGroup[] = [
         url: '/branches',
         icon: Building,
         group: 'branch-management',
-        allowedRoles: ['admin', 'manager'],
+        allowedRoles: ['admin', 'team'],
+        teamRole: 'manager',
         requiredPermissions: ['branches.view'],
       },
       {
@@ -180,7 +207,8 @@ export const navigationConfig: NavigationGroup[] = [
         url: '/branches/create',
         icon: Building,
         group: 'branch-management',
-        allowedRoles: ['admin', 'manager'],
+        allowedRoles: ['admin', 'team'],
+        teamRole: 'manager',
         requiredPermissions: ['branches.create'],
       }
     ]
@@ -188,9 +216,9 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'members',
     title: 'Member Management',
-    allowedRoles: ['super-admin', 'admin', 'team'],
+    allowedRoles: ['admin', 'team'],
     requiredPermissions: ['members.view'],
-    priority: 4,
+    priority: 6,
     items: [
       {
         id: 'members-list',
@@ -221,8 +249,8 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'membership',
     title: 'Membership',
-    allowedRoles: ['super-admin', 'admin', 'team'],
-    priority: 5,
+    allowedRoles: ['admin', 'team'],
+    priority: 7,
     items: [
       {
         id: 'membership-dashboard',
@@ -253,8 +281,8 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'classes',
     title: 'Classes & Training',
-    allowedRoles: ['super-admin', 'admin', 'team'],
-    priority: 6,
+    allowedRoles: ['admin', 'team'],
+    priority: 8,
     items: [
       {
         id: 'classes-list',
@@ -270,7 +298,7 @@ export const navigationConfig: NavigationGroup[] = [
         url: '/classes/create',
         icon: Calendar,
         group: 'classes',
-        allowedRoles: ['super-admin', 'admin', 'team'],
+        allowedRoles: ['admin', 'team'],
         teamRole: 'trainer',
         requiredPermissions: ['classes.create'],
       },
@@ -280,7 +308,7 @@ export const navigationConfig: NavigationGroup[] = [
         url: '/trainers',
         icon: Dumbbell,
         group: 'classes',
-        allowedRoles: ['super-admin', 'admin', 'team'],
+        allowedRoles: ['admin', 'team'],
         requiredPermissions: ['team.view'],
       },
       {
@@ -295,9 +323,9 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'finance',
     title: 'Finance',
-    allowedRoles: ['super-admin', 'admin'],
+    allowedRoles: ['admin'],
     requiredPermissions: ['finance.view'],
-    priority: 7,
+    priority: 9,
     items: [
       {
         id: 'finance-dashboard',
@@ -328,8 +356,8 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'operations',
     title: 'Operations',
-    allowedRoles: ['super-admin', 'admin', 'team'],
-    priority: 8,
+    allowedRoles: ['admin', 'team'],
+    priority: 10,
     items: [
       {
         id: 'attendance',
@@ -345,7 +373,7 @@ export const navigationConfig: NavigationGroup[] = [
         url: '/attendance/devices',
         icon: Monitor,
         group: 'operations',
-        allowedRoles: ['super-admin', 'admin'],
+        allowedRoles: ['admin'],
         requiredPermissions: ['devices.view'],
       },
       {
@@ -369,8 +397,8 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'store',
     title: 'Store & POS',
-    allowedRoles: ['super-admin', 'admin', 'team'],
-    priority: 9,
+    allowedRoles: ['admin', 'team'],
+    priority: 11,
     items: [
       {
         id: 'store',
@@ -393,7 +421,7 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'feedback',
     title: 'Feedback & Support',
-    priority: 10,
+    priority: 12,
     items: [
       {
         id: 'feedback',
@@ -407,51 +435,44 @@ export const navigationConfig: NavigationGroup[] = [
   },
   {
     id: 'analytics',
-    title: 'Analytics & Reports',
-    allowedRoles: ['super-admin', 'admin'],
+    title: 'Branch Analytics',
+    allowedRoles: ['admin'],
     requiredPermissions: ['analytics.view'],
-    priority: 11,
+    priority: 13,
     items: [
       {
-        id: 'analytics',
-        title: 'Analytics',
+        id: 'branch-analytics',
+        title: 'Branch Analytics',
         url: '/analytics',
         icon: BarChart3,
         group: 'analytics',
+        allowedRoles: ['admin'],
         requiredPermissions: ['analytics.view'],
       },
       {
-        id: 'reports',
-        title: 'Reports',
+        id: 'branch-reports',
+        title: 'Branch Reports',
         url: '/reports',
         icon: FileText,
         group: 'analytics',
+        allowedRoles: ['admin'],
         requiredPermissions: ['reports.view'],
       }
     ]
   },
   {
-    id: 'system',
-    title: 'System & Settings',
-    allowedRoles: ['super-admin', 'admin'],
-    priority: 12,
+    id: 'branch-settings',
+    title: 'Branch Settings',
+    allowedRoles: ['admin'],
+    priority: 14,
     items: [
       {
         id: 'ai-settings',
         title: 'AI Settings',
         url: '/system/ai-settings',
         icon: BrainCircuit,
-        group: 'system',
-        allowedRoles: ['super-admin', 'admin'],
-        requiredPermissions: ['system.manage'],
-      },
-      {
-        id: 'system-settings',
-        title: 'System Settings',
-        url: '/system/settings',
-        icon: Settings,
-        group: 'system',
-        allowedRoles: ['super-admin'],
+        group: 'branch-settings',
+        allowedRoles: ['admin'],
         requiredPermissions: ['system.manage'],
       },
       {
@@ -459,8 +480,8 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'Email Settings',
         url: '/system/email',
         icon: Mail,
-        group: 'system',
-        allowedRoles: ['super-admin', 'admin'],
+        group: 'branch-settings',
+        allowedRoles: ['admin'],
         requiredPermissions: ['system.manage'],
       },
       {
@@ -468,8 +489,25 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'SMS Settings',
         url: '/system/sms',
         icon: Smartphone,
-        group: 'system',
-        allowedRoles: ['super-admin', 'admin'],
+        group: 'branch-settings',
+        allowedRoles: ['admin'],
+        requiredPermissions: ['system.manage'],
+      }
+    ]
+  },
+  {
+    id: 'platform-settings',
+    title: 'Platform Settings',
+    allowedRoles: ['super-admin'],
+    priority: 15,
+    items: [
+      {
+        id: 'system-settings',
+        title: 'System Settings',
+        url: '/system/settings',
+        icon: Settings,
+        group: 'platform-settings',
+        allowedRoles: ['super-admin'],
         requiredPermissions: ['system.manage'],
       },
       {
@@ -477,7 +515,7 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'System Health',
         url: '/system/health',
         icon: Activity,
-        group: 'system',
+        group: 'platform-settings',
         allowedRoles: ['super-admin'],
         requiredPermissions: ['system.view'],
       },
@@ -486,7 +524,7 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'Backup',
         url: '/system/backup',
         icon: Database,
-        group: 'system',
+        group: 'platform-settings',
         allowedRoles: ['super-admin'],
         requiredPermissions: ['system.backup'],
       }
