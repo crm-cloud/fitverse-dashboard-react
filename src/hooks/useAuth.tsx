@@ -34,20 +34,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
-    // Check initial auth state
-    const getInitialSession = async () => {
+    // Listen for auth changes FIRST to avoid missing events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Defer any Supabase calls outside the callback to prevent deadlocks
+        setAuthState(prev => ({ ...prev, isAuthenticated: true, isLoading: true, error: null }));
+        setTimeout(() => {
+          fetchUserProfile(session.user!.id)
+            .then((userData) => {
+              setAuthState({
+                user: userData,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null
+              });
+            })
+            .catch((err) => {
+              console.error('Error loading user profile after sign-in:', err);
+              setAuthState({
+                user: null,
+                isAuthenticated: true,
+                isLoading: false,
+                error: err?.message || 'Failed to load profile'
+              });
+            });
+        }, 0);
+      } else if (event === 'SIGNED_OUT') {
+        setAuthState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: null
+        });
+      }
+    });
+
+    // THEN check for existing session
+    (async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
 
         if (session?.user) {
-          const userData = await fetchUserProfile(session.user.id);
-          setAuthState({
-            user: userData,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null
-          });
+          setAuthState(prev => ({ ...prev, isAuthenticated: true, isLoading: true, error: null }));
+          // Defer profile fetch to avoid blocking the callback flow
+          setTimeout(() => {
+            fetchUserProfile(session.user!.id)
+              .then((userData) => {
+                setAuthState({
+                  user: userData,
+                  isAuthenticated: true,
+                  isLoading: false,
+                  error: null
+                });
+              })
+              .catch((err) => {
+                console.error('Error loading user profile on init:', err);
+                setAuthState({
+                  user: null,
+                  isAuthenticated: true,
+                  isLoading: false,
+                  error: err?.message || 'Failed to load profile'
+                });
+              });
+          }, 0);
         } else {
           setAuthState({
             user: null,
@@ -56,40 +106,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             error: null
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error getting initial session:', error);
         setAuthState({
           user: null,
           isAuthenticated: false,
           isLoading: false,
-          error: error.message
+          error: error?.message || 'Failed to get session'
         });
       }
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const userData = await fetchUserProfile(session.user.id);
-          setAuthState({
-            user: userData,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null
-          });
-        } else if (event === 'SIGNED_OUT') {
-          setAuthState({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: null
-          });
-        }
-      }
-    );
+    })();
 
     return () => {
       subscription.unsubscribe();
@@ -234,11 +260,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData: any): Promise<void> => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const redirectUrl = `${window.location.origin}/`;
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData
+          data: userData,
+          emailRedirectTo: redirectUrl,
         }
       });
 
