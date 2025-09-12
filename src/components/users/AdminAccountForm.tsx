@@ -19,10 +19,6 @@ const adminFormSchema = z.object({
   email: z.string().email('Please enter a valid email'),
   phone: z.string()
     .transform(val => val.replace(/\D/g, '')) // Remove all non-digits
-    .refine(val => val.length === 0 || (val.length === 10 && /^[6-9]\d{9}$/.test(val)), {
-      message: 'Enter a valid 10-digit Indian mobile number starting with 6-9'
-    })
-    .transform(val => val ? `+91 ${val.slice(0, 5)} ${val.slice(5)}` : '')
     .optional()
     .or(z.literal('')),
   date_of_birth: z.string().optional(),
