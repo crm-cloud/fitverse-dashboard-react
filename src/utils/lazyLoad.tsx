@@ -27,6 +27,7 @@ export const lazyRoutes = {
   // SaaS Management
   GymManagement: createLazyComponent(() => import('@/pages/gyms/GymManagement').then(m => ({ default: m.default }))),
   SubscriptionPlans: createLazyComponent(() => import('@/pages/subscription-plans/SubscriptionPlans').then(m => ({ default: m.default }))),
+  AdminManagement: createLazyComponent(() => import('@/pages/users/admin-management').then(m => ({ default: m.default }))),
 };
 
 // Component-based lazy loading for heavy components (commented out until components are available)

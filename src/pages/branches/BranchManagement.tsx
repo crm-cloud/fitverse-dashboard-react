@@ -113,12 +113,19 @@ export default function BranchManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Branch Management</h1>
-          <p className="text-muted-foreground">Manage gym branches and locations</p>
+          <p className="text-muted-foreground">
+            {authState.user?.role === 'super-admin' 
+              ? 'View all gym branches across the platform' 
+              : 'Manage your gym branches and locations'
+            }
+          </p>
         </div>
-        <Button onClick={() => window.location.href = '/branches/create'}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Branch
-        </Button>
+        {authState.user?.role !== 'super-admin' && (
+          <Button onClick={() => window.location.href = '/branches/create'}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Branch
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -224,16 +231,20 @@ export default function BranchManagement() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditBranch(branch)}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Branch
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleViewDetails(branch)}>
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleManageStaff(branch)}>
-                          Manage Staff
-                        </DropdownMenuItem>
+                        {authState.user?.role !== 'super-admin' && (
+                          <>
+                            <DropdownMenuItem onClick={() => handleEditBranch(branch)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit Branch
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleManageStaff(branch)}>
+                              Manage Staff
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         {authState.user?.role === 'super-admin' && (
                           <DropdownMenuItem 
                             onClick={() => handleDeleteBranch(branch)}

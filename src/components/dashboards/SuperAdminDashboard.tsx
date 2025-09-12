@@ -87,6 +87,22 @@ export const SuperAdminDashboard = () => {
             Monitor platform-wide metrics and manage gym tenants
           </p>
         </div>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => window.location.href = '/users/admin-management'}
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Manage Admins
+          </button>
+          <button 
+            onClick={() => window.location.href = '/gyms'}
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+          >
+            <Building2 className="h-4 w-4 mr-2" />
+            Add Gym
+          </button>
+        </div>
       </div>
 
       {/* SaaS Metrics Cards */}
@@ -177,29 +193,34 @@ export const SuperAdminDashboard = () => {
 
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Subscription Plans</CardTitle>
+            <CardTitle>Quick Actions</CardTitle>
             <CardDescription>
-              Available subscription tiers
+              Common platform management tasks
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {subscriptionPlans?.map((plan) => (
-                <div key={plan.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{plan.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {plan.max_branches} branches, {plan.max_members} members
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">${plan.price}</p>
-                    <p className="text-xs text-muted-foreground">
-                      /{plan.billing_cycle}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="space-y-3">
+              <button 
+                onClick={() => window.location.href = '/gyms'}
+                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+              >
+                <Building2 className="h-4 w-4 mr-2" />
+                Manage Gyms
+              </button>
+              <button 
+                onClick={() => window.location.href = '/users/admin-management'}
+                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Admin Accounts
+              </button>
+              <button 
+                onClick={() => window.location.href = '/subscription-plans'}
+                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+              >
+                <DollarSign className="h-4 w-4 mr-2" />
+                Subscription Plans
+              </button>
             </div>
           </CardContent>
         </Card>

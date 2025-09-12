@@ -73,8 +73,9 @@ export function GymForm({ gym, onSuccess }: GymFormProps) {
           .eq('id', gym.id);
         
         if (error) throw error;
+        return { gym_id: gym.id };
       } else {
-        const { error } = await supabase
+        const { data: newGym, error } = await supabase
           .from('gyms')
           .insert([{
             name: data.name,
@@ -84,9 +85,12 @@ export function GymForm({ gym, onSuccess }: GymFormProps) {
             max_trainers: data.max_trainers,
             max_members: data.max_members,
             status: 'active'
-          }]);
+          }])
+          .select()
+          .single();
         
         if (error) throw error;
+        return { gym_id: newGym.id };
       }
     },
     onSuccess: () => {

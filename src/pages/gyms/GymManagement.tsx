@@ -123,21 +123,27 @@ export default function GymManagement() {
           <h1 className="text-3xl font-bold">Gym Management</h1>
           <p className="text-muted-foreground">Manage all gym tenants and their subscriptions</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Gym
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Gym</DialogTitle>
-              <DialogDescription>Add a new gym tenant to the platform</DialogDescription>
-            </DialogHeader>
-            <GymForm onSuccess={() => setIsCreateDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.location.href = '/users/admin-management'}>
+            <Users className="h-4 w-4 mr-2" />
+            Manage Admins
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Gym
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Gym</DialogTitle>
+                <DialogDescription>Add a new gym tenant to the platform</DialogDescription>
+              </DialogHeader>
+              <GymForm onSuccess={() => setIsCreateDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -160,18 +166,24 @@ export default function GymManagement() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setSelectedGym(gym)}>
-                        <Settings className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => deleteGym.mutate(gym.id)}
-                        className="text-destructive"
-                      >
-                        Deactivate
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSelectedGym(gym)}>
+                <Settings className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => window.location.href = '/users/admin-management'}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Manage Admins
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => deleteGym.mutate(gym.id)}
+                className="text-destructive"
+              >
+                Deactivate
+              </DropdownMenuItem>
+            </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
                 

@@ -83,6 +83,29 @@ export function BranchForm({ branch, onSuccess }: BranchFormProps) {
 
   const createBranch = useMutation({
     mutationFn: async (data: BranchFormData) => {
+      // Check subscription limits before creating new branch
+      if (!branch && authState.user?.gym_id) {
+        const { data: gym, error: gymError } = await supabase
+          .from('gyms')
+          .select('max_branches')
+          .eq('id', authState.user.gym_id)
+          .single();
+
+        if (gymError) throw gymError;
+
+        const { data: existingBranches, error: branchError } = await supabase
+          .from('branches')
+          .select('id')
+          .eq('gym_id', authState.user.gym_id)
+          .eq('status', 'active');
+
+        if (branchError) throw branchError;
+
+        if (existingBranches.length >= gym.max_branches) {
+          throw new Error(`Cannot create more branches. Your subscription allows a maximum of ${gym.max_branches} branches. Please upgrade your subscription to add more branches.`);
+        }
+      }
+
       const branchData = {
         name: data.name,
         address: {

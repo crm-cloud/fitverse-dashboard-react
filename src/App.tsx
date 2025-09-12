@@ -251,16 +251,28 @@ const App = () => (
                              </ProtectedRoute>
                            } 
                          />
-                        <Route 
-                          path="/users/create" 
-                          element={
-                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                              <DashboardLayout>
-                                <UserCreatePage />
-                              </DashboardLayout>
-                            </ProtectedRoute>
-                          } 
-                        />
+                         <Route 
+                           path="/users/create" 
+                           element={
+                             <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                               <DashboardLayout>
+                                 <UserCreatePage />
+                               </DashboardLayout>
+                             </ProtectedRoute>
+                           } 
+                         />
+                         <Route 
+                           path="/users/admin-management" 
+                           element={
+                             <RouteGuard allowedRoles={['super-admin']}>
+                               <DashboardLayout>
+                                 <Suspense fallback={<PageLoadingState />}>
+                                   <lazyRoutes.AdminManagement />
+                                 </Suspense>
+                               </DashboardLayout>
+                             </RouteGuard>
+                           } 
+                         />
                         <Route 
                           path="/roles" 
                           element={
