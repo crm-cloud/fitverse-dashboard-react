@@ -173,24 +173,24 @@ export const navigationConfig: NavigationGroup[] = [
     allowedRoles: ['super-admin'],
     priority: 3,
     items: [
-      {
-        id: 'platform-analytics',
-        title: 'Platform Analytics',
-        url: '/analytics',
-        icon: BarChart3,
-        group: 'platform-analytics',
-        allowedRoles: ['super-admin'],
-        requiredPermissions: ['analytics.view'],
-      },
-      {
-        id: 'platform-reports',
-        title: 'Platform Reports',
-        url: '/reports',
-        icon: FileText,
-        group: 'platform-analytics',
-        allowedRoles: ['super-admin'],
-        requiredPermissions: ['reports.view'],
-      }
+        {
+          id: 'platform-analytics',
+          title: 'Platform Analytics',
+          url: '/platform-analytics',
+          icon: BarChart3,
+          group: 'platform-analytics',
+          allowedRoles: ['super-admin'],
+          requiredPermissions: ['analytics.view'],
+        },
+        {
+          id: 'platform-reports',
+          title: 'Platform Reports',
+          url: '/platform-reports',
+          icon: FileText,
+          group: 'platform-analytics',
+          allowedRoles: ['super-admin'],
+          requiredPermissions: ['reports.view'],
+        }
     ]
   },
   {

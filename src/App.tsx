@@ -809,16 +809,40 @@ const App = () => (
                           </ProtectedRoute>
                         } 
                       />
-                      <Route 
-                        path="/analytics" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                            <DashboardLayout>
-                              <AnalyticsPage />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
+                        <Route 
+                          path="/platform-analytics" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.PlatformAnalytics />
+                                </Suspense>
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/platform-reports" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.PlatformReports />
+                                </Suspense>
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/analytics" 
+                          element={
+                            <ProtectedRoute allowedRoles={['admin']}>
+                              <DashboardLayout>
+                                <AnalyticsPage />
+                              </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
                       <Route 
                         path="/reports" 
                         element={
