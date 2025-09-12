@@ -17,7 +17,14 @@ import { useEffect, useState } from 'react';
 const adminFormSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
-  phone: z.string().regex(/^\+91 [6-9]\d{4} \d{5}$/, 'Enter a valid 10-digit Indian mobile number starting with 6-9').optional().or(z.literal('')),
+  phone: z.string()
+    .transform(val => val.replace(/\D/g, '')) // Remove all non-digits
+    .refine(val => val.length === 0 || (val.length === 10 && /^[6-9]\d{9}$/.test(val)), {
+      message: 'Enter a valid 10-digit Indian mobile number starting with 6-9'
+    })
+    .transform(val => val ? `+91 ${val.slice(0, 5)} ${val.slice(5)}` : '')
+    .optional()
+    .or(z.literal('')),
   date_of_birth: z.string().optional(),
   address: z.object({
     street: z.string().optional(),
@@ -154,16 +161,22 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   };
 
   // Format Indian phone number
-  const formatIndianPhone = (value: string) => {
+  const formatPhoneNumber = (value: string) => {
+    // If empty, return empty
+    if (!value) return '';
+    
     // Remove all non-digits
     const cleaned = value.replace(/\D/g, '');
     
-    // Handle +91 prefix
-    if (cleaned.startsWith('91') && cleaned.length === 12) {
-      return '+91 ' + cleaned.slice(2, 7) + ' ' + cleaned.slice(7);
-    } else if (cleaned.length === 10) {
-      return '+91 ' + cleaned.slice(0, 5) + ' ' + cleaned.slice(5);
+    // For India (91), format as +91 XXXX XXXXX
+    if (cleaned.startsWith('91') && cleaned.length > 2) {
+      const number = cleaned.slice(2);
+      if (number.length <= 5) return `+91 ${number}`;
+      return `+91 ${number.slice(0, 5)} ${number.slice(5, 10)}`;
     }
+    
+    // For other countries, just add + if it's a number
+    if (cleaned) return `+${cleaned}`;
     
     return value;
   };
@@ -440,14 +453,24 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
                         <FormItem>
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="Enter 10-digit mobile number" 
-                              {...field}
-                              onChange={(e) => {
-                                const formatted = formatIndianPhone(e.target.value);
-                                field.onChange(formatted);
-                              }}
-                            />
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+                                +91
+                              </div>
+                              <Input 
+                                placeholder="Enter 10-digit mobile number"
+                                className="pl-10"
+                                {...field}
+                                value={field.value?.replace(/^\+91\s*/, '') || ''}
+                                onChange={(e) => {
+                                  const digits = e.target.value.replace(/\D/g, '');
+                                  // Only allow 10 digits for Indian numbers
+                                  const formatted = digits.length <= 10 ? digits : e.target.value;
+                                  field.onChange(formatted ? `+91 ${formatted}` : '');
+                                }}
+                                maxLength={12} // 10 digits + 2 spaces
+                              />
+                            </div>
                           </FormControl>
                           <CardDescription>
                             Enter 10-digit Indian mobile number
