@@ -215,36 +215,20 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   const createAdminAccount = useMutation({
     mutationFn: async (data: AdminFormData) => {
       try {
-        // Step 1: Create auth user with proper settings
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: data.email,
-          password: 'TempPass123!' + Math.random().toString(36).slice(-8),
-          options: {
-            data: {
-              full_name: data.full_name,
-              role: 'admin'
-            },
-            emailRedirectTo: undefined // Disable email confirmation redirect
-          }
-        });
+        // Check if user already exists
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('email', data.email)
+          .maybeSingle();
 
-        if (authError) {
-          console.error('Auth error:', authError);
-          throw new Error(`Authentication error: ${authError.message}`);
+        if (existingUser) {
+          throw new Error('A user with this email already exists');
         }
-
-        if (!authData.user) {
-          throw new Error('Failed to create user account - no user returned');
-        }
-
-        console.log('User created:', authData.user.id);
-
-        // Wait a moment for user to be fully created
-        await new Promise(resolve => setTimeout(resolve, 1000));
 
         let gym_id = null;
 
-        // Step 2: Create or use existing gym
+        // Step 1: Create or use existing gym first
         if (data.create_new_gym) {
           // Get subscription plan details
           const { data: subscriptionPlan, error: planError } = await supabase
@@ -269,8 +253,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
               max_branches: subscriptionPlan.max_branches || 1,
               max_trainers: subscriptionPlan.max_trainers || 5,
               max_members: subscriptionPlan.max_members || 100,
-              status: 'active',
-              created_by: authData.user.id
+              status: 'active'
             }])
             .select()
             .single();
@@ -298,53 +281,39 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           console.log('Using existing gym:', gym_id);
         }
 
-        // Step 3: Create profile with retry logic
-        const profileData = {
-          user_id: authData.user.id,
-          email: data.email,
-          full_name: data.full_name,
-          phone: data.phone || null,
-          date_of_birth: data.date_of_birth || null,
-          role: 'admin' as const,
-          branch_id: data.branch_id || null,
-          gym_id,
-          is_active: true
-        };
-
-        console.log('Creating profile with data:', profileData);
-
-        let profileAttempts = 0;
-        const maxAttempts = 3;
-        let profileError: any = null;
-
-        while (profileAttempts < maxAttempts) {
-          const { error: currentProfileError } = await supabase
-            .from('profiles')
-            .insert(profileData);
-
-          if (!currentProfileError) {
-            console.log('Profile created successfully');
-            break;
+        // Step 2: Use Edge Function to create admin account
+        console.log('Creating admin user account via Edge Function...');
+        
+        const { data: result, error: createError } = await supabase.functions.invoke('create-admin-account', {
+          body: {
+            email: data.email,
+            full_name: data.full_name,
+            phone: data.phone,
+            date_of_birth: data.date_of_birth,
+            gym_id: gym_id,
+            gym_name: data.gym_name,
+            create_new_gym: data.create_new_gym,
+            subscription_plan: data.subscription_plan,
+            address: data.address
           }
+        });
 
-          profileError = currentProfileError;
-          profileAttempts++;
-          
-          if (profileAttempts < maxAttempts) {
-            console.log(`Profile creation attempt ${profileAttempts} failed, retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
+        if (createError) {
+          console.error('Admin creation error:', createError);
+          throw new Error(`Failed to create admin account: ${createError.message}`);
         }
 
-        if (profileError) {
-          console.error('Profile creation failed after all attempts:', profileError);
-          throw new Error(`Failed to create admin profile: ${profileError.message}`);
+        if (!result || !result.success) {
+          throw new Error(result?.error || 'Admin account creation failed');
         }
 
-        return { 
-          success: true, 
-          user_id: authData.user.id, 
-          gym_id,
+        console.log('Admin account created successfully:', result);
+
+        return {
+          success: true,
+          user_id: result.userId,
+          gym_id: result.gymId || gym_id,
+          tempPassword: result.tempPassword,
           message: 'Admin account created successfully'
         };
 

@@ -19,6 +19,14 @@ interface CreateAdminRequest {
   create_new_gym?: boolean;
   existing_gym_id?: string;
   branch_id?: string;
+  gym_id?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+  };
 }
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -41,32 +49,14 @@ serve(async (req) => {
   }
 
   try {
-    const { full_name, email, phone, date_of_birth, avatar_url, subscription_plan, gym_name, create_new_gym, existing_gym_id, branch_id }: CreateAdminRequest = await req.json();
+    const { full_name, email, phone, date_of_birth, avatar_url, subscription_plan, gym_name, create_new_gym, existing_gym_id, branch_id, gym_id, address }: CreateAdminRequest = await req.json();
     
     console.log('Creating admin account:', { full_name, email, subscription_plan, create_new_gym, existing_gym_id, branch_id });
 
     // Generate temporary password
     const tempPassword = 'GymFit' + Math.random().toString(36).slice(-8) + '!';
 
-    // Create auth user with service role
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-        role: 'admin'
-      }
-    });
-
-    if (authError) {
-      console.error('Auth error:', authError);
-      throw authError;
-    }
-
-    console.log('User created successfully:', authData.user.id);
-
-    let gym_id = null;
+    let finalGymId = gym_id;
     let gymName = gym_name || `${full_name}'s Gym`;
 
     // Create gym if needed
@@ -93,8 +83,7 @@ serve(async (req) => {
           max_branches: subscriptionPlan.max_branches || 1,
           max_trainers: subscriptionPlan.max_trainers || 5,
           max_members: subscriptionPlan.max_members || 100,
-          status: 'active',
-          created_by: authData.user.id
+          status: 'active'
         }])
         .select()
         .single();
@@ -104,12 +93,12 @@ serve(async (req) => {
         throw gymError;
       }
 
-      gym_id = newGym.id;
-      console.log('Gym created:', gym_id);
+      finalGymId = newGym.id;
+      console.log('Gym created:', finalGymId);
     } else if (existing_gym_id) {
       const { data: existingGym, error: existingGymError } = await supabase
         .from('gyms')
-        .select('id, status')
+        .select('id, status, name')
         .eq('id', existing_gym_id)
         .single();
 
@@ -118,32 +107,36 @@ serve(async (req) => {
         throw new Error('Selected gym not found');
       }
 
-      gym_id = existingGym.id;
-      console.log('Assigning to existing gym:', gym_id);
+      finalGymId = existingGym.id;
+      gymName = existingGym.name;
+      console.log('Assigning to existing gym:', finalGymId);
     }
 
-    // Create profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: authData.user.id,
-        email,
+    // Create auth user with service role and all metadata for the trigger
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: {
         full_name,
-        phone: phone || null,
-        avatar_url: avatar_url || null,
-        date_of_birth: date_of_birth || null,
         role: 'admin',
+        phone: phone || null,
+        date_of_birth: date_of_birth || null,
+        gym_id: finalGymId || null,
         branch_id: branch_id || null,
-        gym_id,
         is_active: true
-      });
+      }
+    });
 
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      throw profileError;
+    if (authError) {
+      console.error('Auth error:', authError);
+      throw authError;
     }
 
-    console.log('Profile created successfully');
+    console.log('User created successfully:', authData.user.id);
+    
+    // The database trigger will automatically create the profile
+    console.log('Profile will be created automatically by database trigger');
 
     // Send welcome email
     try {
@@ -160,7 +153,7 @@ serve(async (req) => {
             <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Email:</strong> ${email}</p>
               <p><strong>Temporary Password:</strong> ${tempPassword}</p>
-              ${gym_id ? `<p><strong>Gym:</strong> ${gymName}</p>` : ''}
+              ${finalGymId ? `<p><strong>Gym:</strong> ${gymName}</p>` : ''}
               <p><strong>Subscription Plan:</strong> ${subscription_plan}</p>
             </div>
 
@@ -188,8 +181,9 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      user_id: authData.user.id,
-      gym_id,
+      userId: authData.user.id,
+      gymId: finalGymId,
+      tempPassword: tempPassword,
       message: 'Admin account created successfully. Login credentials sent via email.'
     }), {
       status: 200,
