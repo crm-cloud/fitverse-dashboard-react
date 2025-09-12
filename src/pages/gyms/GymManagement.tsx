@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { GymFormDrawer } from '@/components/gyms/GymForm';
+import { GymForm } from '@/components/gyms/GymForm';
 
 interface Gym {
   id: string;
@@ -228,12 +228,27 @@ export default function GymManagement() {
         })}
       </div>
 
-      <GymFormDrawer 
-        open={isDrawerOpen}
-        onOpenChange={setIsDrawerOpen}
-        onSuccess={handleSuccess}
-        gym={selectedGym}
-      />
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">
+                {selectedGym ? 'Edit Gym' : 'Add New Gym'}
+              </h2>
+              <button 
+                onClick={() => setIsDrawerOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+            <GymForm 
+              gym={selectedGym}
+              onSuccess={handleSuccess}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

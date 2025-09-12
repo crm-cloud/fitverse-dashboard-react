@@ -207,7 +207,7 @@ export const navigationConfig: NavigationGroup[] = [
         icon: MapPin,
         group: 'gym-management',
         allowedRoles: ['admin'],
-        requiredPermissions: ['branches.view_all'],
+        requiredPermissions: ['branches.view'],
       }
     ]
   },

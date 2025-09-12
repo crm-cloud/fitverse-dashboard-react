@@ -1,146 +1,89 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, MapPin, Plus, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Building2, MapPin, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
-
-type BranchStatus = 'active' | 'inactive' | 'maintenance';
-
-interface BranchAddress {
-  street?: string;
-  city: string;
-  state: string;
-  country: string;
-  zipCode: string;
-}
-
-interface BranchContact {
-  phone: string;
-  email: string;
-  website?: string;
-}
-
-interface BranchManager {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-}
-
-interface BranchGym {
-  name: string;
-  subscription_plan: string;
-}
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Branch {
   id: string;
   name: string;
-  address: BranchAddress;
-  contact: BranchContact;
-  status: BranchStatus;
-  createdAt: string;
-  updatedAt: string;
-  gym: BranchGym;
-  manager?: BranchManager;
-  stats?: {
-    member_count: number;
-    trainer_count: number;
-    active_classes: number;
-  };
-}
-
-interface BranchAddress {
-  street?: string;
-  city: string;
-  state: string;
-  country: string;
-  postal_code: string;
-}
-
-interface BranchContact {
-  phone: string;
-  email: string;
-}
-
-interface Branch {
-  id: string;
-  name: string;
-  address: BranchAddress | string;
-  contact: BranchContact;
-  status: 'active' | 'inactive' | 'maintenance';
+  address: any;
+  contact: any;
+  hours: any;
+  capacity: number;
+  current_members: number;
+  manager_id?: string;
   created_at: string;
-  gym: {
+  updated_at: string;
+  gym_id?: string;
+  status: string;
+  amenities?: string[];
+  gyms?: {
     name: string;
-    subscription_plan: string;
+    subscription_plan?: string;
   };
-  manager?: {
+  profiles?: {
     full_name: string;
     email: string;
-    phone: string;
-  };
-  stats?: {
-    member_count: number;
-    trainer_count: number;
-    active_classes: number;
+    phone?: string;
   };
 }
 
 export default function AdminBranchesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Branch; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
-  const { data: branches = [], isLoading } = useQuery<Branch[]>({
+  const { data: branches = [], isLoading } = useQuery({
     queryKey: ['admin-branches'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('branches')
         .select(`
           *,
-          gym:gym_id (name, subscription_plan),
-          manager:manager_id (full_name, email, phone)
+          gyms!branches_gym_id_fkey (name, subscription_plan),
+          profiles!branches_manager_id_fkey (full_name, email, phone)
         `)
-        .eq('is_active', true)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as any;
     }
   });
 
-  const filteredBranches = branches.filter(branch => {
-    const matchesSearch = 
-      branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      branch.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      branch.manager?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || branch.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredBranches = useMemo(() => {
+    return (branches || []).filter((branch: any) => {
+      const manager = Array.isArray(branch.profiles) ? branch.profiles[0] : branch.profiles;
+      const matchesSearch = 
+        branch.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        manager?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || branch.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [branches, searchTerm, statusFilter]);
 
-  const sortedBranches = [...filteredBranches].sort((a, b) => {
-    if (!sortConfig) return 0;
-    
-    const aValue = a[sortConfig.key];
-    const bValue = b[sortConfig.key];
-    
-    if (aValue < bValue) {
-      return sortConfig.direction === 'asc' ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortConfig.direction === 'asc' ? 1 : -1;
-    }
-    return 0;
-  });
+  const sortedBranches = useMemo(() => {
+    if (!sortConfig) return filteredBranches;
 
-  const requestSort = (key: keyof Branch) => {
+    return [...filteredBranches].sort((a, b) => {
+      const aValue = a[sortConfig.key as keyof Branch];
+      const bValue = b[sortConfig.key as keyof Branch];
+      
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredBranches, sortConfig]);
+
+  const requestSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
@@ -149,23 +92,27 @@ export default function AdminBranchesPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case 'inactive':
-        return <Badge variant="outline">Inactive</Badge>;
-      case 'maintenance':
-        return <Badge className="bg-yellow-100 text-yellow-800">Maintenance</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
+    const statusStyles = {
+      active: 'bg-green-100 text-green-800',
+      inactive: 'bg-gray-100 text-gray-800',
+      maintenance: 'bg-yellow-100 text-yellow-800'
+    };
+    
+    return (
+      <Badge className={statusStyles[status as keyof typeof statusStyles] || statusStyles.inactive}>
+        {status?.charAt(0).toUpperCase() + status?.slice(1) || 'Unknown'}
+      </Badge>
+    );
   };
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-8 w-48" />
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
           <Skeleton className="h-10 w-32" />
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -187,7 +134,7 @@ export default function AdminBranchesPage() {
           </p>
         </div>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
+          <Building2 className="mr-2 h-4 w-4" />
           Add New Branch
         </Button>
       </div>
@@ -264,19 +211,22 @@ export default function AdminBranchesPage() {
                       <TableCell>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5" />
-                          {[branch.city, branch.state, branch.country].filter(Boolean).join(', ')}
+                          {branch.address?.city || 'N/A'}
                         </div>
                       </TableCell>
-                      <TableCell>{branch.gym?.name || 'N/A'}</TableCell>
+                      <TableCell>{branch.gyms?.name || 'N/A'}</TableCell>
                       <TableCell>
-                        {branch.manager ? (
-                          <div className="space-y-1">
-                            <div className="font-medium">{branch.manager.full_name}</div>
-                            <div className="text-xs text-muted-foreground">{branch.manager.email}</div>
-                          </div>
-                        ) : (
-                          'Unassigned'
-                        )}
+                        {(() => {
+                          const manager = Array.isArray(branch.profiles) ? branch.profiles[0] : branch.profiles;
+                          return manager ? (
+                            <div className="space-y-1">
+                              <div className="font-medium">{manager.full_name}</div>
+                              <div className="text-xs text-muted-foreground">{manager.email}</div>
+                            </div>
+                          ) : (
+                            'Unassigned'
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>{getStatusBadge(branch.status)}</TableCell>
                       <TableCell>
