@@ -13,8 +13,9 @@ const adminFormSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().optional(),
-  gym_id: z.string().min(1, 'Please select a gym'),
-  branch_ids: z.array(z.string()).optional(),
+  subscription_plan: z.string().min(1, 'Please select a subscription plan'),
+  gym_name: z.string().optional(),
+  create_new_gym: z.boolean().default(true),
   role: z.literal('admin'),
 });
 
@@ -27,15 +28,15 @@ interface AdminAccountFormProps {
 export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   const queryClient = useQueryClient();
 
-  // Get available gyms
-  const { data: gyms } = useQuery({
-    queryKey: ['gyms-for-admin'],
+  // Get available subscription plans
+  const { data: subscriptionPlans } = useQuery({
+    queryKey: ['subscription-plans-active'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('gyms')
-        .select('id, name, status')
-        .eq('status', 'active')
-        .order('name');
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price', { ascending: true });
       
       if (error) throw error;
       return data;
@@ -48,83 +49,28 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       full_name: '',
       email: '',
       phone: '',
-      gym_id: '',
-      branch_ids: [],
+      subscription_plan: '',
+      gym_name: '',
+      create_new_gym: true,
       role: 'admin',
     }
   });
 
-  // Get branches for selected gym
-  const { data: branches } = useQuery({
-    queryKey: ['branches-for-gym', form.watch('gym_id')],
-    queryFn: async () => {
-      const gymId = form.getValues('gym_id');
-      if (!gymId) return [];
-      
-      const { data, error } = await supabase
-        .from('branches')
-        .select('id, name')
-        .eq('gym_id', gymId)
-        .eq('status', 'active')
-        .order('name');
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!form.watch('gym_id')
-  });
-
   const createAdminAccount = useMutation({
     mutationFn: async (data: AdminFormData) => {
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: data.email,
-        password: 'TempPassword123!', // Temporary password - admin will reset on first login
-        email_confirm: true,
-        user_metadata: {
+      const { data: result, error } = await supabase.functions.invoke('create-admin-account', {
+        body: {
           full_name: data.full_name,
-          role: 'admin'
+          email: data.email,
+          phone: data.phone,
+          subscription_plan: data.subscription_plan,
+          gym_name: data.gym_name || `${data.full_name}'s Gym`,
+          create_new_gym: data.create_new_gym
         }
       });
 
-      if (authError) throw authError;
-
-      // Then create the profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: authData.user.id,
-          email: data.email,
-          full_name: data.full_name,
-          phone: data.phone,
-          role: 'admin',
-          gym_id: data.gym_id,
-          is_active: true
-        });
-
-      if (profileError) throw profileError;
-
-      // Call welcome email edge function
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-admin-welcome-email', {
-          body: {
-            adminId: authData.user.id,
-            adminEmail: data.email,
-            adminName: data.full_name,
-            gymName: gyms?.find(g => g.id === data.gym_id)?.name || 'Unknown Gym',
-            temporaryPassword: 'TempPassword123!'
-          }
-        });
-
-        if (emailError) {
-          console.warn('Failed to send welcome email:', emailError);
-          // Don't throw error - account creation should still succeed
-        }
-      } catch (emailError) {
-        console.warn('Welcome email service error:', emailError);
-      }
-
-      return { user: authData.user, profile: data };
+      if (error) throw error;
+      return result;
     },
     onSuccess: () => {
       toast({
@@ -194,23 +140,23 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
 
         <FormField
           control={form.control}
-          name="gym_id"
+          name="subscription_plan"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assign to Gym</FormLabel>
-              <Select onValueChange={(value) => {
-                field.onChange(value);
-                form.setValue('branch_ids', []); // Reset branch selection when gym changes
-              }} defaultValue={field.value}>
+              <FormLabel>Subscription Plan</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a gym" />
+                    <SelectValue placeholder="Select a subscription plan" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {gyms?.map((gym) => (
-                    <SelectItem key={gym.id} value={gym.id}>
-                      {gym.name}
+                  {subscriptionPlans?.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.name}>
+                      {plan.name} - ${plan.price}/{plan.billing_cycle}
+                      <div className="text-xs text-muted-foreground">
+                        {plan.max_branches} branches, {plan.max_trainers} trainers, {plan.max_members} members
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -220,44 +166,42 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           )}
         />
 
-        {branches && branches.length > 0 && (
+        <FormField
+          control={form.control}
+          name="create_new_gym"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <input
+                  type="checkbox"
+                  checked={field.value}
+                  onChange={field.onChange}
+                  className="rounded border-input mt-1"
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Create New Gym</FormLabel>
+                <p className="text-xs text-muted-foreground">
+                  Check this to create a new gym for this admin
+                </p>
+                <FormMessage />
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {form.watch('create_new_gym') && (
           <FormField
             control={form.control}
-            name="branch_ids"
-            render={() => (
+            name="gym_name"
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>Assign to Branches (Optional)</FormLabel>
-                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-2">
-                  {branches.map((branch) => (
-                    <FormField
-                      key={branch.id}
-                      control={form.control}
-                      name="branch_ids"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value?.includes(branch.id)}
-                              onChange={(e) => {
-                                const updatedValue = e.target.checked
-                                  ? [...(field.value || []), branch.id]
-                                  : (field.value || []).filter((id: string) => id !== branch.id);
-                                field.onChange(updatedValue);
-                              }}
-                              className="rounded border-input"
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm font-normal">
-                            {branch.name}
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
+                <FormLabel>Gym Name (Optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Leave empty to auto-generate" {...field} />
+                </FormControl>
                 <p className="text-xs text-muted-foreground">
-                  Leave empty to allow access to all branches in the gym
+                  If left empty, will be generated from admin's name
                 </p>
                 <FormMessage />
               </FormItem>

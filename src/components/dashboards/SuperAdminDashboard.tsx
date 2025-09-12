@@ -90,17 +90,17 @@ export const SuperAdminDashboard = () => {
         <div className="flex gap-2">
           <button 
             onClick={() => window.location.href = '/users/admin-management'}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Manage Admins
-          </button>
-          <button 
-            onClick={() => window.location.href = '/gyms'}
             className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
           >
-            <Building2 className="h-4 w-4 mr-2" />
-            Add Gym
+            <Users className="h-4 w-4 mr-2" />
+            Create Admin
+          </button>
+          <button 
+            onClick={() => window.location.href = '/platform-analytics'}
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+          >
+            <DollarSign className="h-4 w-4 mr-2" />
+            Analytics
           </button>
         </div>
       </div>
@@ -201,18 +201,25 @@ export const SuperAdminDashboard = () => {
           <CardContent>
             <div className="space-y-3">
               <button 
-                onClick={() => window.location.href = '/gyms'}
-                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-              >
-                <Building2 className="h-4 w-4 mr-2" />
-                Manage Gyms
-              </button>
-              <button 
                 onClick={() => window.location.href = '/users/admin-management'}
                 className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
               >
                 <Users className="h-4 w-4 mr-2" />
-                Admin Accounts
+                Admin Management
+              </button>
+              <button 
+                onClick={() => window.location.href = '/platform-analytics'}
+                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+              >
+                <DollarSign className="h-4 w-4 mr-2" />
+                Platform Analytics
+              </button>
+              <button 
+                onClick={() => window.location.href = '/platform-reports'}
+                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+              >
+                <Building2 className="h-4 w-4 mr-2" />
+                Platform Reports
               </button>
               <button 
                 onClick={() => window.location.href = '/subscription-plans'}

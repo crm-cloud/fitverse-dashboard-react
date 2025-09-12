@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { AdminGymDashboard } from '@/components/gyms/AdminGymDashboard';
 import { 
   Users, 
   Calendar, 
@@ -14,7 +15,8 @@ import {
   Clock,
   Star,
   UserPlus,
-  Settings
+  Settings,
+  Building2
 } from 'lucide-react';
 
 export const AdminDashboard = () => (
@@ -23,6 +25,9 @@ export const AdminDashboard = () => (
       <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
       <Badge variant="destructive">Admin Access</Badge>
     </div>
+    
+    {/* Gym Management Section */}
+    <AdminGymDashboard />
     
     {/* Stats Grid */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
