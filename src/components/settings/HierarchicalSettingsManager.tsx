@@ -79,25 +79,16 @@ export function HierarchicalSettingsManager({ level }: Props) {
     queryKey: ['hierarchical-settings', level.level, level.branchId],
     queryFn: async (): Promise<SettingsData> => {
       // Get super admin settings first (default/fallback)
-      const { data: superAdminSettings, error: superError } = await supabase
+      const { data: superData, error: superError } = await supabase
         .from('system_settings')
         .select('*')
         .in('category', ['email', 'sms', 'whatsapp'])
         .is('branch_id', null);
       
       if (superError) throw superError;
+      const superAdminSettings = ((superData ?? []) as unknown) as Array<{ category: string; key: string; value: any }>;
 
       let branchSettings: any[] = [];
-      if (level.level === 'branch' && level.branchId) {
-        const { data: branchData, error: branchError } = await supabase
-          .from('system_settings')
-          .select('*')
-          .in('category', ['email', 'sms', 'whatsapp'])
-          .eq('branch_id', level.branchId);
-        
-        if (branchError) throw branchError;
-        branchSettings = branchData || [];
-      }
 
       // Merge settings with inheritance logic
       const mergeSettings = (category: string) => {
@@ -144,25 +135,16 @@ export function HierarchicalSettingsManager({ level }: Props) {
             category,
             key,
             value,
-            branch_id: level.level === 'branch' ? level.branchId : null,
             description: `${category} ${key} setting`
           });
         }
       }
       
-      // Delete existing settings for this level and categories
-      const deleteConditions = supabase
+      // Delete existing settings for these categories
+      const { error: deleteError } = await supabase
         .from('system_settings')
         .delete()
         .in('category', ['email', 'sms', 'whatsapp']);
-        
-      if (level.level === 'branch' && level.branchId) {
-        deleteConditions.eq('branch_id', level.branchId);
-      } else {
-        deleteConditions.is('branch_id', null);
-      }
-      
-      const { error: deleteError } = await deleteConditions;
       if (deleteError) throw deleteError;
       
       // Insert new settings

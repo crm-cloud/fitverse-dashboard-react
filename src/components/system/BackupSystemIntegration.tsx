@@ -32,7 +32,7 @@ export function BackupSystemIntegration() {
       const { data, error } = await supabase
         .from('system_backups')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('started_at', { ascending: false })
         .limit(10);
       
       if (error) throw error;
@@ -45,7 +45,7 @@ export function BackupSystemIntegration() {
     queryFn: async () => {
       const { data: allBackups, error } = await supabase
         .from('system_backups')
-        .select('status, file_size, backup_type');
+        .select('status, file_size, backup_type, started_at');
       
       if (error) throw error;
 
@@ -54,7 +54,7 @@ export function BackupSystemIntegration() {
         completedBackups: allBackups?.filter(b => b.status === 'completed').length || 0,
         failedBackups: allBackups?.filter(b => b.status === 'failed').length || 0,
         totalSize: allBackups?.reduce((sum, b) => sum + (b.file_size || 0), 0) || 0,
-        lastBackupDate: allBackups?.[0]?.created_at || null
+        lastBackupDate: allBackups?.[0]?.started_at || null
       };
 
       return stats;
@@ -69,7 +69,7 @@ export function BackupSystemIntegration() {
         .insert({
           backup_type: backupType,
           status: 'pending',
-          metadata: {
+          backup_data: {
             requested_by: 'admin',
             created_via: 'web_interface'
           }
@@ -86,8 +86,9 @@ export function BackupSystemIntegration() {
           .from('system_backups')
           .update({
             status: 'running',
-            metadata: {
-              ...data.metadata,
+            started_at: new Date().toISOString(),
+            backup_data: {
+              ...((data as any).backup_data || {}),
               started_at: new Date().toISOString()
             }
           })
@@ -101,8 +102,8 @@ export function BackupSystemIntegration() {
               status: 'completed',
               completed_at: new Date().toISOString(),
               file_size: Math.floor(Math.random() * 1000000000), // Random file size
-              metadata: {
-                ...data.metadata,
+              backup_data: {
+                ...((data as any).backup_data || {}),
                 completed_at: new Date().toISOString(),
                 backup_location: `backups/${data.id}_${backupType}_${Date.now()}.sql`
               }
@@ -347,7 +348,7 @@ export function BackupSystemIntegration() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Created: {new Date(backup.created_at).toLocaleString()}
+                      Created: {backup.started_at ? new Date(backup.started_at).toLocaleString() : 'Pending'}
                       {backup.completed_at && ` • Completed: ${new Date(backup.completed_at).toLocaleString()}`}
                     </p>
                     {backup.file_size > 0 && (
