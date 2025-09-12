@@ -59,8 +59,8 @@ serve(async (req) => {
     let finalGymId = gym_id;
     let gymName = gym_name || `${full_name}'s Gym`;
 
-    // Create gym if needed
-    if (create_new_gym) {
+    // Create gym if needed (only if create_new_gym is true AND no gym_id is provided)
+    if (create_new_gym && !gym_id) {
       const { data: subscriptionPlan, error: planError } = await supabase
         .from('subscription_plans')
         .select('*')
