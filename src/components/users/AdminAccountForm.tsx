@@ -105,91 +105,149 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
 
   const createAdminAccount = useMutation({
     mutationFn: async (data: AdminFormData) => {
-      // Step 1: Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: 'TempPass123!', // They will reset via email
-        options: {
-          data: {
-            full_name: data.full_name,
+      try {
+        // Step 1: Create auth user with proper settings
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: data.email,
+          password: 'TempPass123!' + Math.random().toString(36).slice(-8),
+          options: {
+            data: {
+              full_name: data.full_name,
+              role: 'admin'
+            },
+            emailRedirectTo: undefined // Disable email confirmation redirect
           }
-        }
-      });
+        });
 
-      if (authError) {
-        throw new Error(authError.message);
-      }
-
-      if (!authData.user) {
-        throw new Error('Failed to create user account');
-      }
-
-      let gym_id = null;
-
-      // Step 2: Create or use existing gym
-      if (data.create_new_gym) {
-        // Get subscription plan details
-        const { data: subscriptionPlan, error: planError } = await supabase
-          .from('subscription_plans')
-          .select('*')
-          .eq('name', data.subscription_plan)
-          .eq('is_active', true)
-          .single();
-
-        if (planError) {
-          throw new Error('Invalid subscription plan');
+        if (authError) {
+          console.error('Auth error:', authError);
+          throw new Error(`Authentication error: ${authError.message}`);
         }
 
-        // Create new gym
-        const { data: newGym, error: gymError } = await supabase
-          .from('gyms')
-          .insert([{
-            name: data.gym_name || `${data.full_name}'s Gym`,
-            billing_email: data.email,
-            subscription_plan: data.subscription_plan.toLowerCase(),
-            max_branches: subscriptionPlan.max_branches || 1,
-            max_trainers: subscriptionPlan.max_trainers || 5,
-            max_members: subscriptionPlan.max_members || 100,
-            status: 'active',
-            created_by: authData.user.id
-          }])
-          .select()
-          .single();
-
-        if (gymError) {
-          throw new Error('Failed to create gym: ' + gymError.message);
+        if (!authData.user) {
+          throw new Error('Failed to create user account - no user returned');
         }
 
-        gym_id = newGym.id;
-      } else if (data.existing_gym_id) {
-        gym_id = data.existing_gym_id;
-      }
+        console.log('User created:', authData.user.id);
 
-      // Step 3: Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
+        // Wait a moment for user to be fully created
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        let gym_id = null;
+
+        // Step 2: Create or use existing gym
+        if (data.create_new_gym) {
+          // Get subscription plan details
+          const { data: subscriptionPlan, error: planError } = await supabase
+            .from('subscription_plans')
+            .select('*')
+            .eq('name', data.subscription_plan)
+            .eq('is_active', true)
+            .single();
+
+          if (planError) {
+            console.error('Subscription plan error:', planError);
+            throw new Error('Invalid subscription plan selected');
+          }
+
+          // Create new gym
+          const { data: newGym, error: gymError } = await supabase
+            .from('gyms')
+            .insert([{
+              name: data.gym_name || `${data.full_name}'s Gym`,
+              billing_email: data.email,
+              subscription_plan: data.subscription_plan.toLowerCase(),
+              max_branches: subscriptionPlan.max_branches || 1,
+              max_trainers: subscriptionPlan.max_trainers || 5,
+              max_members: subscriptionPlan.max_members || 100,
+              status: 'active',
+              created_by: authData.user.id
+            }])
+            .select()
+            .single();
+
+          if (gymError) {
+            console.error('Gym creation error:', gymError);
+            throw new Error(`Failed to create gym: ${gymError.message}`);
+          }
+
+          gym_id = newGym.id;
+          console.log('Gym created:', gym_id);
+        } else if (data.existing_gym_id) {
+          // Verify existing gym exists
+          const { data: existingGym, error: existingGymError } = await supabase
+            .from('gyms')
+            .select('id, status')
+            .eq('id', data.existing_gym_id)
+            .single();
+
+          if (existingGymError || !existingGym) {
+            throw new Error('Selected gym not found or inaccessible');
+          }
+
+          gym_id = existingGym.id;
+          console.log('Using existing gym:', gym_id);
+        }
+
+        // Step 3: Create profile with retry logic
+        const profileData = {
           user_id: authData.user.id,
           email: data.email,
           full_name: data.full_name,
           phone: data.phone || null,
           date_of_birth: data.date_of_birth || null,
-          role: 'admin',
+          role: 'admin' as const,
           branch_id: data.branch_id || null,
           gym_id,
           is_active: true
-        });
+        };
 
-      if (profileError) {
-        throw new Error('Failed to create profile: ' + profileError.message);
+        console.log('Creating profile with data:', profileData);
+
+        let profileAttempts = 0;
+        const maxAttempts = 3;
+        let profileError: any = null;
+
+        while (profileAttempts < maxAttempts) {
+          const { error: currentProfileError } = await supabase
+            .from('profiles')
+            .insert(profileData);
+
+          if (!currentProfileError) {
+            console.log('Profile created successfully');
+            break;
+          }
+
+          profileError = currentProfileError;
+          profileAttempts++;
+          
+          if (profileAttempts < maxAttempts) {
+            console.log(`Profile creation attempt ${profileAttempts} failed, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+
+        if (profileError) {
+          console.error('Profile creation failed after all attempts:', profileError);
+          throw new Error(`Failed to create admin profile: ${profileError.message}`);
+        }
+
+        return { 
+          success: true, 
+          user_id: authData.user.id, 
+          gym_id,
+          message: 'Admin account created successfully'
+        };
+
+      } catch (error: any) {
+        console.error('Admin creation error:', error);
+        throw error;
       }
-
-      return { success: true, user_id: authData.user.id, gym_id };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast({
         title: "Admin Account Created",
-        description: "Admin account created successfully. They will receive an email to set their password and can then login.",
+        description: "Admin account created successfully. They can now login with their email and will need to reset their password on first login.",
       });
       queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
       queryClient.invalidateQueries({ queryKey: ['gyms-active'] });
@@ -198,9 +256,24 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
     },
     onError: (error: any) => {
       console.error('Admin creation error:', error);
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      // Handle specific error cases
+      if (error?.message?.includes('email_exists') || error?.message?.includes('already registered')) {
+        errorMessage = 'A user with this email address already exists. Please use a different email.';
+      } else if (error?.message?.includes('foreign key constraint')) {
+        errorMessage = 'There was a database error. Please try again in a few moments.';
+      } else if (error?.message?.includes('subscription plan')) {
+        errorMessage = 'Invalid subscription plan selected. Please choose a valid plan.';
+      }
+
       toast({
         title: "Failed to Create Admin",
-        description: error?.message || 'An unexpected error occurred. Please try again.',
+        description: errorMessage,
         variant: "destructive"
       });
     }
