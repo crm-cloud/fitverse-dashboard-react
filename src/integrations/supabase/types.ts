@@ -2793,6 +2793,93 @@ export type Database = {
         }
         Relationships: []
       }
+      system_backups: {
+        Row: {
+          backup_data: Json | null
+          backup_type: string
+          completed_at: string | null
+          compression_type: string | null
+          created_by: string | null
+          error_message: string | null
+          file_path: string | null
+          file_size: number | null
+          id: string
+          retention_until: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          backup_data?: Json | null
+          backup_type: string
+          completed_at?: string | null
+          compression_type?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          retention_until?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          backup_data?: Json | null
+          backup_type?: string
+          completed_at?: string | null
+          compression_type?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          retention_until?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      system_events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          event_category: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          event_category: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          event_category?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           category: string
@@ -3631,6 +3718,77 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      whatsapp_templates: {
+        Row: {
+          body_text: string
+          branch_id: string | null
+          buttons: Json | null
+          category: string
+          created_at: string | null
+          created_by: string | null
+          event: string
+          footer_text: string | null
+          header_text: string | null
+          id: string
+          is_active: boolean | null
+          language: string | null
+          name: string
+          status: string | null
+          template_type: string
+          updated_at: string | null
+          variables: Json | null
+          whatsapp_template_id: string | null
+        }
+        Insert: {
+          body_text: string
+          branch_id?: string | null
+          buttons?: Json | null
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          event: string
+          footer_text?: string | null
+          header_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          name: string
+          status?: string | null
+          template_type?: string
+          updated_at?: string | null
+          variables?: Json | null
+          whatsapp_template_id?: string | null
+        }
+        Update: {
+          body_text?: string
+          branch_id?: string | null
+          buttons?: Json | null
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          event?: string
+          footer_text?: string | null
+          header_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          name?: string
+          status?: string | null
+          template_type?: string
+          updated_at?: string | null
+          variables?: Json | null
+          whatsapp_template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_templates_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       work_shifts: {
         Row: {

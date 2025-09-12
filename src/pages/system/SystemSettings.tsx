@@ -1,4 +1,4 @@
-
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +6,44 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Shield, Database, Mail, Bell, ChevronDown } from 'lucide-react';
+import { Settings, Shield, Database, Mail, Bell, MessageSquare, MessageCircle, Plus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSystemSettings, useUpdateSystemSetting } from '@/hooks/useSystemSettings';
+import { SMSTemplateEditor } from '@/components/sms/SMSTemplateEditor';
+import { WhatsAppTemplateEditor } from '@/components/templates/WhatsAppTemplateEditor';
+import { EmailTemplateEditor } from '@/components/email/EmailTemplateEditor';
+import { toast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function SystemSettings() {
+  const { data: allSettings, isLoading } = useSystemSettings();
+  const updateSetting = useUpdateSystemSetting();
+  const [activeTab, setActiveTab] = useState('general');
+  const [showSMSEditor, setShowSMSEditor] = useState(false);
+  const [showEmailEditor, setShowEmailEditor] = useState(false);
+  const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
+
+  // Group settings by category
+  const getSettingsByCategory = (category: string) => {
+    return allSettings?.filter(setting => setting.category === category) || [];
+  };
+
+  const getSettingValue = (category: string, key: string) => {
+    const setting = allSettings?.find(s => s.category === category && s.key === key);
+    return setting?.value;
+  };
+
+  const updateSettingValue = async (category: string, key: string, value: any) => {
+    const setting = allSettings?.find(s => s.category === category && s.key === key);
+    if (setting) {
+      await updateSetting.mutateAsync({ id: setting.id, value });
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64">Loading...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -17,12 +51,13 @@ export default function SystemSettings() {
         <p className="text-muted-foreground">Configure global system settings and preferences</p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="database">Database</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -38,15 +73,26 @@ export default function SystemSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="app-name">Application Name</Label>
-                  <Input id="app-name" defaultValue="GymFit Pro" />
+                  <Input 
+                    id="app-name" 
+                    value={getSettingValue('general', 'app_name') || 'GymFit Pro'} 
+                    onChange={(e) => updateSettingValue('general', 'app_name', e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company-name">Company Name</Label>
-                  <Input id="company-name" defaultValue="GymFit Corporation" />
+                  <Input 
+                    id="company-name" 
+                    value={getSettingValue('general', 'company_name') || 'GymFit Corporation'} 
+                    onChange={(e) => updateSettingValue('general', 'company_name', e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Default Timezone</Label>
-                  <Select defaultValue="UTC">
+                  <Select 
+                    value={getSettingValue('general', 'default_timezone') || 'UTC'}
+                    onValueChange={(value) => updateSettingValue('general', 'default_timezone', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>
@@ -61,7 +107,10 @@ export default function SystemSettings() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="currency">Default Currency</Label>
-                  <Select defaultValue="USD">
+                  <Select 
+                    value={getSettingValue('general', 'default_currency') || 'USD'}
+                    onValueChange={(value) => updateSettingValue('general', 'default_currency', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
@@ -95,14 +144,22 @@ export default function SystemSettings() {
                     <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
                     <p className="text-sm text-muted-foreground">Enable to temporarily disable user access</p>
                   </div>
-                  <Switch id="maintenance-mode" />
+                  <Switch 
+                    id="maintenance-mode" 
+                    checked={getSettingValue('general', 'maintenance_mode') || false}
+                    onCheckedChange={(checked) => updateSettingValue('general', 'maintenance_mode', checked)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="registration">Allow New Registrations</Label>
                     <p className="text-sm text-muted-foreground">Allow new users to register</p>
                   </div>
-                  <Switch id="registration" defaultChecked />
+                  <Switch 
+                    id="registration" 
+                    checked={getSettingValue('general', 'allow_registration') ?? true}
+                    onCheckedChange={(checked) => updateSettingValue('general', 'allow_registration', checked)}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -125,21 +182,33 @@ export default function SystemSettings() {
                     <Label htmlFor="two-factor">Require Two-Factor Authentication</Label>
                     <p className="text-sm text-muted-foreground">Force all users to enable 2FA</p>
                   </div>
-                  <Switch id="two-factor" />
+                  <Switch 
+                    id="two-factor" 
+                    checked={getSettingValue('security', 'require_2fa') || false}
+                    onCheckedChange={(checked) => updateSettingValue('security', 'require_2fa', checked)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="session-timeout">Auto Logout</Label>
                     <p className="text-sm text-muted-foreground">Automatically log users out after inactivity</p>
                   </div>
-                  <Switch id="session-timeout" defaultChecked />
+                  <Switch 
+                    id="session-timeout" 
+                    checked={getSettingValue('security', 'auto_logout') ?? true}
+                    onCheckedChange={(checked) => updateSettingValue('security', 'auto_logout', checked)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="password-policy">Strong Password Policy</Label>
                     <p className="text-sm text-muted-foreground">Enforce strong password requirements</p>
                   </div>
-                  <Switch id="password-policy" defaultChecked />
+                  <Switch 
+                    id="password-policy" 
+                    checked={getSettingValue('security', 'strong_password_policy') ?? true}
+                    onCheckedChange={(checked) => updateSettingValue('security', 'strong_password_policy', checked)}
+                  />
                 </div>
               </div>
               
@@ -148,11 +217,21 @@ export default function SystemSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="session-duration">Session Duration (hours)</Label>
-                  <Input id="session-duration" type="number" defaultValue="8" />
+                  <Input 
+                    id="session-duration" 
+                    type="number" 
+                    value={getSettingValue('security', 'session_duration_hours') || '8'} 
+                    onChange={(e) => updateSettingValue('security', 'session_duration_hours', e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="max-login-attempts">Max Login Attempts</Label>
-                  <Input id="max-login-attempts" type="number" defaultValue="5" />
+                  <Input 
+                    id="max-login-attempts" 
+                    type="number" 
+                    value={getSettingValue('security', 'max_login_attempts') || '5'} 
+                    onChange={(e) => updateSettingValue('security', 'max_login_attempts', e.target.value)}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -175,14 +254,22 @@ export default function SystemSettings() {
                     <Label htmlFor="auto-backup">Automatic Backups</Label>
                     <p className="text-sm text-muted-foreground">Enable scheduled database backups</p>
                   </div>
-                  <Switch id="auto-backup" defaultChecked />
+                  <Switch 
+                    id="auto-backup" 
+                    checked={getSettingValue('database', 'auto_backup') ?? true}
+                    onCheckedChange={(checked) => updateSettingValue('database', 'auto_backup', checked)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="backup-compression">Compress Backups</Label>
                     <p className="text-sm text-muted-foreground">Compress backup files to save space</p>
                   </div>
-                  <Switch id="backup-compression" defaultChecked />
+                  <Switch 
+                    id="backup-compression" 
+                    checked={getSettingValue('database', 'backup_compression') ?? true}
+                    onCheckedChange={(checked) => updateSettingValue('database', 'backup_compression', checked)}
+                  />
                 </div>
               </div>
               
@@ -191,11 +278,20 @@ export default function SystemSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="backup-frequency">Backup Frequency</Label>
-                  <Input id="backup-frequency" defaultValue="Daily" />
+                  <Input 
+                    id="backup-frequency" 
+                    value={getSettingValue('database', 'backup_frequency') || 'Daily'} 
+                    onChange={(e) => updateSettingValue('database', 'backup_frequency', e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="retention-days">Retention Period (days)</Label>
-                  <Input id="retention-days" type="number" defaultValue="30" />
+                  <Input 
+                    id="retention-days" 
+                    type="number" 
+                    value={getSettingValue('database', 'retention_days') || '30'} 
+                    onChange={(e) => updateSettingValue('database', 'retention_days', e.target.value)}
+                  />
                 </div>
               </div>
               
@@ -223,14 +319,22 @@ export default function SystemSettings() {
                     <Label htmlFor="email-notifications">Email Notifications</Label>
                     <p className="text-sm text-muted-foreground">Send system alerts via email</p>
                   </div>
-                  <Switch id="email-notifications" defaultChecked />
+                  <Switch 
+                    id="email-notifications" 
+                    checked={getSettingValue('notifications', 'email_notifications') ?? true}
+                    onCheckedChange={(checked) => updateSettingValue('notifications', 'email_notifications', checked)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="sms-notifications">SMS Notifications</Label>
                     <p className="text-sm text-muted-foreground">Send critical alerts via SMS</p>
                   </div>
-                  <Switch id="sms-notifications" />
+                  <Switch 
+                    id="sms-notifications" 
+                    checked={getSettingValue('notifications', 'sms_notifications') || false}
+                    onCheckedChange={(checked) => updateSettingValue('notifications', 'sms_notifications', checked)}
+                  />
                 </div>
               </div>
               
@@ -238,10 +342,127 @@ export default function SystemSettings() {
               
               <div className="space-y-2">
                 <Label htmlFor="admin-email">Admin Email</Label>
-                <Input id="admin-email" type="email" defaultValue="admin@gymfit.com" />
+                <Input 
+                  id="admin-email" 
+                  type="email" 
+                  value={getSettingValue('notifications', 'admin_email') || 'admin@gymfit.com'} 
+                  onChange={(e) => updateSettingValue('notifications', 'admin_email', e.target.value)}
+                />
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="w-5 h-5" />
+                    Email Templates
+                  </CardTitle>
+                  <CardDescription>Manage email notification templates</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Dialog open={showEmailEditor} onOpenChange={setShowEmailEditor}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Email Template
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Email Template Editor</DialogTitle>
+                      </DialogHeader>
+                      <EmailTemplateEditor
+                        onSave={(template) => {
+                          console.log('Save email template:', template);
+                          setShowEmailEditor(false);
+                        }}
+                        onPreview={(template) => {
+                          console.log('Preview email template:', template);
+                        }}
+                        onTest={async (template, email) => {
+                          console.log('Test email template:', template, email);
+                        }}
+                      />
+                      <div className="flex justify-end gap-2 mt-4">
+                        <Button variant="outline" onClick={() => setShowEmailEditor(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    SMS Templates
+                  </CardTitle>
+                  <CardDescription>Manage SMS notification templates</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Dialog open={showSMSEditor} onOpenChange={setShowSMSEditor}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create SMS Template
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>SMS Template Editor</DialogTitle>
+                      </DialogHeader>
+                      <SMSTemplateEditor
+                        onSave={(template) => {
+                          console.log('Save SMS template:', template);
+                          setShowSMSEditor(false);
+                        }}
+                        onCancel={() => setShowSMSEditor(false)}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5" />
+                    WhatsApp Templates
+                  </CardTitle>
+                  <CardDescription>Manage WhatsApp business templates</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Dialog open={showWhatsAppEditor} onOpenChange={setShowWhatsAppEditor}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create WhatsApp Template
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>WhatsApp Template Editor</DialogTitle>
+                      </DialogHeader>
+                      <WhatsAppTemplateEditor
+                        onSave={(template) => {
+                          console.log('Save WhatsApp template:', template);
+                          setShowWhatsAppEditor(false);
+                        }}
+                        onCancel={() => setShowWhatsAppEditor(false)}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
