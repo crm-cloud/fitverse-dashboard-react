@@ -222,82 +222,83 @@ export default function AdminBranchesPage() {
         </CardHeader>
         
         <CardContent>
-          <div className="rounded-md border
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('name')}
-                >
-                  <div className="flex items-center">
-                    Branch Name
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </div>
-                </TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Gym</TableHead>
-                <TableHead>Manager</TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('status')}
-                >
-                  <div className="flex items-center">
-                    Status
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </div>
-                </TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedBranches.length > 0 ? (
-                sortedBranches.map((branch) => (
-                  <TableRow key={branch.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        {branch.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {[branch.city, branch.state, branch.country].filter(Boolean).join(', ')}
-                      </div>
-                    </TableCell>
-                    <TableCell>{branch.gym?.name || 'N/A'}</TableCell>
-                    <TableCell>
-                      {branch.manager ? (
-                        <div className="space-y-1">
-                          <div className="font-medium">{branch.manager.full_name}</div>
-                          <div className="text-xs text-muted-foreground">{branch.manager.email}</div>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => requestSort('name')}
+                  >
+                    <div className="flex items-center">
+                      Branch Name
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </div>
+                  </TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Gym</TableHead>
+                  <TableHead>Manager</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => requestSort('status')}
+                  >
+                    <div className="flex items-center">
+                      Status
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </div>
+                  </TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedBranches.length > 0 ? (
+                  sortedBranches.map((branch) => (
+                    <TableRow key={branch.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          {branch.name}
                         </div>
-                      ) : (
-                        'Unassigned'
-                      )}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(branch.status)}</TableCell>
-                    <TableCell>
-                      <div className="text-sm text-muted-foreground">
-                        {format(new Date(branch.created_at), 'MMM d, yyyy')}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">View</Button>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {[branch.city, branch.state, branch.country].filter(Boolean).join(', ')}
+                        </div>
+                      </TableCell>
+                      <TableCell>{branch.gym?.name || 'N/A'}</TableCell>
+                      <TableCell>
+                        {branch.manager ? (
+                          <div className="space-y-1">
+                            <div className="font-medium">{branch.manager.full_name}</div>
+                            <div className="text-xs text-muted-foreground">{branch.manager.email}</div>
+                          </div>
+                        ) : (
+                          'Unassigned'
+                        )}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(branch.status)}</TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground">
+                          {format(new Date(branch.created_at), 'MMM d, yyyy')}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">View</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      No branches found
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    No branches found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
