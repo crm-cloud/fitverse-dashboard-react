@@ -222,62 +222,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           throw new Error('A user with this email already exists');
         }
 
-        let gym_id = null;
-
-        // Step 1: Create or use existing gym first
-        if (data.create_new_gym) {
-          // Get subscription plan details
-          const { data: subscriptionPlan, error: planError } = await supabase
-            .from('subscription_plans')
-            .select('*')
-            .eq('name', data.subscription_plan)
-            .eq('is_active', true)
-            .single();
-
-          if (planError) {
-            console.error('Subscription plan error:', planError);
-            throw new Error('Invalid subscription plan selected');
-          }
-
-          // Create new gym
-          const { data: newGym, error: gymError } = await supabase
-            .from('gyms')
-            .insert([{
-              name: data.gym_name || `${data.full_name}'s Gym`,
-              billing_email: data.email,
-              subscription_plan: data.subscription_plan.toLowerCase(),
-              max_branches: subscriptionPlan.max_branches || 1,
-              max_trainers: subscriptionPlan.max_trainers || 5,
-              max_members: subscriptionPlan.max_members || 100,
-              status: 'active'
-            }])
-            .select()
-            .single();
-
-          if (gymError) {
-            console.error('Gym creation error:', gymError);
-            throw new Error(`Failed to create gym: ${gymError.message}`);
-          }
-
-          gym_id = newGym.id;
-          console.log('Gym created:', gym_id);
-        } else if (data.existing_gym_id) {
-          // Verify existing gym exists
-          const { data: existingGym, error: existingGymError } = await supabase
-            .from('gyms')
-            .select('id, status')
-            .eq('id', data.existing_gym_id)
-            .single();
-
-          if (existingGymError || !existingGym) {
-            throw new Error('Selected gym not found or inaccessible');
-          }
-
-          gym_id = existingGym.id;
-          console.log('Using existing gym:', gym_id);
-        }
-
-        // Step 2: Use Edge Function to create admin account
+        // Let the Edge Function handle gym creation/assignment
         console.log('Creating admin user account via Edge Function...');
         
         const { data: result, error: createError } = await supabase.functions.invoke('create-admin-account', {
@@ -286,10 +231,11 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
             full_name: data.full_name,
             phone: data.phone,
             date_of_birth: data.date_of_birth,
-            gym_id: gym_id,
+            subscription_plan: data.subscription_plan,
             gym_name: data.gym_name,
             create_new_gym: data.create_new_gym,
-            subscription_plan: data.subscription_plan,
+            existing_gym_id: data.existing_gym_id,
+            branch_id: data.branch_id,
             address: data.address
           }
         });
@@ -308,7 +254,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
         return {
           success: true,
           user_id: result.userId,
-          gym_id: result.gymId || gym_id,
+          gym_id: result.gymId,
           tempPassword: result.tempPassword,
           message: 'Admin account created successfully'
         };
