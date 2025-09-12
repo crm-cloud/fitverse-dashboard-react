@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,14 +16,19 @@ import { BackupSystemIntegration } from '@/components/system/BackupSystemIntegra
 import { EmailTemplateEditor } from '@/components/email/EmailTemplateEditor';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useSearchParams } from 'react-router-dom';
 
 export default function SystemSettings() {
   const { data: allSettings, isLoading } = useSystemSettings();
   const updateSetting = useUpdateSystemSetting();
-  const [activeTab, setActiveTab] = useState('general');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'general';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [showSMSEditor, setShowSMSEditor] = useState(false);
   const [showEmailEditor, setShowEmailEditor] = useState(false);
-  const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
+const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<Record<string, any>>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Group settings by category
   const getSettingsByCategory = (category: string) => {
@@ -31,15 +36,49 @@ export default function SystemSettings() {
   };
 
   const getSettingValue = (category: string, key: string) => {
+    const pendingKey = `${category}.${key}`;
+    if (pendingKey in pendingChanges) {
+      return pendingChanges[pendingKey];
+    }
     const setting = allSettings?.find(s => s.category === category && s.key === key);
     return setting?.value;
   };
 
-  const updateSettingValue = async (category: string, key: string, value: any) => {
-    const setting = allSettings?.find(s => s.category === category && s.key === key);
-    if (setting) {
-      await updateSetting.mutateAsync({ id: setting.id, value });
+  const updateSettingValue = (category: string, key: string, value: any) => {
+    const pendingKey = `${category}.${key}`;
+    setPendingChanges(prev => ({ ...prev, [pendingKey]: value }));
+    setHasUnsavedChanges(true);
+  };
+
+  const saveAllChanges = async () => {
+    try {
+      const promises = Object.entries(pendingChanges).map(async ([key, value]) => {
+        const [category, settingKey] = key.split('.');
+        const setting = allSettings?.find(s => s.category === category && s.key === settingKey);
+        if (setting) {
+          return updateSetting.mutateAsync({ id: setting.id, value });
+        }
+      });
+      
+      await Promise.all(promises.filter(Boolean));
+      setPendingChanges({});
+      setHasUnsavedChanges(false);
+      toast({
+        title: "Success",
+        description: "All settings saved successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save some settings",
+        variant: "destructive"
+      });
     }
+  };
+
+  const resetChanges = () => {
+    setPendingChanges({});
+    setHasUnsavedChanges(false);
   };
 
   if (isLoading) {
@@ -59,6 +98,7 @@ export default function SystemSettings() {
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="database">Database</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="messaging">Messaging Providers</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
         </TabsList>
 
@@ -99,7 +139,18 @@ export default function SystemSettings() {
                       <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-auto">
-                      {['UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Asia/Tokyo'].map((timezone) => (
+                      {[
+                        'UTC',
+                        'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+                        'America/Toronto', 'America/Vancouver', 'America/Mexico_City', 'America/Sao_Paulo',
+                        'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'Europe/Madrid',
+                        'Europe/Amsterdam', 'Europe/Stockholm', 'Europe/Moscow', 'Europe/Istanbul',
+                        'Asia/Tokyo', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Hong_Kong', 'Asia/Singapore',
+                        'Asia/Bangkok', 'Asia/Mumbai', 'Asia/Dubai', 'Asia/Jerusalem', 'Asia/Kolkata',
+                        'Australia/Sydney', 'Australia/Melbourne', 'Australia/Brisbane', 'Australia/Perth',
+                        'Pacific/Auckland', 'Pacific/Honolulu', 'Pacific/Fiji',
+                        'Africa/Cairo', 'Africa/Lagos', 'Africa/Johannesburg', 'Africa/Nairobi'
+                      ].map((timezone) => (
                         <SelectItem key={timezone} value={timezone}>
                           {timezone.replace(/_/g, ' ')}
                         </SelectItem>
@@ -355,6 +406,10 @@ export default function SystemSettings() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="messaging">
+          <HierarchicalSettingsManager level={{ level: 'super_admin' }} />
+        </TabsContent>
+
         <TabsContent value="templates">
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -468,14 +523,24 @@ export default function SystemSettings() {
         </TabsContent>
       </Tabs>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-end gap-2">
-            <Button variant="outline">Reset to Defaults</Button>
-            <Button>Save Changes</Button>
-          </div>
-        </CardContent>
-      </Card>
+      {hasUnsavedChanges && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-amber-800">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <span className="text-sm font-medium">You have unsaved changes</span>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={resetChanges}>Cancel</Button>
+                <Button onClick={saveAllChanges} disabled={updateSetting.isPending}>
+                  {updateSetting.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

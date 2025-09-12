@@ -12,10 +12,14 @@ import {
   HardDrive,
   CheckCircle,
   AlertCircle,
-  Play
+  Play,
+  Settings
 } from 'lucide-react';
+import { BackupSystemIntegration } from '@/components/system/BackupSystemIntegration';
+import { useNavigate } from 'react-router-dom';
 
 export default function SystemBackup() {
+  const navigate = useNavigate();
   const backupHistory = [
     { id: '1', date: '2024-01-19', time: '02:00 AM', size: '2.4 GB', status: 'completed', type: 'automatic' },
     { id: '2', date: '2024-01-18', time: '02:00 AM', size: '2.3 GB', status: 'completed', type: 'automatic' },
@@ -76,27 +80,6 @@ export default function SystemBackup() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Backup and restore operations</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button className="w-full justify-start h-12">
-              <Play className="w-4 h-4 mr-2" />
-              Create Backup Now
-            </Button>
-            <Button variant="outline" className="w-full justify-start h-12">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Backup File
-            </Button>
-            <Button variant="outline" className="w-full justify-start h-12">
-              <Calendar className="w-4 h-4 mr-2" />
-              Schedule Backup
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>Backup Settings</CardTitle>
             <CardDescription>Current backup configuration</CardDescription>
           </CardHeader>
@@ -117,63 +100,20 @@ export default function SystemBackup() {
               <span className="text-sm">Compression</span>
               <Badge variant="secondary">Enabled</Badge>
             </div>
-            <Button variant="outline" size="sm" className="w-full">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => navigate('/system/settings?tab=database')}
+            >
+              <Settings className="w-4 h-4 mr-2" />
               Configure Settings
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Backup History</CardTitle>
-          <CardDescription>Recent backup operations and their status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {backupHistory.map((backup) => (
-              <div key={backup.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                <div className="flex items-center gap-3">
-                  {backup.status === 'completed' ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 text-red-500" />
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{backup.date}</span>
-                      <Badge variant={backup.type === 'manual' ? 'default' : 'secondary'} className="text-xs">
-                        {backup.type}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {backup.time}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <HardDrive className="w-3 h-3" />
-                        {backup.size}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={backup.status === 'completed' ? 'secondary' : 'destructive'}>
-                    {backup.status}
-                  </Badge>
-                  {backup.status === 'completed' && (
-                    <Button size="sm" variant="outline">
-                      <Download className="w-3 h-3 mr-1" />
-                      Download
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <BackupSystemIntegration />
     </div>
   );
 }
