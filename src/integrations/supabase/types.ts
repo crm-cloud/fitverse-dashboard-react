@@ -2882,6 +2882,7 @@ export type Database = {
       }
       system_settings: {
         Row: {
+          branch_id: string | null
           category: string
           created_at: string | null
           description: string | null
@@ -2892,6 +2893,7 @@ export type Database = {
           value: Json
         }
         Insert: {
+          branch_id?: string | null
           category: string
           created_at?: string | null
           description?: string | null
@@ -2902,6 +2904,7 @@ export type Database = {
           value: Json
         }
         Update: {
+          branch_id?: string | null
           category?: string
           created_at?: string | null
           description?: string | null
@@ -2911,7 +2914,15 @@ export type Database = {
           updated_at?: string | null
           value?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "system_settings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_members: {
         Row: {
