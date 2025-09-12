@@ -14,6 +14,7 @@ const adminFormSchema = z.object({
   email: z.string().email('Please enter a valid email'),
   phone: z.string().optional(),
   gym_id: z.string().min(1, 'Please select a gym'),
+  branch_ids: z.array(z.string()).optional(),
   role: z.literal('admin'),
 });
 
@@ -48,8 +49,29 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       email: '',
       phone: '',
       gym_id: '',
+      branch_ids: [],
       role: 'admin',
     }
+  });
+
+  // Get branches for selected gym
+  const { data: branches } = useQuery({
+    queryKey: ['branches-for-gym', form.watch('gym_id')],
+    queryFn: async () => {
+      const gymId = form.getValues('gym_id');
+      if (!gymId) return [];
+      
+      const { data, error } = await supabase
+        .from('branches')
+        .select('id, name')
+        .eq('gym_id', gymId)
+        .eq('status', 'active')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!form.watch('gym_id')
   });
 
   const createAdminAccount = useMutation({
@@ -81,6 +103,26 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
         });
 
       if (profileError) throw profileError;
+
+      // Call welcome email edge function
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-admin-welcome-email', {
+          body: {
+            adminId: authData.user.id,
+            adminEmail: data.email,
+            adminName: data.full_name,
+            gymName: gyms?.find(g => g.id === data.gym_id)?.name || 'Unknown Gym',
+            temporaryPassword: 'TempPassword123!'
+          }
+        });
+
+        if (emailError) {
+          console.warn('Failed to send welcome email:', emailError);
+          // Don't throw error - account creation should still succeed
+        }
+      } catch (emailError) {
+        console.warn('Welcome email service error:', emailError);
+      }
 
       return { user: authData.user, profile: data };
     },
@@ -156,7 +198,10 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign to Gym</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={(value) => {
+                field.onChange(value);
+                form.setValue('branch_ids', []); // Reset branch selection when gym changes
+              }} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a gym" />
@@ -174,6 +219,51 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
             </FormItem>
           )}
         />
+
+        {branches && branches.length > 0 && (
+          <FormField
+            control={form.control}
+            name="branch_ids"
+            render={() => (
+              <FormItem>
+                <FormLabel>Assign to Branches (Optional)</FormLabel>
+                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-2">
+                  {branches.map((branch) => (
+                    <FormField
+                      key={branch.id}
+                      control={form.control}
+                      name="branch_ids"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value?.includes(branch.id)}
+                              onChange={(e) => {
+                                const updatedValue = e.target.checked
+                                  ? [...(field.value || []), branch.id]
+                                  : (field.value || []).filter((id: string) => id !== branch.id);
+                                field.onChange(updatedValue);
+                              }}
+                              className="rounded border-input"
+                            />
+                          </FormControl>
+                          <FormLabel className="text-sm font-normal">
+                            {branch.name}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to allow access to all branches in the gym
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex gap-2 pt-4">
           <Button type="submit" disabled={createAdminAccount.isPending}>

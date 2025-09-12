@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSystemSettings, useUpdateSystemSetting } from '@/hooks/useSystemSettings';
 import { SMSTemplateEditor } from '@/components/sms/SMSTemplateEditor';
 import { WhatsAppTemplateEditor } from '@/components/templates/WhatsAppTemplateEditor';
+import { HierarchicalSettingsManager } from '@/components/settings/HierarchicalSettingsManager';
+import { BackupSystemIntegration } from '@/components/system/BackupSystemIntegration';
 import { EmailTemplateEditor } from '@/components/email/EmailTemplateEditor';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';

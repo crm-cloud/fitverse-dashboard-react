@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AdminAccountForm } from '@/components/users/AdminAccountForm';
+import { SuperAdminAdvancedAnalytics } from '@/components/dashboards/SuperAdminAdvancedAnalytics';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AdminProfile {
   user_id: string;
@@ -88,7 +90,7 @@ export default function AdminManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Admin Management</h1>
-          <p className="text-muted-foreground">Create and manage gym admin accounts</p>
+          <p className="text-muted-foreground">Create and manage gym admin accounts with advanced analytics</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -109,7 +111,15 @@ export default function AdminManagement() {
         </Dialog>
       </div>
 
-      {/* Stats Cards */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analytics">Advanced Analytics</TabsTrigger>
+          <TabsTrigger value="accounts">Admin Accounts</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-3">
@@ -163,8 +173,14 @@ export default function AdminManagement() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
 
-      {/* Admin Profiles Grid */}
+        <TabsContent value="analytics">
+          <SuperAdminAdvancedAnalytics />
+        </TabsContent>
+
+        <TabsContent value="accounts" className="space-y-6">
+          {/* Admin Profiles Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {adminProfiles.map((admin) => (
           <Card key={admin.user_id} className="relative">
@@ -233,6 +249,8 @@ export default function AdminManagement() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
