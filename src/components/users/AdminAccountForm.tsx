@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 const adminFormSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
-  phone: z.string().regex(/^[+]?[6-9]\d{9}$/, 'Enter a valid 10-digit Indian mobile number').optional().or(z.literal('')),
+  phone: z.string().regex(/^\+91 [6-9]\d{4} \d{5}$/, 'Enter a valid 10-digit Indian mobile number starting with 6-9').optional().or(z.literal('')),
   date_of_birth: z.string().optional(),
   address: z.object({
     street: z.string().optional(),
