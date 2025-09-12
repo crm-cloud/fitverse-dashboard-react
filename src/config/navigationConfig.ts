@@ -87,7 +87,7 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'user-management',
     title: 'User Management',
-    allowedRoles: ['super-admin', 'admin'],
+    allowedRoles: ['admin'],
     requiredPermissions: ['users.view'],
     priority: 4,
     items: [
