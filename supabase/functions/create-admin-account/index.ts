@@ -12,9 +12,13 @@ interface CreateAdminRequest {
   full_name: string;
   email: string;
   phone?: string;
+  date_of_birth?: string;
+  avatar_url?: string;
   subscription_plan: string;
   gym_name?: string;
   create_new_gym?: boolean;
+  existing_gym_id?: string;
+  branch_id?: string;
 }
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -37,9 +41,9 @@ serve(async (req) => {
   }
 
   try {
-    const { full_name, email, phone, subscription_plan, gym_name, create_new_gym }: CreateAdminRequest = await req.json();
+    const { full_name, email, phone, date_of_birth, avatar_url, subscription_plan, gym_name, create_new_gym, existing_gym_id, branch_id }: CreateAdminRequest = await req.json();
     
-    console.log('Creating admin account:', { full_name, email, subscription_plan, create_new_gym });
+    console.log('Creating admin account:', { full_name, email, subscription_plan, create_new_gym, existing_gym_id, branch_id });
 
     // Generate temporary password
     const tempPassword = 'GymFit' + Math.random().toString(36).slice(-8) + '!';
@@ -102,6 +106,20 @@ serve(async (req) => {
 
       gym_id = newGym.id;
       console.log('Gym created:', gym_id);
+    } else if (existing_gym_id) {
+      const { data: existingGym, error: existingGymError } = await supabase
+        .from('gyms')
+        .select('id, status')
+        .eq('id', existing_gym_id)
+        .single();
+
+      if (existingGymError || !existingGym) {
+        console.error('Existing gym not found:', existingGymError);
+        throw new Error('Selected gym not found');
+      }
+
+      gym_id = existingGym.id;
+      console.log('Assigning to existing gym:', gym_id);
     }
 
     // Create profile
@@ -112,7 +130,10 @@ serve(async (req) => {
         email,
         full_name,
         phone: phone || null,
+        avatar_url: avatar_url || null,
+        date_of_birth: date_of_birth || null,
         role: 'admin',
+        branch_id: branch_id || null,
         gym_id,
         is_active: true
       });
@@ -180,13 +201,19 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('Error in create-admin-account function:', error);
+    const status = error?.status || (error?.code === 'email_exists' ? 422 : 500);
+    const message = error?.code === 'email_exists'
+      ? 'A user with this email address has already been registered'
+      : (error?.message || 'Failed to create admin account');
+
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to create admin account',
-        details: error.details || null 
+        error: message,
+        code: error?.code || null,
+        details: error?.details || null 
       }),
       {
-        status: 500,
+        status,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );

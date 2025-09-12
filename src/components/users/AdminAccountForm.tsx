@@ -13,9 +13,13 @@ const adminFormSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().optional(),
+  date_of_birth: z.string().optional(),
+  avatar_url: z.string().url('Please enter a valid URL').optional(),
   subscription_plan: z.string().min(1, 'Please select a subscription plan'),
   gym_name: z.string().optional(),
   create_new_gym: z.boolean().default(true),
+  existing_gym_id: z.string().optional(),
+  branch_id: z.string().optional(),
   role: z.literal('admin'),
 });
 
@@ -49,11 +53,46 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       full_name: '',
       email: '',
       phone: '',
+      date_of_birth: '',
+      avatar_url: '',
       subscription_plan: '',
       gym_name: '',
       create_new_gym: true,
+      existing_gym_id: '',
+      branch_id: '',
       role: 'admin',
     }
+  });
+
+  // Gyms (for assigning existing gym when not creating a new one)
+  const { data: gyms } = useQuery({
+    queryKey: ['gyms-active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('gyms')
+        .select('id, name, status')
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Branches for selected gym
+  const selectedGymId = form.watch('existing_gym_id');
+  const { data: branches } = useQuery({
+    queryKey: ['branches-by-gym', selectedGymId],
+    queryFn: async () => {
+      if (!selectedGymId) return [] as any[];
+      const { data, error } = await supabase
+        .from('branches')
+        .select('id, name, status')
+        .eq('gym_id', selectedGymId)
+        .eq('status', 'active')
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedGymId && !form.watch('create_new_gym')
   });
 
   const createAdminAccount = useMutation({
@@ -63,13 +102,17 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           full_name: data.full_name,
           email: data.email,
           phone: data.phone,
+          date_of_birth: data.date_of_birth || undefined,
+          avatar_url: data.avatar_url || undefined,
           subscription_plan: data.subscription_plan,
           gym_name: data.gym_name || `${data.full_name}'s Gym`,
-          create_new_gym: data.create_new_gym
+          create_new_gym: data.create_new_gym,
+          existing_gym_id: data.create_new_gym ? undefined : (data.existing_gym_id || undefined),
+          branch_id: data.create_new_gym ? undefined : (data.branch_id || undefined),
         }
       });
 
-      if (error) throw error;
+      if (error) throw error as any;
       return result;
     },
     onSuccess: () => {
@@ -80,10 +123,11 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       onSuccess();
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to create admin account';
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     }
@@ -132,6 +176,34 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
               <FormLabel>Phone Number (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="+1 (555) 123-4567" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="date_of_birth"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date of Birth (Optional)</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="avatar_url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Avatar URL (Optional)</FormLabel>
+              <FormControl>
+                <Input type="url" placeholder="https://..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -190,7 +262,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           )}
         />
 
-        {form.watch('create_new_gym') && (
+        {form.watch('create_new_gym') ? (
           <FormField
             control={form.control}
             name="gym_name"
@@ -207,6 +279,58 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
               </FormItem>
             )}
           />
+        ) : (
+          <>
+            <FormField
+              control={form.control}
+              name="existing_gym_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Select Existing Gym</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a gym" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {gyms?.map((gym: any) => (
+                        <SelectItem key={gym.id} value={gym.id}>
+                          {gym.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="branch_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assign Branch (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!branches?.length}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={branches?.length ? "Choose a branch" : "Select a gym first"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {branches?.map((branch: any) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
         )}
 
         <div className="flex gap-2 pt-4">
