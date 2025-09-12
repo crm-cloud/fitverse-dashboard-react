@@ -293,7 +293,7 @@ export const AdminGymDashboard = () => {
                   {branch.name}
                 </CardTitle>
                 <CardDescription>
-                  {branch.address?.city}, {branch.address?.state}
+                  {(branch.address as any)?.city}, {(branch.address as any)?.state}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -308,7 +308,7 @@ export const AdminGymDashboard = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Contact:</span>
-                    <span>{branch.contact?.phone}</span>
+                    <span>{(branch.contact as any)?.phone}</span>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t">

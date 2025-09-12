@@ -141,14 +141,7 @@ export const navigationConfig: NavigationGroup[] = [
     allowedRoles: ['super-admin'],
     priority: 2,
     items: [
-      {
-        id: 'gyms',
-        title: 'Gyms',
-        url: '/gyms',
-        icon: Building,
-        group: 'saas-management',
-        allowedRoles: ['super-admin'],
-      },
+      // Remove direct gym management - super admins create admins who manage gyms
       {
         id: 'admin-management',
         title: 'Admin Management',
@@ -191,6 +184,22 @@ export const navigationConfig: NavigationGroup[] = [
           allowedRoles: ['super-admin'],
           requiredPermissions: ['reports.view'],
         }
+    ]
+  },
+  {
+    id: 'gym-management',
+    title: 'Gym Management',
+    allowedRoles: ['admin'],
+    priority: 4,
+    items: [
+      {
+        id: 'gym-dashboard',
+        title: 'Gym & Branches',
+        url: '/gym-dashboard',
+        icon: Building,
+        group: 'gym-management',
+        allowedRoles: ['admin'],
+      }
     ]
   },
   {

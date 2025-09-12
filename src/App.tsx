@@ -203,18 +203,54 @@ const App = () => (
                            </RouteGuard>
                          } 
                        />
-                       <Route 
-                         path="/subscription-plans" 
-                         element={
-                           <RouteGuard allowedRoles={['super-admin']}>
-                             <DashboardLayout>
-                               <Suspense fallback={<PageLoadingState />}>
-                                 <lazyRoutes.SubscriptionPlans />
-                               </Suspense>
-                             </DashboardLayout>
-                           </RouteGuard>
-                         } 
-                       />
+                        <Route 
+                          path="/subscription-plans" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.SubscriptionPlans />
+                                </Suspense>
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/platform-analytics" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.PlatformAnalytics />
+                                </Suspense>
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/platform-reports" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.PlatformReports />
+                                </Suspense>
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/gym-dashboard" 
+                          element={
+                            <RouteGuard allowedRoles={['admin']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.AdminGymDashboard />
+                                </Suspense>
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
 
                          {/* Branch Management Routes - Gym Admins */}
                        <Route 

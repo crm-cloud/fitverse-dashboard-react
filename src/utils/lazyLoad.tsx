@@ -30,6 +30,8 @@ export const lazyRoutes = {
   AdminManagement: createLazyComponent(() => import('@/pages/users/admin-management').then(m => ({ default: m.default }))),
   PlatformAnalytics: createLazyComponent(() => import('@/pages/platform-analytics/index').then(m => ({ default: m.default }))),
   PlatformReports: createLazyComponent(() => import('@/pages/platform-reports/index').then(m => ({ default: m.default }))),
+  // Gym Management for Admins
+  AdminGymDashboard: createLazyComponent(() => import('@/components/gyms/AdminGymDashboard').then(m => ({ default: m.AdminGymDashboard }))),
 };
 
 // Component-based lazy loading for heavy components (commented out until components are available)
