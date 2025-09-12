@@ -124,7 +124,8 @@ serve(async (req) => {
         date_of_birth: date_of_birth || null,
         gym_id: finalGymId || null,
         branch_id: branch_id || null,
-        is_active: true
+        is_active: true,
+        address: address || null
       }
     });
 

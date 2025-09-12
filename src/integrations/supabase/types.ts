@@ -2458,6 +2458,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: Json | null
           avatar_url: string | null
           branch_id: string | null
           created_at: string
@@ -2474,6 +2475,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          address?: Json | null
           avatar_url?: string | null
           branch_id?: string | null
           created_at?: string
@@ -2490,6 +2492,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          address?: Json | null
           avatar_url?: string | null
           branch_id?: string | null
           created_at?: string
