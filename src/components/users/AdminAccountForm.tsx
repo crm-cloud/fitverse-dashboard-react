@@ -4,23 +4,33 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
+import { User, Building2, CreditCard, Settings } from 'lucide-react';
 
 const adminFormSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().optional(),
   date_of_birth: z.string().optional(),
-  avatar_url: z.string().url('Please enter a valid URL').optional(),
   subscription_plan: z.string().min(1, 'Please select a subscription plan'),
   gym_name: z.string().optional(),
   create_new_gym: z.boolean().default(true),
   existing_gym_id: z.string().optional(),
   branch_id: z.string().optional(),
-  role: z.literal('admin'),
+}).refine((data) => {
+  if (!data.create_new_gym && !data.existing_gym_id) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please select an existing gym when not creating a new one",
+  path: ["existing_gym_id"],
 });
 
 type AdminFormData = z.infer<typeof adminFormSchema>;
@@ -54,13 +64,11 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       email: '',
       phone: '',
       date_of_birth: '',
-      avatar_url: '',
       subscription_plan: '',
       gym_name: '',
       create_new_gym: true,
       existing_gym_id: '',
       branch_id: '',
-      role: 'admin',
     }
   });
 
@@ -97,37 +105,102 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
 
   const createAdminAccount = useMutation({
     mutationFn: async (data: AdminFormData) => {
-      const { data: result, error } = await supabase.functions.invoke('create-admin-account', {
-        body: {
-          full_name: data.full_name,
-          email: data.email,
-          phone: data.phone,
-          date_of_birth: data.date_of_birth || undefined,
-          avatar_url: data.avatar_url || undefined,
-          subscription_plan: data.subscription_plan,
-          gym_name: data.gym_name || `${data.full_name}'s Gym`,
-          create_new_gym: data.create_new_gym,
-          existing_gym_id: data.create_new_gym ? undefined : (data.existing_gym_id || undefined),
-          branch_id: data.create_new_gym ? undefined : (data.branch_id || undefined),
+      // Step 1: Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: 'TempPass123!', // They will reset via email
+        options: {
+          data: {
+            full_name: data.full_name,
+          }
         }
       });
 
-      if (error) throw error as any;
-      return result;
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      let gym_id = null;
+
+      // Step 2: Create or use existing gym
+      if (data.create_new_gym) {
+        // Get subscription plan details
+        const { data: subscriptionPlan, error: planError } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('name', data.subscription_plan)
+          .eq('is_active', true)
+          .single();
+
+        if (planError) {
+          throw new Error('Invalid subscription plan');
+        }
+
+        // Create new gym
+        const { data: newGym, error: gymError } = await supabase
+          .from('gyms')
+          .insert([{
+            name: data.gym_name || `${data.full_name}'s Gym`,
+            billing_email: data.email,
+            subscription_plan: data.subscription_plan.toLowerCase(),
+            max_branches: subscriptionPlan.max_branches || 1,
+            max_trainers: subscriptionPlan.max_trainers || 5,
+            max_members: subscriptionPlan.max_members || 100,
+            status: 'active',
+            created_by: authData.user.id
+          }])
+          .select()
+          .single();
+
+        if (gymError) {
+          throw new Error('Failed to create gym: ' + gymError.message);
+        }
+
+        gym_id = newGym.id;
+      } else if (data.existing_gym_id) {
+        gym_id = data.existing_gym_id;
+      }
+
+      // Step 3: Create profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: authData.user.id,
+          email: data.email,
+          full_name: data.full_name,
+          phone: data.phone || null,
+          date_of_birth: data.date_of_birth || null,
+          role: 'admin',
+          branch_id: data.branch_id || null,
+          gym_id,
+          is_active: true
+        });
+
+      if (profileError) {
+        throw new Error('Failed to create profile: ' + profileError.message);
+      }
+
+      return { success: true, user_id: authData.user.id, gym_id };
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Admin account created successfully. Login credentials will be sent via email."
+        title: "Admin Account Created",
+        description: "Admin account created successfully. They will receive an email to set their password and can then login.",
       });
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['gyms-active'] });
+      form.reset();
       onSuccess();
     },
     onError: (error: any) => {
-      const message = error?.message || 'Failed to create admin account';
+      console.error('Admin creation error:', error);
       toast({
-        title: "Error",
-        description: message,
+        title: "Failed to Create Admin",
+        description: error?.message || 'An unexpected error occurred. Please try again.',
         variant: "destructive"
       });
     }
@@ -137,208 +210,280 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
     createAdminAccount.mutate(data);
   };
 
+  const createNewGym = form.watch('create_new_gym');
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="full_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter admin's full name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email Address</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="admin@gym.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="+1 (555) 123-4567" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="date_of_birth"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date of Birth (Optional)</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="avatar_url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Avatar URL (Optional)</FormLabel>
-              <FormControl>
-                <Input type="url" placeholder="https://..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="subscription_plan"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Subscription Plan</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a subscription plan" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {subscriptionPlans?.map((plan) => (
-                    <SelectItem key={plan.id} value={plan.name}>
-                      {plan.name} - ${plan.price}/{plan.billing_cycle}
-                      <div className="text-xs text-muted-foreground">
-                        {plan.max_branches} branches, {plan.max_trainers} trainers, {plan.max_members} members
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="create_new_gym"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <input
-                  type="checkbox"
-                  checked={field.value}
-                  onChange={field.onChange}
-                  className="rounded border-input mt-1"
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Create New Gym</FormLabel>
-                <p className="text-xs text-muted-foreground">
-                  Check this to create a new gym for this admin
-                </p>
-                <FormMessage />
+    <div className="max-w-4xl mx-auto">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          
+          {/* Admin Details Section */}
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">Admin Details</CardTitle>
               </div>
-            </FormItem>
-          )}
-        />
+              <CardDescription>
+                Basic information about the new admin user
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="full_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter admin's full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        {form.watch('create_new_gym') ? (
-          <FormField
-            control={form.control}
-            name="gym_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Gym Name (Optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Leave empty to auto-generate" {...field} />
-                </FormControl>
-                <p className="text-xs text-muted-foreground">
-                  If left empty, will be generated from admin's name
-                </p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ) : (
-          <>
-            <FormField
-              control={form.control}
-              name="existing_gym_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select Existing Gym</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address *</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="admin@gym.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+1 (555) 123-4567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date_of_birth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Subscription Plan Section */}
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">Subscription Plan</CardTitle>
+              </div>
+              <CardDescription>
+                Choose the subscription plan for this admin's gym
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="subscription_plan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Plan *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a subscription plan" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {subscriptionPlans?.map((plan) => (
+                          <SelectItem key={plan.id} value={plan.name}>
+                            <div className="flex flex-col items-start">
+                              <div className="font-medium">
+                                {plan.name} - ${plan.price}/{plan.billing_cycle}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {plan.max_branches} branches • {plan.max_trainers} trainers • {plan.max_members} members
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Gym Assignment Section */}
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">Gym Assignment</CardTitle>
+              </div>
+              <CardDescription>
+                Create a new gym or assign to an existing one
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="create_new_gym"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Create New Gym</FormLabel>
+                      <CardDescription>
+                        Create a brand new gym for this admin to manage
+                      </CardDescription>
+                    </div>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a gym" />
-                      </SelectTrigger>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {gyms?.map((gym: any) => (
-                        <SelectItem key={gym.id} value={gym.id}>
-                          {gym.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="branch_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assign Branch (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!branches?.length}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={branches?.length ? "Choose a branch" : "Select a gym first"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {branches?.map((branch: any) => (
-                        <SelectItem key={branch.id} value={branch.id}>
-                          {branch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
+              {createNewGym ? (
+                <FormField
+                  control={form.control}
+                  name="gym_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gym Name</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Leave empty to auto-generate from admin's name" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <CardDescription>
+                        If left empty, will be generated as "{form.watch('full_name')}'s Gym"
+                      </CardDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="existing_gym_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Existing Gym *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choose an existing gym" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {gyms?.map((gym: any) => (
+                              <SelectItem key={gym.id} value={gym.id}>
+                                {gym.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" disabled={createAdminAccount.isPending}>
-            {createAdminAccount.isPending ? 'Creating...' : 'Create Admin Account'}
-          </Button>
-        </div>
-      </form>
-    </Form>
+                  <FormField
+                    control={form.control}
+                    name="branch_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Assign Specific Branch</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value} 
+                          disabled={!branches?.length}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={
+                                branches?.length 
+                                  ? "Choose a specific branch (optional)" 
+                                  : "Select a gym first"
+                              } />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {branches?.map((branch: any) => (
+                              <SelectItem key={branch.id} value={branch.id}>
+                                {branch.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <CardDescription>
+                          Optional: Assign admin to a specific branch within the gym
+                        </CardDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Submit Button */}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => form.reset()}
+              disabled={createAdminAccount.isPending}
+            >
+              Reset Form
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={createAdminAccount.isPending}
+              className="min-w-[140px]"
+            >
+              {createAdminAccount.isPending ? (
+                <>
+                  <Settings className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Admin Account'
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 }

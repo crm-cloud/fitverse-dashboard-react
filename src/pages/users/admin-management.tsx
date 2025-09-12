@@ -99,11 +99,11 @@ export default function AdminManagement() {
               Create Admin Account
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Admin Account</DialogTitle>
               <DialogDescription>
-                Create a new gym admin account. The admin will be able to manage their gym's branches and operations.
+                Create a new gym admin account with their own gym or assign them to an existing gym. The admin will receive an email to set their password.
               </DialogDescription>
             </DialogHeader>
             <AdminAccountForm onSuccess={() => setIsCreateDialogOpen(false)} />
