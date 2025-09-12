@@ -17,6 +17,8 @@ import { PageLoadingState } from "@/components/LoadingState";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { lazyRoutes } from "@/utils/lazyLoad";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
@@ -113,6 +115,8 @@ const App = () => (
                       <Routes>
                         <Route path="/" element={<PublicHome />} />
                         <Route path="/login" element={<Login />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/unauthorized" element={<Unauthorized />} />
                         <Route 
                           path="/dashboard" 

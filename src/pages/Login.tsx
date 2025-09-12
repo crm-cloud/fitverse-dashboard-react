@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import gymPoster from '@/assets/gym-poster.jpg';
 const Login = () => {
   const { authState, login } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -40,10 +41,10 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex relative bg-gray-50">
+    <div className="min-h-screen flex relative bg-gray-50 overflow-hidden">
       {/* Background Pattern */}
       <div 
-        className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-5"
+        className="fixed inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-5 -z-10 pointer-events-none"
         style={{
           backgroundSize: '200px 200px',
           backgroundRepeat: 'repeat',
@@ -74,7 +75,7 @@ const Login = () => {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-2/5 flex items-center justify-center p-6 sm:p-8">
+      <div className="w-full lg:w-2/5 flex items-center justify-center p-6 sm:p-8 relative z-10">
         <Card className="w-full max-w-sm border-0 shadow-xl bg-white/90 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-2xl mx-auto mb-6 shadow-lg">
@@ -141,7 +142,14 @@ const Login = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
-                <a href="#" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                <a 
+                  href="/forgot-password" 
+                  className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/forgot-password');
+                  }}
+                >
                   Forgot password?
                 </a>
               </div>

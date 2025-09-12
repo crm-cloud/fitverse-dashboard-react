@@ -194,11 +194,20 @@ export const navigationConfig: NavigationGroup[] = [
     items: [
       {
         id: 'gym-dashboard',
-        title: 'Gym & Branches',
+        title: 'Gym Dashboard',
         url: '/gym-dashboard',
         icon: Building,
         group: 'gym-management',
         allowedRoles: ['admin'],
+      },
+      {
+        id: 'admin-branches',
+        title: 'All Branches',
+        url: '/branches/admin',
+        icon: MapPin,
+        group: 'gym-management',
+        allowedRoles: ['admin'],
+        requiredPermissions: ['branches.view_all'],
       }
     ]
   },

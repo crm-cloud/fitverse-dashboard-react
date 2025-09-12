@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Plus, MoreVertical, Settings, Users, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { GymForm } from '@/components/gyms/GymForm';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { GymFormDrawer } from '@/components/gyms/GymForm';
 
 interface Gym {
   id: string;
@@ -23,7 +22,7 @@ interface Gym {
 }
 
 export default function GymManagement() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedGym, setSelectedGym] = useState<Gym | null>(null);
   const queryClient = useQueryClient();
 
@@ -67,7 +66,12 @@ export default function GymManagement() {
         title: "Success",
         description: "Gym has been deactivated successfully."
       });
-      queryClient.invalidateQueries({ queryKey: ['gyms'] });
+      const handleSuccess = () => {
+        queryClient.invalidateQueries({ queryKey: ['gyms', 'gym-usage'] });
+        setIsDrawerOpen(false);
+        setSelectedGym(null);
+      };
+      handleSuccess();
     },
     onError: (error) => {
       toast({
@@ -104,6 +108,12 @@ export default function GymManagement() {
     }
   };
 
+  const handleSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['gyms', 'gym-usage'] });
+    setIsDrawerOpen(false);
+    setSelectedGym(null);
+  };
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -116,34 +126,23 @@ export default function GymManagement() {
     );
   }
 
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gym Management</h1>
-          <p className="text-muted-foreground">Manage all gym tenants and their subscriptions</p>
+          <h1 className="text-2xl font-bold tracking-tight">Gym Management</h1>
+          <p className="text-muted-foreground">
+            Manage all gyms in your network
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.location.href = '/users/admin-management'}>
-            <Users className="h-4 w-4 mr-2" />
-            Manage Admins
-          </Button>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Gym
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Gym</DialogTitle>
-                <DialogDescription>Add a new gym tenant to the platform</DialogDescription>
-              </DialogHeader>
-              <GymForm onSuccess={() => setIsCreateDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Button onClick={() => {
+          setSelectedGym(null);
+          setIsDrawerOpen(true);
+        }}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Gym
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -166,24 +165,29 @@ export default function GymManagement() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setSelectedGym(gym)}>
-                <Settings className="h-4 w-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => window.location.href = '/users/admin-management'}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Manage Admins
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => deleteGym.mutate(gym.id)}
-                className="text-destructive"
-              >
-                Deactivate
-              </DropdownMenuItem>
-            </DropdownMenuContent>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedGym(gym);
+                          setIsDrawerOpen(true);
+                        }}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => window.location.href = '/users/admin-management'}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Manage Admins
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => deleteGym.mutate(gym.id)}
+                        className="text-destructive"
+                      >
+                        Deactivate
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
                 
@@ -224,20 +228,12 @@ export default function GymManagement() {
         })}
       </div>
 
-      {selectedGym && (
-        <Dialog open={!!selectedGym} onOpenChange={() => setSelectedGym(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Gym: {selectedGym.name}</DialogTitle>
-              <DialogDescription>Update gym settings and subscription</DialogDescription>
-            </DialogHeader>
-            <GymForm 
-              gym={selectedGym} 
-              onSuccess={() => setSelectedGym(null)} 
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      <GymFormDrawer 
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        onSuccess={handleSuccess}
+        gym={selectedGym}
+      />
     </div>
   );
 }
