@@ -48,6 +48,9 @@ import { TrainerChangeRequest } from "./pages/member/TrainerChangeRequest";
 // New system pages
 import SystemHealth from "./pages/system/SystemHealth";
 import SystemSettings from "./pages/system/SystemSettings";
+// Communication & Marketing pages
+import AnnouncementManagement from "./pages/announcements/AnnouncementManagement";
+import ReferralManagement from "./pages/referrals/ReferralManagement";
 import EmailSettings from "./pages/system/EmailSettings";
 import SMSSettings from "./pages/system/SMSSettings";
 import SystemBackup from "./pages/system/SystemBackup";
@@ -883,16 +886,26 @@ const App = () => (
                            </ProtectedRoute>
                          } 
                        />
-                      <Route 
-                        path="/referrals" 
-                        element={
-                          <ProtectedRoute>
-                            <DashboardLayout>
-                              <MemberDashboardPage />
-                            </DashboardLayout>
-                          </ProtectedRoute>
-                        } 
-                      />
+                       <Route 
+                         path="/referrals" 
+                         element={
+                           <ProtectedRoute allowedRoles={['admin', 'team']}>
+                             <DashboardLayout>
+                               <ReferralManagement />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/announcements" 
+                         element={
+                           <ProtectedRoute allowedRoles={['admin', 'team']}>
+                             <DashboardLayout>
+                               <AnnouncementManagement />
+                             </DashboardLayout>
+                           </ProtectedRoute>
+                         } 
+                       />
                         <Route 
                           path="/platform-analytics" 
                           element={

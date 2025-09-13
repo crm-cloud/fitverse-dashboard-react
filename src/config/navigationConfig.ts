@@ -34,7 +34,9 @@ import {
   Database,
   Monitor,
   LifeBuoy,
-  BrainCircuit
+  BrainCircuit,
+  Megaphone,
+  Share2
 } from 'lucide-react';
 import { UserRole } from '@/types/auth';
 import { Permission } from '@/types/rbac';
@@ -85,34 +87,26 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
-    id: 'user-management',
-    title: 'User Management',
+    id: 'team-management',
+    title: 'Team Management',
     allowedRoles: ['admin'],
-    requiredPermissions: ['users.view'],
-    priority: 4,
+    requiredPermissions: ['team.view'],
+    priority: 2,
     items: [
       {
-        id: 'users-list',
-        title: 'Users',
-        url: '/users',
-        icon: Users,
-        group: 'user-management',
-        requiredPermissions: ['users.view'],
-      },
-      {
-        id: 'users-create',
-        title: 'Add User',
-        url: '/users/create',
-        icon: UserPlus,
-        group: 'user-management',
-        requiredPermissions: ['users.create'],
+        id: 'team',
+        title: 'Team',
+        url: '/team',
+        icon: Briefcase,
+        group: 'team-management',
+        requiredPermissions: ['team.view'],
       },
       {
         id: 'roles',
         title: 'Roles',
         url: '/roles',
         icon: Shield,
-        group: 'user-management',
+        group: 'team-management',
         allowedRoles: ['super-admin', 'admin'],
         requiredPermissions: ['roles.view'],
       },
@@ -121,17 +115,9 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'Add Role',
         url: '/roles/create',
         icon: Shield,
-        group: 'user-management',
+        group: 'team-management',
         allowedRoles: ['super-admin', 'admin'],
         requiredPermissions: ['roles.create'],
-      },
-      {
-        id: 'team',
-        title: 'Team',
-        url: '/team',
-        icon: Briefcase,
-        group: 'user-management',
-        requiredPermissions: ['team.view'],
       }
     ]
   },
@@ -139,7 +125,7 @@ export const navigationConfig: NavigationGroup[] = [
     id: 'saas-management',
     title: 'SaaS Management',
     allowedRoles: ['super-admin'],
-    priority: 2,
+    priority: 15,
     items: [
       // Remove direct gym management - super admins create admins who manage gyms
       {
@@ -164,7 +150,7 @@ export const navigationConfig: NavigationGroup[] = [
     id: 'platform-analytics',
     title: 'Platform Analytics',
     allowedRoles: ['super-admin'],
-    priority: 3,
+    priority: 16,
     items: [
         {
           id: 'platform-analytics',
@@ -245,7 +231,7 @@ export const navigationConfig: NavigationGroup[] = [
     title: 'Member Management',
     allowedRoles: ['admin', 'team'],
     requiredPermissions: ['members.view'],
-    priority: 6,
+    priority: 3,
     items: [
       {
         id: 'members-list',
@@ -263,21 +249,13 @@ export const navigationConfig: NavigationGroup[] = [
         group: 'members',
         requiredPermissions: ['members.create'],
       },
-      {
-        id: 'leads',
-        title: 'Leads',
-        url: '/leads',
-        icon: UserCheck,
-        group: 'members',
-        requiredPermissions: ['leads.view'],
-      }
     ]
   },
   {
     id: 'membership',
     title: 'Membership',
     allowedRoles: ['admin', 'team'],
-    priority: 7,
+    priority: 4,
     items: [
       {
         id: 'membership-dashboard',
@@ -309,7 +287,7 @@ export const navigationConfig: NavigationGroup[] = [
     id: 'classes',
     title: 'Classes & Training',
     allowedRoles: ['admin', 'team'],
-    priority: 8,
+    priority: 5,
     items: [
       {
         id: 'classes-list',
@@ -348,11 +326,52 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
+    id: 'communication',
+    title: 'Communication - Announcements',
+    allowedRoles: ['admin', 'team'],
+    requiredPermissions: ['notifications.view'],
+    priority: 6,
+    items: [
+      {
+        id: 'announcements',
+        title: 'Announcements',
+        url: '/announcements',
+        icon: Megaphone,
+        group: 'communication',
+        requiredPermissions: ['notifications.view'],
+      }
+    ]
+  },
+  {
+    id: 'marketing',
+    title: 'Marketing (Leads, Referrals)',
+    allowedRoles: ['admin', 'team'],
+    priority: 7,
+    items: [
+      {
+        id: 'leads',
+        title: 'Leads',
+        url: '/leads',
+        icon: UserCheck,
+        group: 'marketing',
+        requiredPermissions: ['leads.view'],
+      },
+      {
+        id: 'referrals',
+        title: 'Referrals',
+        url: '/referrals',
+        icon: Share2,
+        group: 'marketing',
+        requiredPermissions: ['referrals.view'],
+      }
+    ]
+  },
+  {
     id: 'finance',
     title: 'Finance',
     allowedRoles: ['admin'],
     requiredPermissions: ['finance.view'],
-    priority: 9,
+    priority: 8,
     items: [
       {
         id: 'finance-dashboard',
@@ -392,7 +411,7 @@ export const navigationConfig: NavigationGroup[] = [
     id: 'operations',
     title: 'Operations',
     allowedRoles: ['admin', 'team'],
-    priority: 10,
+    priority: 9,
     items: [
       {
         id: 'attendance',
@@ -433,7 +452,7 @@ export const navigationConfig: NavigationGroup[] = [
     id: 'store',
     title: 'Store & POS',
     allowedRoles: ['admin', 'team'],
-    priority: 11,
+    priority: 10,
     items: [
       {
         id: 'store',
@@ -456,7 +475,7 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'feedback',
     title: 'Feedback & Support',
-    priority: 12,
+    priority: 11,
     items: [
       {
         id: 'feedback',
@@ -473,7 +492,7 @@ export const navigationConfig: NavigationGroup[] = [
     title: 'Branch Analytics',
     allowedRoles: ['admin'],
     requiredPermissions: ['analytics.view'],
-    priority: 13,
+    priority: 12,
     items: [
       {
         id: 'branch-analytics',
@@ -496,17 +515,17 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
-    id: 'branch-settings',
-    title: 'Branch Settings',
+    id: 'gym-settings',
+    title: 'Gym Management (Gym Settings)',
     allowedRoles: ['admin'],
-    priority: 14,
+    priority: 13,
     items: [
       {
         id: 'ai-settings',
         title: 'AI Settings',
         url: '/system/ai-settings',
         icon: BrainCircuit,
-        group: 'branch-settings',
+        group: 'gym-settings',
         allowedRoles: ['admin'],
         requiredPermissions: ['system.manage'],
       },
@@ -515,7 +534,7 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'Email Settings',
         url: '/system/email',
         icon: Mail,
-        group: 'branch-settings',
+        group: 'gym-settings',
         allowedRoles: ['admin'],
         requiredPermissions: ['system.manage'],
       },
@@ -524,7 +543,7 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'SMS Settings',
         url: '/system/sms',
         icon: Smartphone,
-        group: 'branch-settings',
+        group: 'gym-settings',
         allowedRoles: ['admin'],
         requiredPermissions: ['system.manage'],
       }
@@ -534,7 +553,7 @@ export const navigationConfig: NavigationGroup[] = [
     id: 'platform-settings',
     title: 'Platform Settings',
     allowedRoles: ['super-admin'],
-    priority: 15,
+    priority: 17,
     items: [
       {
         id: 'system-settings',
