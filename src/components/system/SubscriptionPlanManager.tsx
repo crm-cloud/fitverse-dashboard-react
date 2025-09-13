@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, DollarSign, Building2, Users, UserCheck } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface SubscriptionPlan {
   id: string;
@@ -57,6 +58,7 @@ export const SubscriptionPlanManager = () => {
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [formData, setFormData] = useState<PlanFormData>(initialFormData);
   const queryClient = useQueryClient();
+  const { formatCurrency } = useCurrency();
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['subscription-plans-all'],
@@ -321,7 +323,7 @@ export const SubscriptionPlanManager = () => {
             <CardContent>
               <div className="space-y-4">
                 <div className="text-center">
-                  <span className="text-3xl font-bold">${plan.price}</span>
+                  <span className="text-3xl font-bold">{formatCurrency(plan.price)}</span>
                   <span className="text-muted-foreground">/{plan.billing_cycle}</span>
                 </div>
                 

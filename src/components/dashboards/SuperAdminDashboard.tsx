@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { Building2, Users, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export const SuperAdminDashboard = () => {
   // Fetch SaaS-level metrics
@@ -47,6 +48,8 @@ export const SuperAdminDashboard = () => {
   });
 
   const isLoading = gymsLoading || usageLoading || plansLoading;
+
+  const { formatCurrency } = useCurrency();
 
   const totalRevenue = gyms?.reduce((acc, gym) => {
     const plan = subscriptionPlans?.find(p => p.name.toLowerCase() === gym.subscription_plan);
@@ -126,7 +129,7 @@ export const SuperAdminDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
               From {gyms?.filter(g => g.status === 'active').length} subscriptions
             </p>

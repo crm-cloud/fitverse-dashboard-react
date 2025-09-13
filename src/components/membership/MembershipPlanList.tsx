@@ -25,10 +25,12 @@ import {
 import { MembershipPlan } from '@/types/membership';
 import { mockMembershipPlans, accessTypeLabels } from '@/utils/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export const MembershipPlanList = () => {
   const [plans, setPlans] = useState<MembershipPlan[]>(mockMembershipPlans);
   const { toast } = useToast();
+  const { formatCurrency } = useCurrency();
 
   const handleDeletePlan = (planId: string) => {
     setPlans(plans.filter(plan => plan.id !== planId));
@@ -36,14 +38,6 @@ export const MembershipPlanList = () => {
       title: 'Plan Deleted',
       description: 'Membership plan has been successfully deleted.',
     });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   const formatDuration = (months: number) => {

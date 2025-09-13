@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useFormValidation, validationRules } from '@/hooks/useFormValidation';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface PlanFormData {
   name: string;
@@ -87,6 +88,7 @@ const availableFeatures = [
 export function PlanForm() {
   const [formData, setFormData] = useState<PlanFormData>(initialData);
   const navigate = useNavigate();
+  const { symbol } = useCurrency();
   
   const {
     errors,
@@ -162,20 +164,20 @@ export function PlanForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="price">Price *</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2">$</span>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => handleInputChange('price', e.target.value)}
-                  onBlur={() => validateField('price', formData.price)}
-                  placeholder="99.99"
-                  className={`pl-8 ${errors.price ? 'border-destructive' : ''}`}
-                />
-              </div>
+            <Label htmlFor="price">Price *</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2">{symbol}</span>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => handleInputChange('price', e.target.value)}
+                onBlur={() => validateField('price', formData.price)}
+                placeholder="99.99"
+                className={`pl-8 ${errors.price ? 'border-destructive' : ''}`}
+              />
+            </div>
               {errors.price && (
                 <p className="text-sm text-destructive">{errors.price}</p>
               )}

@@ -10,18 +10,14 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import { FinancialSummary } from '@/types/finance';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface FinanceOverviewCardsProps {
   summary: FinancialSummary;
 }
 
 export function FinanceOverviewCards({ summary }: FinanceOverviewCardsProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  const { formatCurrency } = useCurrency();
 
   const cards = [
     {

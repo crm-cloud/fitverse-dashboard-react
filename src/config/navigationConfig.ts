@@ -371,6 +371,14 @@ export const navigationConfig: NavigationGroup[] = [
         requiredPermissions: ['finance.view'],
       },
       {
+        id: 'invoices',
+        title: 'Invoices',
+        url: '/finance/invoices',
+        icon: FileText,
+        group: 'finance',
+        requiredPermissions: ['finance.view'],
+      },
+      {
         id: 'reports',
         title: 'Reports',
         url: '/finance/reports',

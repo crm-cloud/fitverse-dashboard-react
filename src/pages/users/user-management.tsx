@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface AdminUser {
   id: string;
@@ -62,6 +63,7 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
+  const { formatCurrency } = useCurrency();
 
   // Fetch admin users list
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
@@ -458,11 +460,11 @@ export default function UserManagement() {
                     </div>
                     
                     <div>
-                      <span className="text-sm font-medium">Price</span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold">$99</span>
-                        <span className="text-sm text-muted-foreground">per month</span>
-                      </div>
+          <span className="text-sm font-medium">Price</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-bold">{formatCurrency(99)}</span>
+            <span className="text-sm text-muted-foreground">per month</span>
+          </div>
                     </div>
                     
                     <div>
@@ -577,18 +579,18 @@ export default function UserManagement() {
                 <CardContent>
                   <div className="space-y-3">
                     {[
-                      { date: '2024-11-09', amount: '$99.00', status: 'Paid', invoice: 'INV-001' },
-                      { date: '2024-10-09', amount: '$99.00', status: 'Paid', invoice: 'INV-002' },
-                      { date: '2024-09-09', amount: '$99.00', status: 'Paid', invoice: 'INV-003' },
+                      { date: '2024-11-09', amount: 99.0, status: 'Paid', invoice: 'INV-001' },
+                      { date: '2024-10-09', amount: 99.0, status: 'Paid', invoice: 'INV-002' },
+                      { date: '2024-09-09', amount: 99.0, status: 'Paid', invoice: 'INV-003' },
                     ].map((invoice, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded">
                         <div>
                           <p className="font-medium">{invoice.invoice}</p>
                           <p className="text-sm text-muted-foreground">{invoice.date}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">{invoice.amount}</p>
-                          <Badge variant={invoice.status === 'Paid' ? 'default' : 'destructive'}>
+            <div className="text-right">
+              <p className="font-medium">{formatCurrency(invoice.amount)}</p>
+              <Badge variant={invoice.status === 'Paid' ? 'default' : 'destructive'}>
                             {invoice.status}
                           </Badge>
                         </div>

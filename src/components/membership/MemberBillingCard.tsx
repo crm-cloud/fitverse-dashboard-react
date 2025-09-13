@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { Invoice, PaymentStatus } from '@/types/membership';
 import { mockInvoices } from '@/utils/mockData';
 import { PaymentRecorderDrawer } from './PaymentRecorderDrawer';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface MemberBillingCardProps {
   memberId: string;
@@ -90,15 +91,9 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
   const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
-  const memberInvoices = mockInvoices.filter(invoice => invoice.memberId === memberId);
+  const { formatCurrency } = useCurrency();
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const memberInvoices = mockInvoices.filter(invoice => invoice.memberId === memberId);
 
   const handleRecordPayment = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
