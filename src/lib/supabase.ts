@@ -1,16 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
 import { User } from '@/types';
-
-// These should be set in your environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '@/integrations/supabase/client';
 
 // User related queries
 export const getUsers = async () => {
   const { data, error } = await supabase
-    .from('users')
+    .from('profiles')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -23,9 +17,9 @@ export const getUsers = async () => {
 
 export const getUserById = async (id: string) => {
   const { data, error } = await supabase
-    .from('users')
+    .from('profiles')
     .select('*')
-    .eq('id', id)
+    .eq('user_id', id)
     .single();
 
   if (error) {
@@ -37,9 +31,9 @@ export const getUserById = async (id: string) => {
 
 export const updateUser = async (id: string, updates: Partial<User>) => {
   const { data, error } = await supabase
-    .from('users')
+    .from('profiles')
     .update(updates)
-    .eq('id', id)
+    .eq('user_id', id)
     .select()
     .single();
 

@@ -176,7 +176,7 @@ export default function GymManagement() {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => window.location.href = '/users/admin-management'}
+                        onClick={() => window.location.href = '/users/user-management'}
                       >
                         <Users className="h-4 w-4 mr-2" />
                         Manage Admins
