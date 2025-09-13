@@ -288,9 +288,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
+      // Clear any existing session data first
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Clear any stored tokens or session data
+      localStorage.removeItem('sb-access-token');
+      localStorage.removeItem('sb-refresh-token');
+      
+      // Reset auth state
       setAuthState({
         user: null,
         isAuthenticated: false,
@@ -298,15 +303,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         error: null
       });
 
+      // Force a hard refresh to ensure all auth state is cleared
+      window.location.href = '/login';
+      
+      // Show success message (will show after redirect)
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
     } catch (error: any) {
+      console.error('Logout error:', error);
+      
+      // Even if there's an error, we should still clear local state
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null
+      });
+      
+      // Redirect to login page on error
+      window.location.href = '/login';
+      
       toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive"
+        title: "Logged out",
+        description: "Your session has been cleared.",
       });
     }
   };
