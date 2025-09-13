@@ -299,6 +299,7 @@ export default function UserManagement() {
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="branches">Branches</TabsTrigger>
+              <TabsTrigger value="billing">Billing & Plans</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
@@ -431,6 +432,172 @@ export default function UserManagement() {
                       No branches found for this user's gym
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="billing" className="space-y-4">
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Current Plan Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Current Plan</CardTitle>
+                    <CardDescription>
+                      {selectedUser.gym_name} subscription details
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Plan Type</span>
+                        <Badge variant="default">Professional</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Standard plan for growing businesses
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <span className="text-sm font-medium">Price</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold">$99</span>
+                        <span className="text-sm text-muted-foreground">per month</span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="text-sm font-medium">Status</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="default">Active</Badge>
+                        <span className="text-sm text-muted-foreground">
+                          Until Dec 09, 2024
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button size="sm">Upgrade Plan</Button>
+                      <Button size="sm" variant="outline">View Details</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Usage & Limits */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Usage & Limits</CardTitle>
+                    <CardDescription>
+                      Current usage against plan limits
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Branches</span>
+                        <span>{selectedUser.branches_count} of 10</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full" 
+                          style={{ width: `${(selectedUser.branches_count || 0) / 10 * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Trainers</span>
+                        <span>{selectedUser.trainers_count} of 50</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full" 
+                          style={{ width: `${(selectedUser.trainers_count || 0) / 50 * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Members</span>
+                        <span>{selectedUser.members_count} of 1000</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full" 
+                          style={{ width: `${(selectedUser.members_count || 0) / 1000 * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Payment Methods */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Methods</CardTitle>
+                  <CardDescription>
+                    Manage payment methods for this gym
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                          VISA
+                        </div>
+                        <div>
+                          <p className="font-medium">•••• •••• •••• 4242</p>
+                          <p className="text-sm text-muted-foreground">Expires 12/24</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">Primary</Badge>
+                        <Button size="sm" variant="ghost">Edit</Button>
+                      </div>
+                    </div>
+                    
+                    <Button variant="outline" className="w-full">
+                      + Add Payment Method
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Billing History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Invoices</CardTitle>
+                  <CardDescription>
+                    Latest billing transactions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[
+                      { date: '2024-11-09', amount: '$99.00', status: 'Paid', invoice: 'INV-001' },
+                      { date: '2024-10-09', amount: '$99.00', status: 'Paid', invoice: 'INV-002' },
+                      { date: '2024-09-09', amount: '$99.00', status: 'Paid', invoice: 'INV-003' },
+                    ].map((invoice, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded">
+                        <div>
+                          <p className="font-medium">{invoice.invoice}</p>
+                          <p className="text-sm text-muted-foreground">{invoice.date}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{invoice.amount}</p>
+                          <Badge variant={invoice.status === 'Paid' ? 'default' : 'destructive'}>
+                            {invoice.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="outline" className="w-full mt-3">
+                    View All Invoices
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>

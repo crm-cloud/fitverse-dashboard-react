@@ -311,16 +311,28 @@ const App = () => (
                              </ProtectedRoute>
                            } 
                          />
-                         <Route 
-                           path="/users/create" 
-                           element={
-                             <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                               <DashboardLayout>
-                                 <UserCreatePage />
-                               </DashboardLayout>
-                             </ProtectedRoute>
-                           } 
-                         />
+                          <Route 
+                            path="/users/create" 
+                            element={
+                              <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                                <DashboardLayout>
+                                  <UserCreatePage />
+                                </DashboardLayout>
+                              </ProtectedRoute>
+                            } 
+                          />
+                          <Route 
+                            path="/users/edit/:userId" 
+                            element={
+                              <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                                <DashboardLayout>
+                                  <Suspense fallback={<PageLoadingState />}>
+                                    <lazyRoutes.UserEdit />
+                                  </Suspense>
+                                </DashboardLayout>
+                              </ProtectedRoute>
+                            } 
+                          />
                          <Route 
                            path="/users/admin-management" 
                            element={

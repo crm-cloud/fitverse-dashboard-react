@@ -84,7 +84,7 @@ export default function EditUser() {
         description: 'User updated successfully',
       });
       
-      navigate('/users');
+      navigate('/users/user-management');
     } catch (error) {
       console.error('Error updating user:', error);
     } finally {
@@ -108,7 +108,7 @@ export default function EditUser() {
       <div className="text-center py-20">
         <h1 className="text-2xl font-bold mb-2">User Not Found</h1>
         <p className="text-muted-foreground mb-4">The requested user could not be found.</p>
-        <Button onClick={() => navigate('/users')}>
+        <Button onClick={() => navigate('/users/user-management')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Users
         </Button>
@@ -119,7 +119,7 @@ export default function EditUser() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate('/users')}>
+        <Button variant="outline" onClick={() => navigate('/users/user-management')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
@@ -220,7 +220,7 @@ export default function EditUser() {
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => navigate('/users')}
+                onClick={() => navigate('/users/user-management')}
                 disabled={saving}
               >
                 Cancel
