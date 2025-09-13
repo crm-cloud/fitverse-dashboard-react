@@ -1,10 +1,10 @@
 import { useSystemSetting } from './useSystemSettings';
 
 export const useCurrency = () => {
-  const currency = useSystemSetting('general', 'currency');
+  const currency = useSystemSetting('general', 'default_currency') || 'INR'; // Default to INR if not set
   
   const getCurrencySymbol = (currencyCode?: string) => {
-    const code = currencyCode || currency || 'USD';
+    const code = currencyCode || currency;
     const symbols: { [key: string]: string } = {
       'USD': '$',
       'EUR': '€',
@@ -22,7 +22,7 @@ export const useCurrency = () => {
   };
 
   const formatCurrency = (amount: number, currencyCode?: string) => {
-    const code = currencyCode || currency || 'USD';
+    const code = currencyCode || currency;
     const symbol = getCurrencySymbol(code);
     
     return new Intl.NumberFormat('en-US', {
@@ -33,7 +33,7 @@ export const useCurrency = () => {
   };
 
   return {
-    currency: currency || 'USD',
+    currency: currency,
     symbol: getCurrencySymbol(),
     formatCurrency,
     getCurrencySymbol
