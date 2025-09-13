@@ -12,8 +12,8 @@ import { useSystemSettings, useUpdateSystemSetting, useCreateSystemSetting } fro
 import { SMSTemplateEditor } from '@/components/sms/SMSTemplateEditor';
 import { WhatsAppTemplateEditor } from '@/components/templates/WhatsAppTemplateEditor';
 import { HierarchicalSettingsManager } from '@/components/settings/HierarchicalSettingsManager';
-import { BackupSystemIntegration } from '@/components/system/BackupSystemIntegration';
 import { EmailTemplateEditor } from '@/components/email/EmailTemplateEditor';
+import { PredefinedTemplatesSection } from '@/components/templates/PredefinedTemplatesSection';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useSearchParams } from 'react-router-dom';
@@ -424,6 +424,17 @@ const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
 
         <TabsContent value="templates">
           <div className="space-y-6">
+            {/* Predefined Templates Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Predefined Templates</CardTitle>
+                <CardDescription>Quick-start templates with professional designs that you can customize</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PredefinedTemplatesSection />
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
                 <CardHeader>
@@ -431,7 +442,7 @@ const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
                     <Mail className="w-5 h-5" />
                     Email Templates
                   </CardTitle>
-                  <CardDescription>Manage email notification templates</CardDescription>
+                  <CardDescription>Manage custom email notification templates</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Dialog open={showEmailEditor} onOpenChange={setShowEmailEditor}>

@@ -41,6 +41,8 @@ import { LeadListPage } from "./pages/leads/list";
 import { DietWorkoutPlannerPage } from "./pages/diet-workout/planner";
 import FinanceDashboard from '@/pages/finance/dashboard';
 import TransactionsPage from '@/pages/finance/transactions';
+const FinanceReportsPage = lazy(() => import('./pages/finance/reports'));
+const InvoicesPage = lazy(() => import('./pages/finance/invoices'));
 import { FeedbackManagementPage } from "./pages/feedback/management";
 import { TaskManagementPage } from "./pages/tasks/management";
 import { MemberFeedbackPage } from "./pages/member/feedback";

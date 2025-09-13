@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { Invoice, InvoiceItem } from '@/types/finance';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface InvoiceCreationDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface InvoiceCreationDialogProps {
 }
 
 export function InvoiceCreationDialog({ open, onOpenChange, onSubmit }: InvoiceCreationDialogProps) {
+  const { formatCurrency } = useCurrency();
   const [formData, setFormData] = useState({
     customerName: '',
     customerEmail: '',
@@ -153,7 +155,7 @@ export function InvoiceCreationDialog({ open, onOpenChange, onSubmit }: InvoiceC
                         />
                       </div>
                       <div>
-                        <Label>Unit Price ($)</Label>
+                        <Label>Unit Price</Label>
                         <Input
                           type="number"
                           value={item.unitPrice}
@@ -167,7 +169,7 @@ export function InvoiceCreationDialog({ open, onOpenChange, onSubmit }: InvoiceC
                         <div className="flex-1">
                           <Label>Total</Label>
                           <div className="text-lg font-medium">
-                            ${(item.quantity * item.unitPrice).toFixed(2)}
+                            {useCurrency().formatCurrency(item.quantity * item.unitPrice)}
                           </div>
                         </div>
                         {formData.items.length > 1 && (
@@ -203,7 +205,7 @@ export function InvoiceCreationDialog({ open, onOpenChange, onSubmit }: InvoiceC
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="discount">Discount ($)</Label>
+              <Label htmlFor="discount">Discount</Label>
               <Input
                 id="discount"
                 type="number"
@@ -215,7 +217,7 @@ export function InvoiceCreationDialog({ open, onOpenChange, onSubmit }: InvoiceC
             </div>
             <div className="space-y-2">
               <Label>Total Amount</Label>
-              <div className="text-2xl font-bold">${total.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(total)}</div>
             </div>
           </div>
 
@@ -237,19 +239,19 @@ export function InvoiceCreationDialog({ open, onOpenChange, onSubmit }: InvoiceC
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Tax ({formData.tax}%):</span>
-                  <span>${taxAmount.toFixed(2)}</span>
+                  <span>{formatCurrency(taxAmount)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Discount:</span>
-                  <span>-${formData.discount.toFixed(2)}</span>
+                  <span>-{formatCurrency(formData.discount)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
               </div>
             </CardContent>
