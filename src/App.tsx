@@ -277,18 +277,30 @@ const App = () => (
                            </ProtectedRoute>
                          }
                        />
-                       <Route 
-                         path="/users/user-management" 
-                         element={
-                           <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                             <DashboardLayout>
-                               <Suspense fallback={<PageLoadingState />}>
-                                 <lazyRoutes.UserManagement />
-                               </Suspense>
-                             </DashboardLayout>
-                           </ProtectedRoute>
-                         } 
-                       />
+                        <Route 
+                          path="/users/user-management" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.UserManagement />
+                                </Suspense>
+                              </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/users/user-management/:userId" 
+                          element={
+                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.UserManagement />
+                                </Suspense>
+                              </DashboardLayout>
+                            </ProtectedRoute>
+                          } 
+                        />
                          <Route 
                            path="/branches/create" 
                            element={
