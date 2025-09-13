@@ -1,382 +1,677 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Plus, 
-  Search, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  MoreHorizontal, 
-  Download,
-  Users,
-  UserCheck,
-  UserX,
-  Clock,
-  Copy
+  Users, Search, Filter, ArrowUpDown, Download, MoreHorizontal, 
+  UserCheck, UserPlus, UserX, ArrowLeft, Edit, Trash2, Mail, 
+  Phone, MapPin, Calendar, CheckCircle2, XCircle, MoreVertical 
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AdminAccountForm } from '@/components/users/AdminAccountForm';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import { getUsers, getUserById } from '@/lib/supabase';
 
-interface UserProfile {
+interface Branch {
   id: string;
-  user_id: string;
-  email: string;
-  full_name: string;
-  role: string;
-  phone?: string;
-  is_active: boolean;
-  gym_id?: string;
-  branch_id?: string;
+  name: string;
+  address: string;
+  status: 'active' | 'inactive';
+  members_count: number;
   created_at: string;
-  gyms?: {
-    name: string;
-    subscription_plan?: string;
-  };
-  branches?: {
-    name: string;
-  };
 }
 
-export default function UserManagement() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url?: string;
+  role: 'admin' | 'manager' | 'trainer' | 'member';
+  status: 'active' | 'inactive' | 'suspended' | 'pending';
+  last_login?: string;
+  created_at: string;
+  subscription_plan?: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
+  branches?: Branch[];
+}
 
-  // Fetch all users with their profile information
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['users', searchTerm, roleFilter, statusFilter],
-    queryFn: async () => {
-      let query = supabase
-        .from('profiles')
-        .select(`
-          *,
-          gyms(name, subscription_plan),
-          branches(name)
-        `)
-        .order('created_at', { ascending: false });
+// User List Component
+const UserList = ({ 
+  users, 
+  onUserSelect, 
+  searchTerm, 
+  setSearchTerm, 
+  statusFilter, 
+  setStatusFilter, 
+  roleFilter, 
+  setRoleFilter,
+  sortConfig,
+  requestSort
+}: { 
+  users: User[];
+  onUserSelect: (user: User) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  statusFilter: string;
+  setStatusFilter: (status: string) => void;
+  roleFilter: string;
+  setRoleFilter: (role: string) => void;
+  sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
+  requestSort: (key: string) => void;
+}) => (
+  <div className="space-y-4">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div>
+        <h2 className="text-lg font-semibold">User Management</h2>
+        <p className="text-sm text-muted-foreground">
+          Manage all users and their permissions
+        </p>
+      </div>
+      <Button>
+        <UserPlus className="mr-2 h-4 w-4" />
+        Add New User
+      </Button>
+    </div>
 
-      if (searchTerm) {
-        query = query.or(
-          `full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
-        );
-      }
+    <div className="flex flex-col md:flex-row justify-between gap-4">
+      <div className="relative w-full md:w-96">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search users..."
+          className="w-full pl-8"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <Filter className="h-4 w-4 text-muted-foreground" />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue placeholder="Role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="manager">Manager</SelectItem>
+            <SelectItem value="trainer">Trainer</SelectItem>
+            <SelectItem value="member">Member</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
 
-      if (roleFilter !== 'all') {
-        query = query.eq('role', roleFilter as any);
-      }
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead 
+              className="cursor-pointer"
+              onClick={() => requestSort('last_login')}
+            >
+              <div className="flex items-center">
+                Last Login
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+              </div>
+            </TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.length > 0 ? (
+            users.map((user) => (
+              <TableRow key={user.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onUserSelect(user)}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                      <AvatarFallback>
+                        {user.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium">{user.full_name || 'Unnamed User'}</div>
+                      <div className="text-sm text-muted-foreground">{user.email}</div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    className={{
+                      'admin': 'bg-purple-100 text-purple-800',
+                      'manager': 'bg-blue-100 text-blue-800',
+                      'trainer': 'bg-cyan-100 text-cyan-800',
+                      'member': 'bg-green-100 text-green-800'
+                    }[user.role] || 'bg-gray-100 text-gray-800'}
+                  >
+                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    variant="outline"
+                    className={{
+                      'active': 'bg-green-50 text-green-700 border-green-200',
+                      'inactive': 'bg-gray-50 text-gray-700 border-gray-200',
+                      'suspended': 'bg-red-50 text-red-700 border-red-200',
+                      'pending': 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                    }[user.status] || 'bg-gray-50 text-gray-700 border-gray-200'}
+                  >
+                    {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {user.last_login ? format(new Date(user.last_login), 'MMM d, yyyy') : 'Never'}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        onUserSelect(user);
+                      }}>
+                        <UserCheck className="mr-2 h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit User
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        {user.status === 'active' ? 'Deactivate' : 'Activate'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={5} className="h-24 text-center">
+                No users found matching your criteria
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
+  </div>
+);
 
-      if (statusFilter !== 'all') {
-        query = query.eq('is_active', statusFilter === 'active');
-      }
+// User Detail Component
+const UserDetail = ({ user, onBack }: { user: User; onBack: () => void }) => (
+  <div className="space-y-6">
+    <Button variant="ghost" onClick={onBack} className="mb-4">
+      <ArrowLeft className="mr-2 h-4 w-4" />
+      Back to Users
+    </Button>
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as UserProfile[];
-    }
-  });
+    <div className="grid gap-6 md:grid-cols-3">
+      <div className="space-y-6 md:col-span-1">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center space-y-4">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                <AvatarFallback className="text-2xl">
+                  {user.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold">{user.full_name}</h3>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <Badge className="mt-2">
+                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                </Badge>
+              </div>
+            </div>
 
-  // Calculate statistics
-  const totalUsers = users.length;
-  const activeUsers = users.filter(user => user.is_active).length;
-  const inactiveUsers = users.filter(user => !user.is_active).length;
-  const adminUsers = users.filter(user => user.role === 'admin').length;
+            <Separator className="my-4" />
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'super-admin': return 'destructive';
-      case 'admin': return 'destructive';
-      case 'manager': return 'default';
-      case 'staff': return 'secondary';
-      case 'trainer': return 'outline';
-      case 'member': return 'default';
-      default: return 'secondary';
-    }
-  };
+            <div className="space-y-2">
+              <div className="flex items-center text-sm">
+                <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Phone:</span>
+                <span className="ml-2">{user.phone || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-sm">
+                <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Location:</span>
+                <span className="ml-2">{user.location || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-sm">
+                <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Member Since:</span>
+                <span className="ml-2">
+                  {format(new Date(user.created_at), 'MMM d, yyyy')}
+                </span>
+              </div>
+              <div className="flex items-center text-sm">
+                {user.status === 'active' ? (
+                  <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                ) : (
+                  <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                )}
+                <span className="text-muted-foreground">Status:</span>
+                <span className="ml-2 capitalize">{user.status}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'super-admin': return '🔥';
-      case 'admin': return '🛡️';
-      case 'manager': return '👤';
-      case 'staff': return '⚙️';  
-      case 'trainer': return '🏋️';
-      case 'member': return '👤';
-      default: return '👤';
-    }
-  };
-
-  return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage all platform users and their permissions</p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" className="w-full justify-start">
+              <Mail className="mr-2 h-4 w-4" />
+              Send Message
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Profile
+            </Button>
+            {user.status === 'active' ? (
+              <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
+                <UserX className="mr-2 h-4 w-4" />
+                Deactivate User
+              </Button>
+            ) : (
+              <Button variant="outline" className="w-full justify-start text-green-600 hover:text-green-700">
+                <UserCheck className="mr-2 h-4 w-4" />
+                Activate User
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6 md:col-span-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>User Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">Email</h4>
+                <p>{user.email}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">Role</h4>
+                <p className="capitalize">{user.role}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">Account Status</h4>
+                <div className="flex items-center">
+                  {user.status === 'active' ? (
+                    <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                  )}
+                  <span className="capitalize">{user.status}</span>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">Last Login</h4>
+                <p>{user.last_login ? format(new Date(user.last_login), 'PPpp') : 'Never'}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">Member Since</h4>
+                <p>{format(new Date(user.created_at), 'PP')}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Statistics Cards matching reference design */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Session</CardTitle>
-                <Users className="h-4 w-4 text-purple-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalUsers.toLocaleString()}</div>
-                <p className="text-xs text-green-600">(+29%)</p>
-                <p className="text-xs text-muted-foreground">Total Users</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Paid Users</CardTitle>
-                <UserCheck className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{adminUsers.toLocaleString()}</div>
-                <p className="text-xs text-green-600">(+18%)</p>
-                <p className="text-xs text-muted-foreground">Last week analytics</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-                <Clock className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeUsers.toLocaleString()}</div>
-                <p className="text-xs text-red-600">(-14%)</p>
-                <p className="text-xs text-muted-foreground">Last week analytics</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Users</CardTitle>
-                <UserX className="h-4 w-4 text-orange-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{inactiveUsers.toLocaleString()}</div>
-                <p className="text-xs text-green-600">(+42%)</p>
-                <p className="text-xs text-muted-foreground">Last week analytics</p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="users" className="space-y-6">
-          {/* Filters */}
+        {user.role === 'admin' && user.branches && user.branches.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Filters</CardTitle>
+              <CardTitle>Managed Branches</CardTitle>
+              <CardDescription>
+                Branches managed by this administrator
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col lg:flex-row gap-4 items-end">
-                <div className="flex flex-col lg:flex-row gap-4 flex-1">
-                  <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="min-w-[200px]">
-                      <SelectValue placeholder="Select Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Select Role</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="member">Member</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value="all">
-                    <SelectTrigger className="min-w-[200px]">
-                      <SelectValue placeholder="Select Plan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Select Plan</SelectItem>
-                      <SelectItem value="basic">Basic</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="min-w-[200px]">
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Select Status</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex gap-2">
-                  <Select value="10">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
-                      placeholder="Search User"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 min-w-[200px]"
-                    />
+              <div className="space-y-4">
+                {user.branches.map((branch) => (
+                  <div key={branch.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium">{branch.name}</h4>
+                        <p className="text-sm text-muted-foreground">{branch.address}</p>
+                      </div>
+                      <Badge variant={branch.status === 'active' ? 'default' : 'secondary'} className="capitalize">
+                        {branch.status}
+                      </Badge>
+                    </div>
+                    <div className="mt-2 flex justify-between text-sm text-muted-foreground">
+                      <span>{branch.members_count} members</span>
+                      <span>Created {format(new Date(branch.created_at), 'MMM d, yyyy')}</span>
+                    </div>
                   </div>
-                  
-                  <Button variant="outline">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-
-                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add New Record
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Add User</DialogTitle>
-                      </DialogHeader>
-                      <AdminAccountForm onSuccess={() => setIsCreateDialogOpen(false)} />
-                    </DialogContent>
-                  </Dialog>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
+        )}
+      </div>
+    </div>
+  </div>
+);
 
-          {/* Users Table */}
+// Mock data for users - replace with actual API call in production
+const mockUsers: User[] = [
+  {
+    id: '1',
+    email: 'admin@example.com',
+    full_name: 'Admin User',
+    role: 'admin',
+    status: 'active',
+    created_at: new Date().toISOString(),
+    last_login: new Date().toISOString(),
+    branches: [
+      {
+        id: 'b1',
+        name: 'Downtown Branch',
+        address: '123 Main St',
+        status: 'active',
+        members_count: 150,
+        created_at: new Date().toISOString()
+      }
+    ]
+  },
+  {
+    id: '2',
+    email: 'trainer@example.com',
+    full_name: 'Trainer One',
+    role: 'trainer',
+    status: 'active',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    last_login: new Date().toISOString()
+  },
+  {
+    id: '3',
+    email: 'member@example.com',
+    full_name: 'Member One',
+    role: 'member',
+    status: 'active',
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    last_login: new Date(Date.now() - 86400000).toISOString()
+  }
+];
+
+export default function UserManagementPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('admin'); // Default to showing only admins
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+  const { userId } = useParams();
+
+  const location = useLocation();
+  
+  // Fetch users using Supabase
+  const { data: users = [], isLoading, error } = useQuery<User[]>({
+    queryKey: ['users'],
+    queryFn: getUsers,
+    refetchOnWindowFocus: false
+  });
+  
+  // Fetch single user when userId is present in the URL
+  const { data: currentUser } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => userId ? getUserById(userId) : null,
+    enabled: !!userId && !selectedUser,
+    onSuccess: (data) => {
+      if (data) setSelectedUser(data);
+    }
+  });
+  
+  // Navigation handler to go back to the user list
+  const handleBackToList = () => {
+    setSelectedUser(null);
+    navigate('/users');
+  };
+
+  // Filter users based on role and status
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+      const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+      const matchesSearch = searchTerm === '' || 
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.phone?.includes(searchTerm);
+      
+      return matchesRole && matchesStatus && matchesSearch;
+    });
+  }, [users, roleFilter, statusFilter, searchTerm]);
+
+  // Handle back to list view
+  const handleBackToList = () => {
+    setSelectedUser(null);
+    navigate('/users');
+  };
+  
+  // Handle user selection
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user);
+    navigate(`/users/${user.id}`);
+  };
+
+  // Loading state component
+  const LoadingState = () => (
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="p-6">
+            <Skeleton className="h-6 w-24 mb-2" />
+            <Skeleton className="h-8 w-20 mb-2" />
+            <Skeleton className="h-4 w-32" />
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Error state component
+  const ErrorState = ({ error }: { error: Error }) => (
+    <div className="p-6 text-center text-red-500">
+      <p>Error loading users: {error.message}</p>
+      <Button variant="outline" onClick={() => window.location.reload()} className="mt-4">
+        Retry
+      </Button>
+    </div>
+  );
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} />;
+  }
+
+  if (selectedUser || userId) {
+    const userToShow = selectedUser || users.find(u => u.id === userId);
+    if (userToShow) {
+      return <UserDetail user={userToShow} onBack={handleBackToList} />;
+    }
+    // If user not found, go back to list
+    handleBackToList();
+  }
+
+  // Sort users
+  const sortedUsers = useMemo(() => {
+    if (!sortConfig) return filteredUsers;
+
+    return [...filteredUsers].sort((a, b) => {
+      const aValue = a[sortConfig.key as keyof User];
+      const bValue = b[sortConfig.key as keyof User];
+      
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredUsers, sortConfig]);
+
+  // Handle sort request
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+
+
+  // ... (rest of the code remains the same)
+
+  // Show user list by default
+  return (
+    <div className="space-y-6">
+      <Tabs defaultValue="users" className="space-y-4">
+        <div className="flex justify-between items-center">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { 
+                title: 'Total Users', 
+                value: users.length, 
+                icon: Users,
+                trend: '+12.5%',
+                trendType: 'positive'
+              },
+              { 
+                title: 'Active Users', 
+                value: users.filter(u => u.status === 'active').length, 
+                icon: UserCheck,
+                trend: '+5.2%',
+                trendType: 'positive'
+              },
+              { 
+                title: 'Admins', 
+                value: users.filter(u => u.role === 'admin').length, 
+                icon: UserCheck,
+                trend: '+2.1%',
+                trendType: 'positive'
+              },
+              { 
+                title: 'Inactive Users', 
+                value: users.filter(u => u.status === 'inactive').length, 
+                icon: UserX,
+                trend: '-1.3%',
+                trendType: 'negative'
+              },
+            ].map((stat, index) => (
+              <Card key={index}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {stat.title}
+                  </CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className={`text-xs mt-1 ${stat.trendType === 'positive' ? 'text-green-500' : 'text-red-500'}`}>
+                    {stat.trend} from last month
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
           <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">
-                      <input type="checkbox" className="rounded" />
-                    </TableHead>
-                    <TableHead>USER</TableHead>
-                    <TableHead>ROLE</TableHead>
-                    <TableHead>PLAN</TableHead>
-                    <TableHead>BILLING</TableHead>
-                    <TableHead>STATUS</TableHead>
-                    <TableHead className="w-[100px]">ACTIONS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <input type="checkbox" className="rounded" />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback>
-                              {user.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{user.full_name}</div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          <span className="mr-1">{getRoleIcon(user.role)}</span>
-                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {user.gyms?.subscription_plan || 'Basic'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          Auto Debit
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={user.is_active ? 'default' : 'secondary'}>
-                          {user.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>Edit</DropdownMenuItem>
-                              <DropdownMenuItem>Suspend</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Latest user activities and actions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {users?.slice(0, 5).map((user) => (
+                  <div key={user.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <Avatar>
+                        <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                        <AvatarFallback>
+                          {user.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium leading-none">{user.full_name}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Last login: {user.last_login ? format(new Date(user.last_login), 'MMM d, yyyy') : 'Never'}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <UserList 
+            users={sortedUsers}
+            onUserSelect={handleUserSelect}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            roleFilter={roleFilter}
+            setRoleFilter={setRoleFilter}
+            sortConfig={sortConfig}
+            requestSort={requestSort}
+          />
         </TabsContent>
       </Tabs>
     </div>

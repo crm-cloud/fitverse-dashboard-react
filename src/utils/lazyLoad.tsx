@@ -18,7 +18,7 @@ export const preloadRoute = (importFn: () => Promise<any>) => {
 // Route-based lazy loading for major pages
 export const lazyRoutes = {
   // Major pages
-  UserManagement: createLazyComponent(() => import('@/pages/UserManagement').then(m => ({ default: m.default }))),
+  UserManagement: createLazyComponent(() => import('@/pages/users/user-management').then(m => ({ default: m.default }))),
   RoleManagement: createLazyComponent(() => import('@/pages/RoleManagement').then(m => ({ default: m.default }))),
   TeamManagement: createLazyComponent(() => import('@/pages/TeamManagement').then(m => ({ default: m.default }))),
   FinanceDashboard: createLazyComponent(() => import('@/pages/finance/dashboard').then(m => ({ default: m.default }))),

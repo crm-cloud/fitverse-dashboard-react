@@ -273,6 +273,14 @@ const App = () => (
                          path="/users" 
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
+                             <Navigate to="/users/user-management" replace />
+                           </ProtectedRoute>
+                         }
+                       />
+                       <Route 
+                         path="/users/user-management" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
                              <DashboardLayout>
                                <Suspense fallback={<PageLoadingState />}>
                                  <lazyRoutes.UserManagement />
@@ -280,7 +288,7 @@ const App = () => (
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
-                        />
+                       />
                          <Route 
                            path="/branches/create" 
                            element={

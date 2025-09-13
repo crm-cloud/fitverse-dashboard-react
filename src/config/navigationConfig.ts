@@ -143,10 +143,10 @@ export const navigationConfig: NavigationGroup[] = [
     items: [
       // Remove direct gym management - super admins create admins who manage gyms
       {
-        id: 'admin-management',
-        title: 'Admin Management',
-        url: '/users/admin-management',
-        icon: UserCog,
+        id: 'user-menu',
+        title: 'User Menu',
+        url: '/users/user-management',
+        icon: Users,
         group: 'saas-management',
         allowedRoles: ['super-admin'],
       },
