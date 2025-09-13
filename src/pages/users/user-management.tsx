@@ -456,10 +456,14 @@ export default function UserManagementPage() {
     queryKey: ['user', userId],
     queryFn: () => userId ? getUserById(userId) : null,
     enabled: !!userId && !selectedUser,
-    onSuccess: (data) => {
-      if (data) setSelectedUser(data);
-    }
   });
+
+  // Handle currentUser data changes
+  useEffect(() => {
+    if (currentUser) {
+      setSelectedUser(currentUser);
+    }
+  }, [currentUser]);
   
   // Navigation handler to go back to the user list
   const handleBackToList = () => {
@@ -481,11 +485,6 @@ export default function UserManagementPage() {
     });
   }, [users, roleFilter, statusFilter, searchTerm]);
 
-  // Handle back to list view
-  const handleBackToList = () => {
-    setSelectedUser(null);
-    navigate('/users');
-  };
   
   // Handle user selection
   const handleUserSelect = (user: User) => {
