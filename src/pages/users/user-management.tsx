@@ -26,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useRecentInvoices } from '@/hooks/useInvoices';
 
 interface AdminUser {
   id: string;
@@ -190,6 +191,12 @@ export default function UserManagement() {
     },
     enabled: !!userId && (users?.length || 0) > 0
   });
+
+  // Fetch recent invoices for the selected user's gym
+  const { data: recentInvoices = [], isLoading: invoicesLoading } = useRecentInvoices(
+    selectedUser?.gym_id, 
+    3 // Limit to 3 recent invoices
+  );
 
   // Filter users
   const filteredUsers = (users || []).filter(user => {
@@ -578,26 +585,45 @@ export default function UserManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {[
-                      { date: '2024-11-09', amount: 99.0, status: 'Paid', invoice: 'INV-001' },
-                      { date: '2024-10-09', amount: 99.0, status: 'Paid', invoice: 'INV-002' },
-                      { date: '2024-09-09', amount: 99.0, status: 'Paid', invoice: 'INV-003' },
-                    ].map((invoice, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded">
-                        <div>
-                          <p className="font-medium">{invoice.invoice}</p>
-                          <p className="text-sm text-muted-foreground">{invoice.date}</p>
+                    {invoicesLoading ? (
+                      // Loading state
+                      [...Array(3)].map((_, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded animate-pulse">
+                          <div className="space-y-1">
+                            <div className="h-4 bg-gray-200 rounded w-20"></div>
+                            <div className="h-3 bg-gray-200 rounded w-24"></div>
+                          </div>
+                          <div className="space-y-1 text-right">
+                            <div className="h-4 bg-gray-200 rounded w-16"></div>
+                            <div className="h-5 bg-gray-200 rounded w-12"></div>
+                          </div>
                         </div>
-            <div className="text-right">
-              <p className="font-medium">{formatCurrency(invoice.amount)}</p>
-              <Badge variant={invoice.status === 'Paid' ? 'default' : 'destructive'}>
-                            {invoice.status}
-                          </Badge>
+                      ))
+                    ) : recentInvoices.length > 0 ? (
+                      recentInvoices.map((invoice) => (
+                        <div key={invoice.id} className="flex items-center justify-between p-3 border rounded">
+                          <div>
+                            <p className="font-medium">{invoice.invoiceNumber}</p>
+                            <p className="text-sm text-muted-foreground">{invoice.date}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{formatCurrency(invoice.amount)}</p>
+                            <Badge variant={invoice.status === 'Paid' ? 'default' : 'destructive'}>
+                              {invoice.status}
+                            </Badge>
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      // No invoices state
+                      <div className="text-center py-4 text-muted-foreground">
+                        <p>No recent invoices found for this gym.</p>
                       </div>
-                    ))}
+                    )}
                   </div>
-                  <Button variant="outline" className="w-full mt-3">
+                  <Button variant="outline" className="w-full mt-3"
+                    onClick={() => window.location.href = '/finance/invoices'}
+                  >
                     View All Invoices
                   </Button>
                 </CardContent>

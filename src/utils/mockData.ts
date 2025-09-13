@@ -22,6 +22,7 @@ export const mockTransactions: any[] = [];
 export const mockMonthlyData: any[] = [];
 export const mockEnhancedTrainers: any[] = [];
 export const mockClasses: any[] = [];
+// Temporary mockInvoices for backward compatibility - other components will be updated later
 export const mockInvoices: any[] = [];
 export const mockBranches: any[] = [];
 export const mockTrainers: any[] = [];

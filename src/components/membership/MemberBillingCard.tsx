@@ -15,9 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Invoice, PaymentStatus } from '@/types/membership';
-import { mockInvoices } from '@/utils/mockData';
 import { PaymentRecorderDrawer } from './PaymentRecorderDrawer';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useInvoices } from '@/hooks/useInvoices';
 
 interface MemberBillingCardProps {
   memberId: string;
@@ -93,7 +93,9 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
 
   const { formatCurrency } = useCurrency();
 
-  const memberInvoices = mockInvoices.filter(invoice => invoice.memberId === memberId);
+  // Fetch invoices for this member
+  const { data: allInvoices = [], isLoading } = useInvoices({ customerId: memberId });
+  const memberInvoices = allInvoices.filter(invoice => invoice.customerId === memberId);
 
   const handleRecordPayment = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
@@ -105,6 +107,25 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
     setPaymentDrawerOpen(false);
     setSelectedInvoice(null);
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Receipt className="h-5 w-5 mr-2" />
+            Billing History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground mt-2">Loading billing history...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (memberInvoices.length === 0) {
     return (
@@ -135,13 +156,31 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {memberInvoices.map((invoice) => {
-            const statusInfo = getPaymentStatusInfo(invoice.paymentStatus);
-            const dueDateAlert = getDueDateAlert(invoice.dueDate, invoice.paymentStatus);
-            const StatusIcon = statusInfo.icon;
-
+            {memberInvoices.map((invoice) => {
+              const membershipInvoice = {
+                id: invoice.id,
+                invoiceNumber: invoice.invoiceNumber,
+                membershipId: '', // Add required field
+                memberId: invoice.customerId || '',
+                memberName: invoice.customerName,
+                planName: 'Membership Plan', // Default since we don't have this field
+                originalAmount: invoice.subtotal,
+                discountAmount: invoice.discount,
+                gstAmount: invoice.tax,
+                finalAmount: invoice.total,
+                issueDate: new Date(invoice.date),
+                dueDate: new Date(invoice.dueDate),
+                paymentStatus: invoice.status === 'paid' ? 'paid' as PaymentStatus : 'unpaid' as PaymentStatus,
+                branchId: '',
+                branchName: '',
+                createdAt: new Date(invoice.createdAt)
+              };
+              
+              const statusInfo = getPaymentStatusInfo(membershipInvoice.paymentStatus);
+              const dueDateAlert = getDueDateAlert(membershipInvoice.dueDate, membershipInvoice.paymentStatus);
+              const StatusIcon = statusInfo.icon;
             return (
-              <Card key={invoice.id} className="border-l-4 border-l-primary">
+              <Card key={membershipInvoice.id} className="border-l-4 border-l-primary">
                 <CardContent className="pt-4">
                   {/* Alert for due dates */}
                   {dueDateAlert && (
@@ -164,7 +203,7 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <div className="flex items-center space-x-2 mb-1">
-                        <h4 className="font-semibold">{invoice.invoiceNumber}</h4>
+                        <h4 className="font-semibold">{membershipInvoice.invoiceNumber}</h4>
                         <Badge 
                           variant="secondary" 
                           className={`${statusInfo.bgColor} ${statusInfo.color} hover:${statusInfo.bgColor}`}
@@ -173,24 +212,24 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
                           {statusInfo.label}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{invoice.planName}</p>
+                      <p className="text-sm text-muted-foreground">{membershipInvoice.planName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-lg">{formatCurrency(invoice.finalAmount)}</p>
+                      <p className="font-bold text-lg">{formatCurrency(membershipInvoice.finalAmount)}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                     <div>
                       <p className="text-muted-foreground">Issue Date</p>
-                      <p>{format(invoice.issueDate, 'MMM dd, yyyy')}</p>
+                      <p>{format(membershipInvoice.issueDate, 'MMM dd, yyyy')}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Due Date</p>
-                      <p className={isAfter(new Date(), invoice.dueDate) && invoice.paymentStatus !== 'paid' 
+                      <p className={isAfter(new Date(), membershipInvoice.dueDate) && membershipInvoice.paymentStatus !== 'paid' 
                         ? 'text-red-600 font-medium' 
                         : ''}>
-                        {format(invoice.dueDate, 'MMM dd, yyyy')}
+                        {format(membershipInvoice.dueDate, 'MMM dd, yyyy')}
                       </p>
                     </div>
                   </div>
@@ -199,34 +238,34 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Original Amount:</span>
-                      <span>{formatCurrency(invoice.originalAmount)}</span>
+                      <span>{formatCurrency(membershipInvoice.originalAmount)}</span>
                     </div>
-                    {invoice.discountAmount > 0 && (
+                    {membershipInvoice.discountAmount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>Discount:</span>
-                        <span>-{formatCurrency(invoice.discountAmount)}</span>
+                        <span>-{formatCurrency(membershipInvoice.discountAmount)}</span>
                       </div>
                     )}
-                    {invoice.gstAmount > 0 && (
+                    {membershipInvoice.gstAmount > 0 && (
                       <div className="flex justify-between">
                         <span>GST (18%):</span>
-                        <span>+{formatCurrency(invoice.gstAmount)}</span>
+                        <span>+{formatCurrency(membershipInvoice.gstAmount)}</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between font-medium">
                       <span>Total Amount:</span>
-                      <span>{formatCurrency(invoice.finalAmount)}</span>
+                      <span>{formatCurrency(membershipInvoice.finalAmount)}</span>
                     </div>
                   </div>
 
                   {/* Payment Action */}
-                  {invoice.paymentStatus !== 'paid' && (
+                  {membershipInvoice.paymentStatus !== 'paid' && (
                     <div className="mt-4 pt-4 border-t">
                       <Button 
-                        onClick={() => handleRecordPayment(invoice)}
+                        onClick={() => handleRecordPayment(membershipInvoice)}
                         className="w-full"
-                        variant={invoice.paymentStatus === 'overdue' ? 'destructive' : 'default'}
+                        variant={membershipInvoice.paymentStatus === 'overdue' ? 'destructive' : 'default'}
                       >
                         <CreditCard className="h-4 w-4 mr-2" />
                         Record Payment
