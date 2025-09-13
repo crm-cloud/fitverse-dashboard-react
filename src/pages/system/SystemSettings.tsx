@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Settings, Shield, Database, Mail, Bell, MessageSquare, MessageCircle, Plus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSystemSettings, useUpdateSystemSetting } from '@/hooks/useSystemSettings';
+import { useSystemSettings, useUpdateSystemSetting, useCreateSystemSetting } from '@/hooks/useSystemSettings';
 import { SMSTemplateEditor } from '@/components/sms/SMSTemplateEditor';
 import { WhatsAppTemplateEditor } from '@/components/templates/WhatsAppTemplateEditor';
 import { HierarchicalSettingsManager } from '@/components/settings/HierarchicalSettingsManager';
@@ -21,6 +21,7 @@ import { useSearchParams } from 'react-router-dom';
 export default function SystemSettings() {
   const { data: allSettings, isLoading } = useSystemSettings();
   const updateSetting = useUpdateSystemSetting();
+  const createSetting = useCreateSystemSetting();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'general';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -55,8 +56,18 @@ const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
       const promises = Object.entries(pendingChanges).map(async ([key, value]) => {
         const [category, settingKey] = key.split('.');
         const setting = allSettings?.find(s => s.category === category && s.key === settingKey);
+        
         if (setting) {
+          // Update existing setting
           return updateSetting.mutateAsync({ id: setting.id, value });
+        } else {
+          // Create new setting
+          return createSetting.mutateAsync({
+            category: category as 'general' | 'security' | 'database' | 'notifications' | 'backup' | 'subscription',
+            key: settingKey,
+            value,
+            description: `${category} ${settingKey} setting`
+          });
         }
       });
       
@@ -68,6 +79,7 @@ const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
         description: "All settings saved successfully"
       });
     } catch (error) {
+      console.error('Error saving settings:', error);
       toast({
         title: "Error",
         description: "Failed to save some settings",
@@ -533,8 +545,8 @@ const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={resetChanges}>Cancel</Button>
-                <Button onClick={saveAllChanges} disabled={updateSetting.isPending}>
-                  {updateSetting.isPending ? 'Saving...' : 'Save Changes'}
+                <Button onClick={saveAllChanges} disabled={updateSetting.isPending || createSetting.isPending}>
+                  {(updateSetting.isPending || createSetting.isPending) ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
             </div>
