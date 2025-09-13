@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/hooks/useAuth";
 import { RBACProvider } from "@/hooks/useRBAC";
 import { BranchContextProvider } from "@/hooks/useBranchContext";
@@ -39,10 +39,6 @@ import { POSInterface } from "./components/pos/POSInterface";
 import { ProductManagement } from "./pages/products/ProductManagement";
 import { LeadListPage } from "./pages/leads/list";
 import { DietWorkoutPlannerPage } from "./pages/diet-workout/planner";
-import FinanceDashboard from '@/pages/finance/dashboard';
-import TransactionsPage from '@/pages/finance/transactions';
-const FinanceReportsPage = lazy(() => import('./pages/finance/reports'));
-const InvoicesPage = lazy(() => import('./pages/finance/invoices'));
 import { FeedbackManagementPage } from "./pages/feedback/management";
 import { TaskManagementPage } from "./pages/tasks/management";
 import { MemberFeedbackPage } from "./pages/member/feedback";
@@ -419,22 +415,36 @@ const App = () => (
                           </ProtectedRoute>
                         } 
                       />
-                      <Route 
-                        path="/finance/transactions" 
-                        element={
-                          <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
-                            <PermissionGate permission="finance.view">
-                              <DashboardLayout>
-                                <Suspense fallback={<PageLoadingState />}>
-                                  <lazyRoutes.TransactionsPage />
-                                </Suspense>
-                              </DashboardLayout>
-                            </PermissionGate>
-                          </ProtectedRoute>
-                        } 
-                      />
-                      <Route 
-                        path="/feedback" 
+                       <Route 
+                         path="/finance/transactions" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                             <PermissionGate permission="finance.view">
+                               <DashboardLayout>
+                                 <Suspense fallback={<PageLoadingState />}>
+                                   <lazyRoutes.TransactionsPage />
+                                 </Suspense>
+                               </DashboardLayout>
+                             </PermissionGate>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/finance/invoices" 
+                         element={
+                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
+                             <PermissionGate permission="finance.view">
+                               <DashboardLayout>
+                                 <Suspense fallback={<PageLoadingState />}>
+                                   <lazyRoutes.InvoicesPage />
+                                 </Suspense>
+                               </DashboardLayout>
+                             </PermissionGate>
+                           </ProtectedRoute>
+                         } 
+                       />
+                       <Route 
+                         path="/feedback"
                         element={
                           <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                             <DashboardLayout>
