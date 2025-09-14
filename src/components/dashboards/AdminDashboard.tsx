@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AdminGymDashboard } from '@/components/gyms/AdminGymDashboard';
+import { AdminBranchDashboard } from '@/components/branches/AdminBranchDashboard';
 import { 
   Users, 
   Calendar, 
@@ -26,8 +26,8 @@ export const AdminDashboard = () => (
       <Badge variant="destructive">Admin Access</Badge>
     </div>
     
-    {/* Gym Management Section */}
-    <AdminGymDashboard />
+    {/* Branch Management Section */}
+    <AdminBranchDashboard />
     
     {/* Stats Grid */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
