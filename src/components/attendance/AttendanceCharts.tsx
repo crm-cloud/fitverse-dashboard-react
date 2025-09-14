@@ -38,44 +38,46 @@ export const AttendanceCharts = ({
 
   const pieColors = [colors.primary, colors.secondary, colors.success, colors.warning];
 
-  // Transform data for charts
-  const peakHoursData = summary.peakHours.map(item => ({
+  // Transform data for charts with null checks
+  const peakHoursData = (summary.peakHours || []).map(item => ({
     hour: `${item.hour}:00`,
     count: item.count,
     time: item.hour
   }));
 
-  const busyDaysData = summary.busyDays.map(item => ({
-    day: item.day.substring(0, 3), // Mon, Tue, etc.
+  const busyDaysData = (summary.busyDays || []).map(item => ({
+    day: item.day?.substring(0, 3) || 'N/A', // Mon, Tue, etc.
     count: item.count,
     fullDay: item.day
   }));
 
-  const methodData = Object.entries(summary.methodBreakdown).map(([method, count]) => ({
-    name: method.charAt(0).toUpperCase() + method.slice(1),
-    value: count,
-    percentage: ((count / summary.totalRecords) * 100).toFixed(1)
+  const methodData = summary?.methodBreakdown 
+    ? Object.entries(summary.methodBreakdown).map(([method, count]) => ({
+        name: method.charAt(0).toUpperCase() + method.slice(1),
+        value: count,
+        percentage: summary.totalRecords > 0 ? ((count / summary.totalRecords) * 100).toFixed(1) : '0'
+      }))
+    : [];
+
+  const branchData = (summary?.branchBreakdown || []).map(branch => ({
+    name: branch?.branchName?.replace(' Branch', '') || 'Unknown',
+    count: branch?.count || 0,
+    fullName: branch?.branchName || 'Unknown Branch'
   }));
 
-  const branchData = summary.branchBreakdown.map(branch => ({
-    name: branch.branchName.replace(' Branch', ''),
-    count: branch.count,
-    fullName: branch.branchName
-  }));
-
-  if (isLoading) {
+  if (isLoading || !summary) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-5 bg-muted rounded w-1/2"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 bg-muted rounded"></div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading charts...</CardTitle>
+          </CardHeader>
+          <CardContent className="h-80 flex items-center justify-center">
+            <div className="animate-pulse text-muted-foreground">
+              {isLoading ? 'Loading data...' : 'No data available'}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

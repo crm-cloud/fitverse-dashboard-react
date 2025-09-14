@@ -9,8 +9,105 @@ export const mockPlanAssignments: any[] = [];
 export const mockTransactionCategories: any[] = [];
 export const mockPaymentMethods: any[] = [];
 export const mockMembershipPlans: any[] = [];
-export const mockLockers: any[] = [];
-export const mockLockerSizes: any[] = [];
+export const mockLockerSizes = [
+  { id: 'small', name: 'Small', dimensions: '12" x 12" x 36"', monthlyFee: 20 },
+  { id: 'medium', name: 'Medium', dimensions: '18" x 18" x 36"', monthlyFee: 30 },
+  { id: 'large', name: 'Large', dimensions: '24" x 24" x 36"', monthlyFee: 40 },
+  { id: 'xlarge', name: 'Extra Large', dimensions: '36" x 24" x 36"', monthlyFee: 50 },
+];
+
+export const mockLockers = [
+  {
+    id: 'L-101',
+    number: '101',
+    name: 'Locker 101',
+    status: 'available',
+    size: mockLockerSizes[0],
+    branchId: '1',
+    branchName: 'Downtown Branch',
+    monthlyFee: 20,
+    notes: '',
+    assignedMemberId: undefined,
+    assignedMemberName: undefined,
+    assignedDate: undefined,
+    expirationDate: undefined,
+    releaseDate: undefined,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2025-01-15T00:00:00Z',
+  },
+  {
+    id: 'L-102',
+    number: '102',
+    name: 'Locker 102',
+    status: 'occupied',
+    size: mockLockerSizes[1],
+    branchId: '1',
+    branchName: 'Downtown Branch',
+    monthlyFee: 30,
+    assignedMemberId: 'M1001',
+    assignedMemberName: 'John Doe',
+    assignedDate: '2025-01-01',
+    expirationDate: '2025-12-31',
+    notes: 'Key card access only',
+    releaseDate: undefined,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-12-10T00:00:00Z',
+  },
+  {
+    id: 'L-201',
+    number: '201',
+    name: 'Locker 201',
+    status: 'maintenance',
+    size: mockLockerSizes[2],
+    branchId: '2',
+    branchName: 'Westside Branch',
+    monthlyFee: 40,
+    notes: 'Lock needs replacement',
+    assignedMemberId: undefined,
+    assignedMemberName: undefined,
+    assignedDate: undefined,
+    expirationDate: undefined,
+    releaseDate: undefined,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-11-20T00:00:00Z',
+  },
+  {
+    id: 'L-202',
+    number: '202',
+    name: 'Locker 202',
+    status: 'reserved',
+    size: mockLockerSizes[1],
+    branchId: '2',
+    branchName: 'Westside Branch',
+    monthlyFee: 30,
+    assignedMemberId: 'M1002',
+    assignedMemberName: 'Jane Smith',
+    assignedDate: '2025-02-01',
+    expirationDate: '2025-07-31',
+    notes: 'Prepaid for 6 months',
+    releaseDate: undefined,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2025-01-10T00:00:00Z',
+  },
+  {
+    id: 'L-301',
+    number: '301',
+    name: 'Locker 301',
+    status: 'available',
+    size: mockLockerSizes[0],
+    branchId: '3',
+    branchName: 'Northside Branch',
+    monthlyFee: 20,
+    notes: '',
+    assignedMemberId: undefined,
+    assignedMemberName: undefined,
+    assignedDate: undefined,
+    expirationDate: undefined,
+    releaseDate: undefined,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2025-01-20T00:00:00Z',
+  },
+];
 export const mockMeasurementHistory: any[] = [];
 export const mockAttendanceRecords: any[] = [];
 export const mockProducts: any[] = [];
@@ -39,8 +136,41 @@ export const leadSources: any[] = [];
 export const lockerStatuses: any[] = [];
 export const classTagLabels: any = {};
 
-// Mock attendance data  
-export const mockAttendanceSummary: any = {};
+// Mock attendance data
+export const mockAttendanceSummary = {
+  totalRecords: 150,
+  presentCount: 120,
+  lateCount: 25,
+  absentCount: 5,
+  peakHours: [
+    { hour: 8, count: 45 },
+    { hour: 9, count: 60 },
+    { hour: 10, count: 50 },
+    { hour: 17, count: 55 },
+    { hour: 18, count: 40 }
+  ],
+  busyDays: [
+    { day: 'Monday', count: 35 },
+    { day: 'Tuesday', count: 40 },
+    { day: 'Wednesday', count: 38 },
+    { day: 'Thursday', count: 42 },
+    { day: 'Friday', count: 30 },
+    { day: 'Saturday', count: 25 },
+    { day: 'Sunday', count: 10 }
+  ],
+  methodBreakdown: {
+    biometric: 100,
+    manual: 30,
+    card: 15,
+    mobile: 5
+  },
+  branchBreakdown: [
+    { branchId: 'branch-001', branchName: 'Downtown Branch', count: 70 },
+    { branchId: 'branch-002', branchName: 'Westside Branch', count: 50 },
+    { branchId: 'branch-003', branchName: 'Northside Branch', count: 30 }
+  ]
+};
+
 export const mockAttendanceData: any[] = [];
 
 // Add missing exports to mockData
@@ -147,7 +277,22 @@ export interface LockerSize {
 // Add missing mock exports
 export const mockFeedbackStats: any = {};
 export const mockLeadStats: any = {};
-export const mockLockerSummary: any = {};
+export const mockLockerSummary = {
+  totalLockers: mockLockers.length,
+  available: mockLockers.filter(l => l.status === 'available').length,
+  occupied: mockLockers.filter(l => l.status === 'occupied').length,
+  reserved: mockLockers.filter(l => l.status === 'reserved').length,
+  maintenance: mockLockers.filter(l => l.status === 'maintenance').length,
+  sizeBreakdown: mockLockerSizes.map(size => ({
+    size: size.name,
+    count: mockLockers.filter(l => l.size?.id === size.id).length
+  })),
+  branchBreakdown: [
+    { branchId: '1', branchName: 'Downtown Branch', count: mockLockers.filter(l => l.branchId === '1').length },
+    { branchId: '2', branchName: 'Westside Branch', count: mockLockers.filter(l => l.branchId === '2').length },
+    { branchId: '3', branchName: 'Northside Branch', count: mockLockers.filter(l => l.branchId === '3').length },
+  ]
+};
 export const mockLockerAssignments: any[] = [];
 export const mockPayments: any[] = [];
 

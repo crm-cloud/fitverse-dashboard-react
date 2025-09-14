@@ -258,14 +258,6 @@ export const navigationConfig: NavigationGroup[] = [
     priority: 4,
     items: [
       {
-        id: 'membership-dashboard',
-        title: 'Membership',
-        url: '/membership',
-        icon: CreditCard,
-        group: 'membership',
-        requiredPermissions: ['members.view'],
-      },
-      {
         id: 'membership-plans',
         title: 'Plans',
         url: '/membership/plans',

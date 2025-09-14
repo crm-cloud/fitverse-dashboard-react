@@ -7,7 +7,6 @@ import { Switch } from '@/components/ui/switch';
 import { DataTable } from '@/components/ui/data-table';
 import { DeviceForm } from './DeviceForm';
 import { DeviceSettingsDialog } from './DeviceSettingsDialog';
-const [devices, setDevices] = useState<BiometricDevice[]>([]);
 import { BiometricDevice } from '@/types/attendance';
 import { toast } from '@/hooks/use-toast';
 import { PermissionGate } from '@/components/PermissionGate';

@@ -29,7 +29,14 @@ export const AttendanceFilters = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const updateFilter = (key: keyof AttendanceFilter, value: any) => {
-    onFiltersChange({ ...filters, [key]: value });
+    // If the value is 'all', set it to undefined to clear the filter
+    if (value === 'all') {
+      const newFilters = { ...filters };
+      delete newFilters[key];
+      onFiltersChange(newFilters);
+    } else {
+      onFiltersChange({ ...filters, [key]: value });
+    }
   };
 
   const clearFilters = () => {
@@ -112,12 +119,12 @@ export const AttendanceFilters = ({
           </Popover>
 
           {/* Status */}
-          <Select value={filters.status || ''} onValueChange={(value) => updateFilter('status', value || undefined)}>
+          <Select value={filters.status || 'all'} onValueChange={(value) => updateFilter('status', value === 'all' ? undefined : value)}>
             <SelectTrigger>
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="checked-in">Checked In</SelectItem>
               <SelectItem value="checked-out">Checked Out</SelectItem>
               <SelectItem value="late">Late</SelectItem>
@@ -148,12 +155,12 @@ export const AttendanceFilters = ({
         {showAdvanced && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-border">
             {/* User Role */}
-            <Select value={filters.userRole || ''} onValueChange={(value) => updateFilter('userRole', value || undefined)}>
+            <Select value={filters.userRole || 'all'} onValueChange={(value) => updateFilter('userRole', value === 'all' ? undefined : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="User Role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Roles</SelectItem>
+                <SelectItem value="all">All Roles</SelectItem>
                 <SelectItem value="member">Members</SelectItem>
                 <SelectItem value="trainer">Trainers</SelectItem>
                 <SelectItem value="staff">Staff</SelectItem>
@@ -162,12 +169,12 @@ export const AttendanceFilters = ({
             </Select>
 
             {/* Entry Method */}
-            <Select value={filters.entryMethod || ''} onValueChange={(value) => updateFilter('entryMethod', value || undefined)}>
+            <Select value={filters.entryMethod || 'all'} onValueChange={(value) => updateFilter('entryMethod', value === 'all' ? undefined : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Entry Method" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Methods</SelectItem>
+                <SelectItem value="all">All Methods</SelectItem>
                 <SelectItem value="biometric">Biometric</SelectItem>
                 <SelectItem value="manual">Manual Entry</SelectItem>
                 <SelectItem value="card">Card/Badge</SelectItem>
@@ -176,12 +183,12 @@ export const AttendanceFilters = ({
             </Select>
 
             {/* Branch */}
-            <Select value={filters.branchId || ''} onValueChange={(value) => updateFilter('branchId', value || undefined)}>
+            <Select value={filters.branchId || 'all'} onValueChange={(value) => updateFilter('branchId', value === 'all' ? undefined : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Branch" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Branches</SelectItem>
+                <SelectItem value="all">All Branches</SelectItem>
                 <SelectItem value="branch-001">Downtown Branch</SelectItem>
                 <SelectItem value="branch-002">Westside Branch</SelectItem>
                 <SelectItem value="branch-003">Northside Branch</SelectItem>
@@ -189,12 +196,15 @@ export const AttendanceFilters = ({
             </Select>
 
             {/* Late Filter */}
-            <Select value={filters.isLate?.toString() || ''} onValueChange={(value) => updateFilter('isLate', value ? value === 'true' : undefined)}>
+            <Select 
+              value={filters.isLate === undefined ? 'all' : filters.isLate.toString()} 
+              onValueChange={(value) => updateFilter('isLate', value === 'all' ? undefined : value === 'true')}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Late Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Records</SelectItem>
+                <SelectItem value="all">All Records</SelectItem>
                 <SelectItem value="true">Late Only</SelectItem>
                 <SelectItem value="false">On Time Only</SelectItem>
               </SelectContent>

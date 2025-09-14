@@ -45,6 +45,7 @@ import { MemberFeedbackPage } from "./pages/member/feedback";
 import { TrainerManagementPage } from "./pages/trainers/management";
 import { MemberProfileSettings } from "./pages/member/ProfileSettings";
 import { TrainerChangeRequest } from "./pages/member/TrainerChangeRequest";
+import LockerManagement from "./pages/lockers/management";
 // New system pages
 import SystemHealth from "./pages/system/SystemHealth";
 import SystemSettings from "./pages/system/SystemSettings";
@@ -80,7 +81,6 @@ import ReportsPage from "./pages/reports/index";
 import { BranchCreatePage } from "./pages/branches/create";
 import { UserCreatePage } from "./pages/users/create";
 import { RoleCreatePage } from "./pages/roles/create";
-import LockerManagement from "./pages/lockers/management";
 import AttendanceDashboard from "./pages/attendance/dashboard";
 import AttendanceDevicesPage from "./pages/attendance/devices";
 
@@ -551,7 +551,7 @@ const App = () => (
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                              <DashboardLayout>
-                               <Dashboard />
+                               <AttendanceDashboard />
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
@@ -561,7 +561,7 @@ const App = () => (
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                              <DashboardLayout>
-                               <Dashboard />
+                               <AttendanceDevicesPage />
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
@@ -601,7 +601,7 @@ const App = () => (
                          element={
                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                              <DashboardLayout>
-                               <Dashboard />
+                               <LockerManagement />
                              </DashboardLayout>
                            </ProtectedRoute>
                          } 
