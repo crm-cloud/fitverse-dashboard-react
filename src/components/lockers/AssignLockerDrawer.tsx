@@ -8,8 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Key, User } from 'lucide-react';
-import { Locker } from '@/types/locker';
-import { mockLockers } from '@/utils/mockData';
+import { useLockers } from '@/hooks/useLockers';
+import { useMembers } from '@/hooks/useMembers';
 import { LockerStatusBadge } from './LockerStatusBadge';
 
 interface AssignLockerDrawerProps {
@@ -32,16 +32,18 @@ export function AssignLockerDrawer({
   const [selectedLockerId, setSelectedLockerId] = useState('');
   const [search, setSearch] = useState('');
   const [notes, setNotes] = useState('');
+  const [expirationDate, setExpirationDate] = useState('');
 
+  const { data: lockers = [] } = useLockers(branchId);
+  
   // Filter available lockers
-  const availableLockers = mockLockers.filter(locker => 
+  const availableLockers = lockers.filter(locker => 
     locker.status === 'available' &&
-    (!branchId || locker.branchId === branchId) &&
     (locker.number.toLowerCase().includes(search.toLowerCase()) ||
      locker.name.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const selectedLocker = mockLockers.find(l => l.id === selectedLockerId);
+  const selectedLocker = lockers.find(l => l.id === selectedLockerId);
 
   const handleAssign = () => {
     if (!selectedLocker) return;
@@ -51,12 +53,14 @@ export function AssignLockerDrawer({
       memberId,
       memberName,
       notes,
+      expirationDate: expirationDate || undefined,
       monthlyFee: selectedLocker.monthlyFee,
     });
 
     onOpenChange(false);
     setSelectedLockerId('');
     setNotes('');
+    setExpirationDate('');
   };
 
   return (
@@ -163,6 +167,16 @@ export function AssignLockerDrawer({
                   <span className="text-muted-foreground">Monthly Fee:</span>
                   <span className="font-medium">${selectedLocker.monthlyFee}</span>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="expiration">Expiration Date (Optional)</Label>
+                <Input
+                  id="expiration"
+                  type="date"
+                  value={expirationDate}
+                  onChange={(e) => setExpirationDate(e.target.value)}
+                />
               </div>
 
               <div className="space-y-2">

@@ -23,7 +23,13 @@ export const useBranchContext = () => {
 
 export const BranchContextProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
-  const [currentBranchId, setCurrentBranchId] = useState<string | null>(null);
+  const [currentBranchId, setCurrentBranchId] = useState<string | null>(() => {
+    // Initialize from sessionStorage
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('selectedBranchId');
+    }
+    return null;
+  });
 
   // Get user's accessible branches based on their gym
   const { data: branches = [] } = useQuery({
@@ -43,13 +49,33 @@ export const BranchContextProvider = ({ children }: { children: ReactNode }) => 
     enabled: !!authState.user?.gym_id,
   });
 
+  // Enhanced setCurrentBranchId with session persistence
+  const handleSetCurrentBranchId = (branchId: string | null) => {
+    setCurrentBranchId(branchId);
+    if (typeof window !== 'undefined') {
+      if (branchId) {
+        sessionStorage.setItem('selectedBranchId', branchId);
+      } else {
+        sessionStorage.removeItem('selectedBranchId');
+      }
+    }
+  };
+
   useEffect(() => {
     if (authState.user && branches.length > 0) {
-      // Set current branch based on user's primary branch or first available branch
-      const branchId = authState.user.branchId || branches[0]?.id || null;
-      setCurrentBranchId(branchId);
+      // Check if stored branch is still valid
+      const storedBranchId = typeof window !== 'undefined' ? sessionStorage.getItem('selectedBranchId') : null;
+      const isValidBranch = storedBranchId && branches.some(b => b.id === storedBranchId);
+      
+      if (isValidBranch) {
+        setCurrentBranchId(storedBranchId);
+      } else {
+        // Set current branch based on user's primary branch or first available branch
+        const branchId = authState.user.branchId || branches[0]?.id || null;
+        handleSetCurrentBranchId(branchId);
+      }
     } else {
-      setCurrentBranchId(null);
+      handleSetCurrentBranchId(null);
     }
   }, [authState.user, branches]);
 
@@ -85,7 +111,7 @@ export const BranchContextProvider = ({ children }: { children: ReactNode }) => 
   return (
     <BranchContext.Provider value={{
       currentBranchId,
-      setCurrentBranchId,
+      setCurrentBranchId: handleSetCurrentBranchId,
       canAccessBranch,
       getAccessibleBranches
     }}>

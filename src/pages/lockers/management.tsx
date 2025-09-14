@@ -2,31 +2,40 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Key, BarChart3, Users, AlertTriangle } from 'lucide-react';
+import { Plus, Key, BarChart3, Users, AlertTriangle, Table, Grid3X3, Package } from 'lucide-react';
 import { Locker, LockerFilters as LockerFiltersType } from '@/types/locker';
-import { mockLockers, mockLockerSummary, mockLockerAssignments } from '@/utils/mockData';
 import { LockerCard } from '@/components/lockers/LockerCard';
 import { LockerFilters } from '@/components/lockers/LockerFilters';
 import { LockerForm } from '@/components/lockers/LockerForm';
 import { AssignLockerDrawer } from '@/components/lockers/AssignLockerDrawer';
+import { LockerTableView } from '@/components/lockers/LockerTableView';
+import { BulkLockerCreationDialog } from '@/components/lockers/BulkLockerCreationDialog';
 import { PermissionGate } from '@/components/PermissionGate';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock branches data
-const mockBranches = [
-  { id: '1', name: 'Downtown Branch' },
-  { id: '2', name: 'Westside Branch' },
-  { id: '3', name: 'Northside Branch' },
-];
+import { useLockers, useLockerSummary, useCreateLocker, useUpdateLocker, useDeleteLocker, useAssignLocker, useReleaseLocker } from '@/hooks/useLockers';
+import { useBranchContext } from '@/hooks/useBranchContext';
+import { useBranches } from '@/hooks/useBranches';
 
 export default function LockerManagement() {
-  const [lockers, setLockers] = useState<Locker[]>(mockLockers);
   const [filters, setFilters] = useState<LockerFiltersType>({});
   const [showLockerForm, setShowLockerForm] = useState(false);
   const [showAssignDrawer, setShowAssignDrawer] = useState(false);
+  const [showBulkCreateDialog, setShowBulkCreateDialog] = useState(false);
   const [selectedLocker, setSelectedLocker] = useState<Locker | undefined>();
   const [selectedMember, setSelectedMember] = useState({ id: '', name: '' });
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const { toast } = useToast();
+  
+  const { currentBranchId } = useBranchContext();
+  const { branches } = useBranches();
+  const { data: lockers = [], isLoading } = useLockers(currentBranchId || undefined);
+  const { data: summary } = useLockerSummary(currentBranchId || undefined);
+  
+  const createLockerMutation = useCreateLocker();
+  const updateLockerMutation = useUpdateLocker();
+  const deleteLockerMutation = useDeleteLocker();
+  const assignLockerMutation = useAssignLocker();
+  const releaseLockerMutation = useReleaseLocker();
 
   // Filter lockers based on current filters
   const filteredLockers = lockers.filter(locker => {
@@ -47,20 +56,9 @@ export default function LockerManagement() {
   });
 
   const handleAddLocker = (data: any) => {
-    const newLocker: Locker = {
-      id: Math.random().toString(36).substr(2, 9),
+    createLockerMutation.mutate({
       ...data,
-      assignedMemberId: undefined,
-      assignedMemberName: undefined,
-      assignedDate: undefined,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setLockers(prev => [newLocker, ...prev]);
-    toast({
-      title: "Locker Added",
-      description: "The locker has been successfully added.",
+      branch_id: currentBranchId
     });
   };
 
@@ -71,81 +69,35 @@ export default function LockerManagement() {
 
   const handleUpdateLocker = (data: any) => {
     if (!selectedLocker) return;
-
-    setLockers(prev => 
-      prev.map(l => 
-        l.id === selectedLocker.id 
-          ? { ...selectedLocker, ...data, updatedAt: new Date().toISOString() }
-          : l
-      )
-    );
-
-    toast({
-      title: "Locker Updated",
-      description: "The locker has been successfully updated.",
+    updateLockerMutation.mutate({
+      id: selectedLocker.id,
+      ...data
     });
-    setSelectedLocker(undefined);
   };
 
   const handleDeleteLocker = (lockerId: string) => {
-    setLockers(prev => prev.filter(l => l.id !== lockerId));
-    toast({
-      title: "Locker Deleted",
-      description: "The locker has been successfully deleted.",
-    });
+    deleteLockerMutation.mutate(lockerId);
   };
 
   const handleAssignLocker = (locker: Locker) => {
-    // In a real app, this would open a member selection dialog
-    setSelectedMember({ id: 'mock-member', name: 'Mock Member' });
     setSelectedLocker(locker);
     setShowAssignDrawer(true);
   };
 
   const handleReleaseLocker = (locker: Locker) => {
-    setLockers(prev => 
-      prev.map(l => 
-        l.id === locker.id 
-          ? { 
-              ...l, 
-              status: 'available' as const,
-              assignedMemberId: undefined,
-              assignedMemberName: undefined,
-              assignedDate: undefined,
-              releaseDate: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          : l
-      )
-    );
-
-    toast({
-      title: "Locker Released",
-      description: "The locker has been successfully released.",
-    });
+    releaseLockerMutation.mutate(locker.id);
   };
 
   const handleAssignComplete = (data: any) => {
     if (!selectedLocker) return;
 
-    setLockers(prev => 
-      prev.map(l => 
-        l.id === selectedLocker.id 
-          ? { 
-              ...l, 
-              status: 'occupied' as const,
-              assignedMemberId: data.memberId,
-              assignedMemberName: data.memberName,
-              assignedDate: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          : l
-      )
-    );
-
-    toast({
-      title: "Locker Assigned",
-      description: `Locker ${selectedLocker.number} has been assigned to ${data.memberName}.`,
+    assignLockerMutation.mutate({
+      lockerId: selectedLocker.id,
+      memberId: data.memberId,
+      monthlyFee: data.monthlyFee,
+      expirationDate: data.expirationDate,
+      notes: data.notes,
+      createInvoice: data.monthlyFee > 0
     });
   };
 
@@ -160,12 +112,18 @@ export default function LockerManagement() {
           </p>
         </div>
         
-        <PermissionGate permission="lockers.create">
-          <Button onClick={() => setShowLockerForm(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Locker
-          </Button>
-        </PermissionGate>
+        <div className="flex gap-2">
+          <PermissionGate permission="lockers.create">
+            <Button variant="outline" onClick={() => setShowBulkCreateDialog(true)}>
+              <Package className="w-4 h-4 mr-2" />
+              Bulk Create
+            </Button>
+            <Button onClick={() => setShowLockerForm(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Locker
+            </Button>
+          </PermissionGate>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -176,7 +134,7 @@ export default function LockerManagement() {
             <Key className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockLockerSummary.totalLockers}</div>
+            <div className="text-2xl font-bold">{summary?.totalLockers || 0}</div>
           </CardContent>
         </Card>
 
@@ -187,7 +145,7 @@ export default function LockerManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {mockLockerSummary.availableLockers}
+              {summary?.availableLockers || 0}
             </div>
           </CardContent>
         </Card>
@@ -199,10 +157,10 @@ export default function LockerManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {mockLockerSummary.occupiedLockers}
+              {summary?.occupiedLockers || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              {mockLockerSummary.occupancyRate}% occupancy
+              {summary?.occupancyRate.toFixed(0) || 0}% occupancy
             </p>
           </CardContent>
         </Card>
@@ -213,7 +171,7 @@ export default function LockerManagement() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${mockLockerSummary.monthlyRevenue}</div>
+            <div className="text-2xl font-bold">${summary?.monthlyRevenue || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -227,27 +185,58 @@ export default function LockerManagement() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* Filters */}
-          <LockerFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            branches={mockBranches}
-          />
-
-          {/* Locker Grid */}
-          <PermissionGate permission="lockers.view">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredLockers.map((locker) => (
-                <LockerCard
-                  key={locker.id}
-                  locker={locker}
-                  onAssign={handleAssignLocker}
-                  onRelease={handleReleaseLocker}
-                  onEdit={handleEditLocker}
-                  onDelete={handleDeleteLocker}
-                />
-              ))}
+          {/* View Toggle */}
+          <div className="flex items-center justify-between">
+            <LockerFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              branches={branches.map(b => ({ id: b.id, name: b.name }))}
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'cards' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('cards')}
+              >
+                <Grid3X3 className="w-4 h-4 mr-2" />
+                Cards
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+              >
+                <Table className="w-4 h-4 mr-2" />
+                Table
+              </Button>
             </div>
+          </div>
+
+          {/* Content */}
+          <PermissionGate permission="lockers.view">
+            {viewMode === 'cards' ? (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredLockers.map((locker) => (
+                  <LockerCard
+                    key={locker.id}
+                    locker={locker}
+                    onAssign={handleAssignLocker}
+                    onRelease={handleReleaseLocker}
+                    onEdit={handleEditLocker}
+                    onDelete={handleDeleteLocker}
+                  />
+                ))}
+              </div>
+            ) : (
+              <LockerTableView
+                lockers={filteredLockers}
+                onAssign={handleAssignLocker}
+                onRelease={handleReleaseLocker}
+                onEdit={handleEditLocker}
+                onDelete={handleDeleteLocker}
+                isLoading={isLoading}
+              />
+            )}
           </PermissionGate>
 
           {filteredLockers.length === 0 && (
@@ -271,36 +260,48 @@ export default function LockerManagement() {
             <CardHeader>
               <CardTitle>Active Assignments</CardTitle>
               <CardDescription>
-                Current locker assignments across all branches
+                Current locker assignments for this branch
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockLockerAssignments.map((assignment) => (
-                  <div
-                    key={assignment.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Key className="w-4 h-4" />
-                        <span className="font-medium">{assignment.lockerNumber}</span>
+                {filteredLockers.filter(l => l.status === 'occupied').length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No active assignments found
+                  </p>
+                ) : (
+                  filteredLockers
+                    .filter(l => l.status === 'occupied')
+                    .map((locker) => (
+                      <div
+                        key={locker.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Key className="w-4 h-4" />
+                            <span className="font-medium">{locker.number}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Assigned to {locker.assignedMemberName || 'Unknown Member'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Since {locker.assignedDate ? new Date(locker.assignedDate).toLocaleDateString() : 'Unknown'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">${locker.monthlyFee}/month</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleReleaseLocker(locker)}
+                          >
+                            Release
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Assigned to {assignment.memberName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Since {new Date(assignment.assignedDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">${assignment.monthlyFee}/month</p>
-                      <Button variant="outline" size="sm">
-                        Release
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                    ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -313,7 +314,7 @@ export default function LockerManagement() {
                 <CardTitle>Utilization by Branch</CardTitle>
               </CardHeader>
               <CardContent>
-                {mockBranches.map((branch) => {
+                {branches.map((branch) => {
                   const branchLockers = lockers.filter(l => l.branchId === branch.id);
                   const occupiedCount = branchLockers.filter(l => l.status === 'occupied').length;
                   const utilization = branchLockers.length > 0 ? (occupiedCount / branchLockers.length) * 100 : 0;
@@ -363,6 +364,15 @@ export default function LockerManagement() {
         </TabsContent>
       </Tabs>
 
+      {/* Bulk Create Dialog */}
+      {currentBranchId && (
+        <BulkLockerCreationDialog
+          open={showBulkCreateDialog}
+          onOpenChange={setShowBulkCreateDialog}
+          branchId={currentBranchId}
+        />
+      )}
+
       {/* Locker Form */}
       <LockerForm
         open={showLockerForm}
@@ -372,7 +382,7 @@ export default function LockerManagement() {
         }}
         locker={selectedLocker}
         onSubmit={selectedLocker ? handleUpdateLocker : handleAddLocker}
-        branches={mockBranches}
+        branches={branches.map(b => ({ id: b.id, name: b.name }))}
       />
 
       {/* Assign Locker Drawer */}
