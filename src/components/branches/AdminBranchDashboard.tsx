@@ -53,7 +53,7 @@ export const AdminBranchDashboard = () => {
     enabled: !!authState.user?.gym_id,
   });
 
-  if (gymLoading) {
+  if (gymLoading || authState.isLoading) {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -66,11 +66,49 @@ export const AdminBranchDashboard = () => {
             </Card>
           ))}
         </div>
+        <Skeleton className="h-[300px] w-full" />
       </div>
     );
   }
 
-  if (!gym) {
+  if (branchesLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <Skeleton className="h-[300px] w-full" />
+      </div>
+    );
+  }
+
+  // Show empty state if no branches exist
+  if (!branches || branches.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="text-center py-12"
+      >
+        <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-2">No Branches Yet</h2>
+        <p className="text-muted-foreground mb-6">
+          Create your first branch to get started
+        </p>
+        <Button 
+          onClick={() => setShowBranchForm(true)}
+          className="mt-4"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Create First Branch
+        </Button>
+      </motion.div>
+    );
+  }
+
+  if (!gym || !authState.user?.gym_id) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}

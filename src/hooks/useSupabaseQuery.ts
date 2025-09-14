@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -85,8 +86,39 @@ export const useMembershipPlans = () => {
   );
 };
 
+const SELECTED_BRANCH_KEY = 'selected_branch_id';
+
 export const useBranches = () => {
-  return useSupabaseQuery(
+  const [selectedBranch, setSelectedBranchState] = useState<any>(null);
+  const queryClient = useQueryClient();
+  
+  // Initialize selected branch from localStorage on mount
+  useEffect(() => {
+    const savedBranchId = localStorage.getItem(SELECTED_BRANCH_KEY);
+    if (savedBranchId) {
+      // Try to find the branch in the cache first
+      const cachedBranches = queryClient.getQueryData(['branches']);
+      if (cachedBranches) {
+        const branch = cachedBranches.find((b: any) => b.id === savedBranchId);
+        if (branch) {
+          setSelectedBranchState(branch);
+        } else {
+          localStorage.removeItem(SELECTED_BRANCH_KEY);
+        }
+      }
+    }
+  }, [queryClient]);
+  
+  const setSelectedBranch = (branch: any) => {
+    if (branch) {
+      localStorage.setItem(SELECTED_BRANCH_KEY, branch.id);
+    } else {
+      localStorage.removeItem(SELECTED_BRANCH_KEY);
+    }
+    setSelectedBranchState(branch);
+  };
+
+  const branchesQuery = useSupabaseQuery(
     ['branches'],
     async () => {
       const { data, error } = await supabase
@@ -96,9 +128,29 @@ export const useBranches = () => {
         .order('name');
 
       if (error) throw error;
-      return data;
+      
+      // If no branch is selected, select the first one by default
+      if (data && data.length > 0 && !selectedBranch) {
+        const savedBranchId = localStorage.getItem(SELECTED_BRANCH_KEY);
+        const branchToSelect = savedBranchId 
+          ? data.find((b: any) => b.id === savedBranchId) || data[0]
+          : data[0];
+        
+        if (branchToSelect) {
+          setSelectedBranch(branchToSelect);
+        }
+      }
+      
+      return data || [];
     }
   );
+
+  return {
+    ...branchesQuery,
+    branches: branchesQuery.data || [],
+    selectedBranch: selectedBranch || (branchesQuery.data?.[0] || null),
+    setSelectedBranch
+  };
 };
 
 export const useTrainers = () => {

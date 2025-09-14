@@ -186,6 +186,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         branchName = branch?.name;
       }
 
+      // Get gym info if gym_id exists
+      let gymName = undefined;
+      if (profile.gym_id) {
+        const { data: gym } = await supabase
+          .from('gyms')
+          .select('name')
+          .eq('id', profile.gym_id)
+          .maybeSingle();
+        gymName = gym?.name;
+      }
+
       return {
         id: profile.user_id,
         email: profile.email,
@@ -196,7 +207,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         phone: profile.phone,
         joinDate: profile.created_at?.split('T')[0],
         branchId: profile.branch_id,
-        branchName: branchName
+        branchName: branchName,
+        gym_id: profile.gym_id,
+        gymName: gymName
       };
     } catch (error) {
       console.error('Error fetching user profile:', error);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,45 +27,85 @@ import {
   Settings,
   Users,
   MapPin,
-  Phone
+  Phone,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 export function BranchListTable() {
   const { authState } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: branches = [], isLoading } = useQuery({
+  const { data: branches = [], isLoading, error } = useQuery({
     queryKey: ['admin-branches-table', authState.user?.gym_id],
     queryFn: async () => {
       if (!authState.user?.gym_id) return [];
       
-      const { data, error } = await supabase
+      // First, fetch the branches
+      const { data: branchesData, error: branchesError } = await supabase
         .from('branches')
-        .select(`
-          *,
-          profiles!branches_manager_id_fkey(full_name, email)
-        `)
+        .select('*')
         .eq('gym_id', authState.user.gym_id)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
+
+      if (branchesError) {
+        console.error('Error fetching branches:', branchesError);
+        throw branchesError;
+      }
+
+      // Then fetch manager profiles in a separate query
+      const managerIds = branchesData
+        .map(branch => branch.manager_id)
+        .filter((id): id is string => !!id);
+
+      let managers = {};
       
-      if (error) throw error;
-      return data;
+      if (managerIds.length > 0) {
+        const { data: managersData, error: managersError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, avatar_url')
+          .in('id', managerIds);
+          
+        if (managersError) {
+          console.error('Error fetching managers:', managersError);
+        } else {
+          // Create a map of manager_id -> manager data
+          managers = managersData.reduce((acc, manager) => ({
+            ...acc,
+            [manager.id]: manager
+          }), {});
+        }
+      }
+      
+      // Combine the data
+      return branchesData.map(branch => ({
+        ...branch,
+        manager: branch.manager_id ? managers[branch.manager_id] : null
+      })) || [];
     },
     enabled: !!authState.user?.gym_id,
+    retry: 2,
   });
 
-  const filteredBranches = branches.filter(branch => {
-    const searchLower = searchTerm.toLowerCase();
-    const name = branch.name?.toLowerCase() || '';
-    const address = branch.address as any;
-    const city = address?.city?.toLowerCase() || '';
-    const state = address?.state?.toLowerCase() || '';
+  const filteredBranches = React.useMemo(() => {
+    if (!branches || branches.length === 0) return [];
     
-    return name.includes(searchLower) || 
-           city.includes(searchLower) || 
-           state.includes(searchLower);
-  });
+    const searchLower = searchTerm.toLowerCase();
+    return branches.filter(branch => {
+      const name = branch.name?.toLowerCase() || '';
+      const address = branch.address as any;
+      const city = address?.city?.toLowerCase() || '';
+      const state = address?.state?.toLowerCase() || '';
+      const managerName = branch.manager?.full_name?.toLowerCase() || '';
+      
+      return name.includes(searchLower) || 
+             city.includes(searchLower) || 
+             state.includes(searchLower) ||
+             managerName.includes(searchLower);
+    });
+  }, [branches, searchTerm]);
 
   if (isLoading) {
     return (
@@ -74,6 +114,24 @@ export function BranchListTable() {
         {[...Array(5)].map((_, i) => (
           <div key={i} className="h-16 bg-muted rounded animate-pulse" />
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Error Loading Branches</h3>
+        <p className="text-muted-foreground mb-4">
+          {error instanceof Error ? error.message : 'Failed to load branches. Please try again.'}
+        </p>
+        <Button 
+          variant="outline"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
       </div>
     );
   }
@@ -101,13 +159,13 @@ export function BranchListTable() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="font-semibold">Branch Name</TableHead>
-              <TableHead className="font-semibold">Code</TableHead>
-              <TableHead className="font-semibold">Address</TableHead>
-              <TableHead className="font-semibold">Members</TableHead>
-              <TableHead className="font-semibold">Capacity</TableHead>
-              <TableHead className="font-semibold">Manager</TableHead>
-              <TableHead className="font-semibold">Actions</TableHead>
+              <TableHead className="font-semibold w-[200px]">Branch Name</TableHead>
+              <TableHead className="font-semibold w-[100px]">Code</TableHead>
+              <TableHead className="font-semibold w-[250px]">Address</TableHead>
+              <TableHead className="font-semibold w-[120px] text-center">Members</TableHead>
+              <TableHead className="font-semibold w-[100px] text-center">Capacity</TableHead>
+              <TableHead className="font-semibold w-[200px]">Manager</TableHead>
+              <TableHead className="font-semibold w-[80px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -169,16 +227,24 @@ export function BranchListTable() {
                   </TableCell>
                   
                   <TableCell>
-                    <div className="space-y-1">
-                      {branch.profiles && Array.isArray(branch.profiles) && branch.profiles.length > 0 ? (
-                        <div>
-                          <div className="font-medium text-sm">
-                            {branch.profiles[0].full_name}
+                    <div className="flex items-center gap-3">
+                      {branch.manager ? (
+                        <>
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={branch.manager.avatar_url || ''} alt={branch.manager.full_name} />
+                            <AvatarFallback>
+                              {branch.manager.full_name?.charAt(0) || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium text-sm">
+                              {branch.manager.full_name || 'Unnamed'}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate max-w-[160px]">
+                              {branch.manager.email || 'No email'}
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {branch.profiles[0].email}
-                          </div>
-                        </div>
+                        </>
                       ) : (
                         <Badge variant="outline" className="text-xs">
                           Not assigned
@@ -187,11 +253,12 @@ export function BranchListTable() {
                     </div>
                   </TableCell>
                   
-                  <TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -203,9 +270,9 @@ export function BranchListTable() {
                           <Users className="h-4 w-4 mr-2" />
                           Assign Manager
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Settings className="h-4 w-4 mr-2" />
-                          Settings
+                        <DropdownMenuItem className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Branch
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

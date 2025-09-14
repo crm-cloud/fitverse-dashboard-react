@@ -62,9 +62,22 @@ export function BranchCreationForm({ onSuccess }: BranchCreationFormProps) {
       state: '',
       pincode: '',
       phone: '',
-      capacity: 100
-    }
+      capacity: 10
+    },
+    mode: 'onChange'
   });
+
+  // Watch for changes to generate branch code
+  const name = form.watch('name');
+  React.useEffect(() => {
+    if (name && !form.formState.dirtyFields.branchCode) {
+      const code = name
+        .substring(0, 4)
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '');
+      form.setValue('branchCode', code, { shouldValidate: true });
+    }
+  }, [name, form]);
 
   // Auto-generate branch code when name changes
   const handleNameChange = (value: string) => {
@@ -79,21 +92,85 @@ export function BranchCreationForm({ onSuccess }: BranchCreationFormProps) {
     }
   };
 
+  interface ProfileData {
+    gym_id: string;
+  }
+
+  interface UserProfile {
+    id: string;
+    gym_id: string | null;
+  }
+
   const createBranch = useMutation({
     mutationFn: async (data: BranchFormData) => {
-      // Validate subscription limits
-      if (authState.user?.gym_id) {
-        const { data: existingBranches, error: branchError } = await supabase
-          .from('branches')
-          .select('id')
-          .eq('gym_id', authState.user.gym_id)
-          .eq('status', 'active');
-
-        if (branchError) throw branchError;
-
-        if (existingBranches.length >= (gym?.max_branches || 1)) {
-          throw new Error(`Cannot create more branches. Your subscription allows a maximum of ${gym?.max_branches || 1} branches. Please upgrade your subscription to add more branches.`);
+      console.log('[BranchCreation] Starting branch creation with data:', data);
+      
+      if (!authState.user) {
+        console.error('[BranchCreation] No authenticated user found');
+        throw new Error('User not authenticated. Please log in again.');
+      }
+      
+      // Get user ID and log it for debugging
+      const userId = authState.user.id;
+      console.log(`[BranchCreation] Authenticated user ID: ${userId}`);
+      
+      // First try to get gym_id from the user object
+      let gymId = authState.user.gym_id;
+      console.log(`[BranchCreation] Initial gym_id from auth state: ${gymId || 'not found'}`);
+      
+      // If not found in user object, try to get it from the profiles table
+      if (!gymId) {
+        console.log('[BranchCreation] Gym ID not found in user object, checking profiles table...');
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('gym_id, role')
+          .eq('id', userId)
+          .single<UserProfile>();
+          
+        if (profileError) {
+          console.error('[BranchCreation] Error fetching profile:', profileError);
+          throw new Error('Failed to fetch your profile information. Please try again.');
         }
+        
+        console.log('[BranchCreation] Profile data:', profile);
+        
+        if (!profile?.gym_id) {
+          console.error('[BranchCreation] No gym_id found in profile');
+          throw new Error('Your account is not associated with a gym. Please contact support.');
+        }
+        
+        gymId = profile.gym_id;
+        console.log(`[BranchCreation] Found gym_id in profiles table: ${gymId}`);
+        
+        // Update auth state with gym_id if it was missing
+        if (authState.user) {
+          authState.user.gym_id = gymId;
+        }
+      }
+      
+      if (!gymId) {
+        throw new Error('Could not determine gym association. Please contact support.');
+      }
+      
+      console.log(`[BranchCreation] Using gym_id: ${gymId}`);
+      
+      // Validate subscription limits
+      console.log('[BranchCreation] Checking subscription limits...');
+      const { data: existingBranches, error: branchError } = await supabase
+        .from('branches')
+        .select('id, status')
+        .eq('gym_id', gymId);
+
+      if (branchError) {
+        console.error('[BranchCreation] Error fetching existing branches:', branchError);
+        throw new Error('Failed to verify subscription limits. Please try again.');
+      }
+
+      const activeBranches = existingBranches.filter(b => b.status === 'active');
+      console.log(`[BranchCreation] Found ${activeBranches.length} active branches out of ${existingBranches.length} total`);
+
+      if (activeBranches.length >= (gym?.max_branches || 1)) {
+        throw new Error(`Cannot create more branches. Your subscription allows a maximum of ${gym?.max_branches || 1} branches. Please upgrade your subscription to add more branches.`);
       }
 
       // Validate member capacity against gym limits
@@ -101,22 +178,28 @@ export function BranchCreationForm({ onSuccess }: BranchCreationFormProps) {
         throw new Error(`Branch capacity cannot exceed your subscription limit of ${gym?.max_members || 100} members.`);
       }
 
+      // Generate branch email
+      const domain = authState.user.email?.split('@')[1] || 'gym.com';
+      const branchEmail = `${data.branchCode?.toLowerCase() || data.name.toLowerCase().replace(/\s+/g, '.')}@${domain}`;
+      
       const branchData = {
-        name: data.name,
+        name: data.name.trim(),
+        code: data.branchCode?.toUpperCase() || data.name.substring(0, 4).toUpperCase(),
         address: {
-          street: data.street,
-          city: data.city,
-          state: data.state,
-          zipCode: data.pincode,
+          street: data.street.trim(),
+          city: data.city.trim(),
+          state: data.state.trim(),
+          zipCode: data.pincode.trim(),
           country: 'US'
         },
         contact: {
-          phone: data.phone,
-          email: `${data.branchCode?.toLowerCase() || 'branch'}@${authState.user?.email?.split('@')[1] || 'gym.com'}`
+          phone: data.phone.trim(),
+          email: branchEmail
         },
-        capacity: data.capacity,
+        capacity: Number(data.capacity) || 10,
         current_members: 0,
-        gym_id: authState.user?.gym_id,
+        gym_id: gymId,
+        status: 'active',
         hours: {
           monday: { open: '06:00', close: '22:00' },
           tuesday: { open: '06:00', close: '22:00' },
@@ -127,17 +210,45 @@ export function BranchCreationForm({ onSuccess }: BranchCreationFormProps) {
           sunday: { open: '08:00', close: '18:00' }
         },
         amenities: ['Parking', 'Lockers', 'WiFi'],
-        status: 'active',
-        images: []
+        images: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      const { data: newBranch, error } = await supabase
+      console.log('[BranchCreation] Branch data being inserted:', JSON.stringify(branchData, null, 2));
+      
+      // Start a transaction to ensure data consistency
+      const { data: newBranch, error: insertError } = await supabase
         .from('branches')
         .insert([branchData])
-        .select()
+        .select('*')
         .single();
       
-      if (error) throw error;
+      if (insertError) {
+        console.error('[BranchCreation] Error creating branch:', insertError);
+        
+        // Handle specific error cases
+        if (insertError.code === '42501') {
+          throw new Error('Permission denied. You do not have permission to create branches.');
+        } else if (insertError.code === '23505') {
+          throw new Error('A branch with this name or code already exists. Please choose a different name or code.');
+        } else if (insertError.code === '23503') {
+          throw new Error('Invalid gym association. Please contact support.');
+        } else if (insertError.code === 'PGRST116') {
+          // This is a PostgREST error for missing required fields
+          throw new Error('Missing required information. Please check all fields and try again.');
+        }
+        
+        // Generic error for other cases
+        throw new Error(insertError.message || 'Failed to create branch. Please try again.');
+      }
+
+      if (!newBranch) {
+        console.error('[BranchCreation] No data returned after branch creation');
+        throw new Error('Failed to create branch. No data was returned.');
+      }
+
+      console.log('[BranchCreation] Branch created successfully:', newBranch);
       return newBranch;
     },
     onSuccess: () => {

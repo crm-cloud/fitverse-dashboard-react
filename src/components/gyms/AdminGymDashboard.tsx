@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { GymForm } from './GymForm';
+import { BranchCreationForm } from '@/components/branches/BranchCreationForm';
 import { BranchForm } from '@/components/branches/BranchForm';
 import { Building2, Plus, Users, MapPin, Settings, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -146,17 +146,17 @@ export const AdminGymDashboard = () => {
             <DialogTrigger asChild>
               <Button size="lg">
                 <Plus className="h-4 w-4 mr-2" />
-                Create Your Gym
+                Create Your First Branch
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Create Your Gym</DialogTitle>
+                <DialogTitle>Create Your First Branch</DialogTitle>
                 <DialogDescription>
-                  Set up your gym details and choose your subscription plan.
+                  Set up your first branch location and details.
                 </DialogDescription>
               </DialogHeader>
-              <GymForm onSuccess={() => setShowGymForm(false)} />
+              <BranchCreationForm onSuccess={() => setShowGymForm(false)} />
             </DialogContent>
           </Dialog>
         </div>
