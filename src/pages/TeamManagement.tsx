@@ -6,19 +6,29 @@ import { TeamMemberForm } from '@/components/team/TeamMemberForm';
 import { TeamMemberTable } from '@/components/team/TeamMemberTable';
 import { TeamFiltersComponent, TeamFilters } from '@/components/team/TeamFilters';
 import { PermissionGate } from '@/components/PermissionGate';
-import { mockTeamMembers, TeamMember } from '@/utils/mockData';
 import { useAuth } from '@/hooks/useAuth';
-import { useBranches } from '@/hooks/useBranches';
+import { useBranchContext } from '@/hooks/useBranchContext';
 import { useRBAC } from '@/hooks/useRBAC';
 import { useToast } from '@/hooks/use-toast';
+import { useTeamMembers, TeamMember } from '@/hooks/useTeamMembers';
 
 export default function TeamManagement() {
   const { authState } = useAuth();
-  const { branches, selectedBranch } = useBranches();
+  const { currentBranchId } = useBranchContext();
   const { hasPermission } = useRBAC();
   const { toast } = useToast();
 
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(mockTeamMembers);
+  const {
+    teamMembers,
+    isLoading,
+    createTeamMember,
+    updateTeamMember,
+    toggleMemberStatus,
+    resetPassword,
+    isCreating,
+    isUpdating
+  } = useTeamMembers();
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | undefined>();
   const [filters, setFilters] = useState<TeamFilters>({
@@ -28,25 +38,19 @@ export default function TeamManagement() {
     status: 'all',
   });
 
-  const isAdmin = authState.user?.role === 'admin';
-  const isManager = authState.user?.role === 'team' && authState.user?.teamRole === 'manager';
+  const isAdmin = authState.user?.role === 'admin' || authState.user?.role === 'super-admin';
 
-  // Apply branch-based filtering
+  // Apply filtering
   const visibleMembers = useMemo(() => {
     let filtered = teamMembers;
-
-    // Branch scope enforcement
-    if (!isAdmin && selectedBranch) {
-      filtered = filtered.filter(member => member.branchId === selectedBranch.id);
-    }
 
     // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(member =>
-        member.name.toLowerCase().includes(searchLower) ||
+        member.full_name.toLowerCase().includes(searchLower) ||
         member.email.toLowerCase().includes(searchLower) ||
-        member.phone.includes(filters.search)
+        (member.phone && member.phone.includes(filters.search))
       );
     }
 
@@ -57,96 +61,95 @@ export default function TeamManagement() {
 
     // Apply branch filter (only for admin)
     if (filters.branch !== 'all' && isAdmin) {
-      filtered = filtered.filter(member => member.branchId === filters.branch);
+      filtered = filtered.filter(member => member.branch_id === filters.branch);
     }
 
     // Apply status filter
     if (filters.status !== 'all') {
-      filtered = filtered.filter(member => member.status === filters.status);
+      const isActive = filters.status === 'active';
+      filtered = filtered.filter(member => member.is_active === isActive);
     }
 
     return filtered;
-  }, [teamMembers, filters, isAdmin, selectedBranch]);
+  }, [teamMembers, filters, isAdmin]);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const relevant = isAdmin ? teamMembers : teamMembers.filter(m => m.branchId === selectedBranch?.id);
     return {
-      total: relevant.length,
-      active: relevant.filter(m => m.status === 'active').length,
-      managers: relevant.filter(m => m.role === 'manager').length,
-      inactive: relevant.filter(m => m.status === 'inactive').length,
+      total: teamMembers.length,
+      active: teamMembers.filter(m => m.is_active).length,
+      managers: teamMembers.filter(m => m.role === 'manager').length,
+      inactive: teamMembers.filter(m => !m.is_active).length,
     };
-  }, [teamMembers, isAdmin, selectedBranch]);
+  }, [teamMembers]);
 
   const handleCreateMember = (data: any) => {
-    const newMember: TeamMember = {
-      id: `tm_${Date.now()}`,
-      name: data.name,
+    createTeamMember({
+      full_name: data.name,
       email: data.email,
       phone: data.phone,
       role: data.role,
-      branchId: data.branchId,
-      branchName: branches.find(b => b.id === data.branchId)?.name || '',
-      status: data.status,
-      avatar: data.avatar,
-      createdAt: new Date(),
-    };
-
-    setTeamMembers(prev => [...prev, newMember]);
-    toast({
-      title: 'Success',
-      description: 'Team member created successfully',
+      branch_id: data.branchId,
+      password: data.password || 'TempPass123!' // Should be generated or required
     });
+    setShowCreateForm(false);
   };
 
   const handleEditMember = (data: any) => {
     if (!editingMember) return;
 
-    const updatedMember: TeamMember = {
-      ...editingMember,
-      name: data.name,
+    updateTeamMember({
+      id: editingMember.id,
+      full_name: data.name,
       email: data.email,
       phone: data.phone,
       role: data.role,
-      branchId: data.branchId,
-      branchName: branches.find(b => b.id === data.branchId)?.name || '',
-      status: data.status,
-      avatar: data.avatar,
-    };
-
-    setTeamMembers(prev => prev.map(m => m.id === editingMember.id ? updatedMember : m));
-    setEditingMember(undefined);
-    toast({
-      title: 'Success',
-      description: 'Team member updated successfully',
+      branch_id: data.branchId,
+      is_active: data.status === 'active'
     });
+    setEditingMember(undefined);
   };
 
   const handleViewMember = (member: TeamMember) => {
     toast({
       title: 'Member Details',
-      description: `Viewing details for ${member.name}`,
+      description: `Viewing details for ${member.full_name}`,
     });
   };
 
   const handleDisableMember = (member: TeamMember) => {
-    const newStatus = member.status === 'active' ? 'inactive' : 'active';
-    setTeamMembers(prev => 
-      prev.map(m => m.id === member.id ? { ...m, status: newStatus } : m)
-    );
-    toast({
-      title: 'Success',
-      description: `Member ${newStatus === 'active' ? 'enabled' : 'disabled'} successfully`,
-    });
+    toggleMemberStatus(member);
   };
 
   const handleResetPassword = (member: TeamMember) => {
-    toast({
-      title: 'Password Reset',
-      description: `Password reset email sent to ${member.email}`,
-    });
+    resetPassword(member.email);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading team members...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Convert team members to match table interface
+  const tableMembers = visibleMembers.map(member => ({
+    id: member.id,
+    name: member.full_name,
+    email: member.email,
+    phone: member.phone || '',
+    role: member.role as any,
+    branchId: member.branch_id || '',
+    branchName: member.branches?.name || '',
+    status: member.is_active ? 'active' as const : 'inactive' as const,
+    avatar: member.avatar_url,
+    createdAt: new Date(member.created_at),
+    lastLogin: undefined
+  }));
 
   return (
     <div className="space-y-6">
@@ -238,11 +241,23 @@ export default function TeamManagement() {
         </CardHeader>
         <CardContent>
           <TeamMemberTable
-            members={visibleMembers}
-            onView={handleViewMember}
-            onEdit={setEditingMember}
-            onDisable={handleDisableMember}
-            onResetPassword={handleResetPassword}
+            members={tableMembers}
+            onView={(member) => {
+              const teamMember = teamMembers.find(tm => tm.id === member.id);
+              if (teamMember) handleViewMember(teamMember);
+            }}
+            onEdit={(member) => {
+              const teamMember = teamMembers.find(tm => tm.id === member.id);
+              setEditingMember(teamMember);
+            }}
+            onDisable={(member) => {
+              const teamMember = teamMembers.find(tm => tm.id === member.id);
+              if (teamMember) handleDisableMember(teamMember);
+            }}
+            onResetPassword={(member) => {
+              const teamMember = teamMembers.find(tm => tm.id === member.id);
+              if (teamMember) handleResetPassword(teamMember);
+            }}
           />
         </CardContent>
       </Card>
@@ -258,7 +273,18 @@ export default function TeamManagement() {
       <TeamMemberForm
         open={!!editingMember}
         onOpenChange={(open) => !open && setEditingMember(undefined)}
-        member={editingMember}
+        member={editingMember ? {
+          id: editingMember.id,
+          name: editingMember.full_name,
+          email: editingMember.email,
+          phone: editingMember.phone || '',
+          role: editingMember.role as any,
+          branchId: editingMember.branch_id || '',
+          branchName: editingMember.branches?.name || '',
+          status: editingMember.is_active ? 'active' : 'inactive',
+          avatar: editingMember.avatar_url,
+          createdAt: new Date(editingMember.created_at)
+        } : undefined}
         onSubmit={handleEditMember}
       />
     </div>

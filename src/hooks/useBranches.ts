@@ -14,8 +14,8 @@ export const useBranches = () => {
     const savedBranchId = localStorage.getItem(SELECTED_BRANCH_KEY);
     if (savedBranchId) {
       // Try to find the branch in the cache first
-      const cachedBranches = queryClient.getQueryData(['branches']);
-      if (cachedBranches) {
+      const cachedBranches = queryClient.getQueryData(['branches']) as any[];
+      if (cachedBranches && Array.isArray(cachedBranches)) {
         const branch = cachedBranches.find((b: any) => b.id === savedBranchId);
         if (branch) {
           setSelectedBranchState(branch);

@@ -139,9 +139,13 @@ export const classTagLabels: any = {};
 // Mock attendance data
 export const mockAttendanceSummary = {
   totalRecords: 150,
-  presentCount: 120,
-  lateCount: 25,
-  absentCount: 5,
+  totalMembers: 100,
+  totalStaff: 20,
+  checkedInCount: 120,
+  checkedOutCount: 30,
+  lateArrivals: 25,
+  noShows: 5,
+  averageDuration: 120, // minutes
   peakHours: [
     { hour: 8, count: 45 },
     { hour: 9, count: 60 },
@@ -189,9 +193,7 @@ export enum TeamMemberRole {
   ADMIN = 'admin',
   MANAGER = 'manager', 
   TRAINER = 'trainer',
-  RECEPTIONIST = 'receptionist',
-  CLEANER = 'cleaner',
-  MAINTENANCE = 'maintenance'
+  STAFF = 'staff'
 }
 
 export interface TeamMember {
