@@ -1,8 +1,9 @@
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -29,9 +30,11 @@ import { CategoryManagementDialog } from '@/components/finance/CategoryManagemen
 import { PermissionGate } from '@/components/PermissionGate';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useBranchContext } from '@/hooks/useBranchContext';
 
 export default function FinanceDashboard() {
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'quarterly' | 'half-yearly' | 'yearly'>('monthly');
+  const [selectedBranch, setSelectedBranch] = useState<string | 'all'>('all');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showIncomeDialog, setShowIncomeDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
@@ -39,6 +42,94 @@ export default function FinanceDashboard() {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { currentBranchId, getAccessibleBranches } = useBranchContext();
+
+  // Initialize selected branch with current context branch if available
+  // Users can switch to "All Branches" to aggregate
+  useMemo(() => {
+    if (currentBranchId && selectedBranch === 'all') {
+      setSelectedBranch(currentBranchId);
+    }
+  }, [currentBranchId]);
+
+  // Filter helpers — expect transactions to optionally have branchId
+  const filteredTransactions = useMemo(() => {
+    if (selectedBranch === 'all') return mockTransactions;
+    return mockTransactions.filter((t: any) => !t.branchId || t.branchId === selectedBranch);
+  }, [selectedBranch]);
+
+  const filteredMonthly = useMemo(() => {
+    if (selectedBranch === 'all') return mockMonthlyData;
+    return mockMonthlyData.map((m: any) => ({
+      ...m,
+      // If your monthly data supports per-branch values, filter/aggregate here
+    }));
+  }, [selectedBranch]);
+
+  // Aggregate monthly data by selected period for the Package Analytics line chart
+  const chartDataForPeriod = useMemo(() => {
+    const source = filteredMonthly;
+    if (!Array.isArray(source) || source.length === 0) return [] as any[];
+    if (selectedPeriod === 'monthly') return source;
+
+    const monthToQuarter = (month: string) => {
+      const idx = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].findIndex(m => m === month);
+      if (idx < 0) return 'Q1';
+      const q = Math.floor(idx / 3) + 1;
+      return `Q${q}`;
+    };
+
+    if (selectedPeriod === 'quarterly') {
+      const map: Record<string, { month: string; income: number; expenses: number; profit: number }>
+        = {};
+      for (const m of source as any[]) {
+        const q = monthToQuarter(m.month);
+        if (!map[q]) map[q] = { month: q, income: 0, expenses: 0, profit: 0 };
+        map[q].income += m.income || 0;
+        map[q].expenses += m.expenses || 0;
+        map[q].profit += m.profit || 0;
+      }
+      return Object.values(map);
+    }
+
+    if (selectedPeriod === 'half-yearly') {
+      const map: Record<string, { month: string; income: number; expenses: number; profit: number }>
+        = { H1: { month: 'H1', income: 0, expenses: 0, profit: 0 }, H2: { month: 'H2', income: 0, expenses: 0, profit: 0 } };
+      for (const m of source as any[]) {
+        const idx = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].findIndex(mm => mm === m.month);
+        const h = idx >= 0 && idx < 6 ? 'H1' : 'H2';
+        map[h].income += m.income || 0;
+        map[h].expenses += m.expenses || 0;
+        map[h].profit += m.profit || 0;
+      }
+      return Object.values(map);
+    }
+
+    // yearly
+    const totals = { month: 'Year', income: 0, expenses: 0, profit: 0 } as any;
+    for (const m of source as any[]) {
+      totals.income += m.income || 0;
+      totals.expenses += m.expenses || 0;
+      totals.profit += m.profit || 0;
+    }
+    return [totals];
+  }, [filteredMonthly, selectedPeriod]);
+
+  const summaryForBranch = useMemo(() => {
+    // If you have per-transaction data, compute summary dynamically
+    if (Array.isArray(filteredTransactions) && filteredTransactions.length > 0) {
+      const income = filteredTransactions.filter((t: any) => t.type === 'income').reduce((s: number, t: any) => s + (t.amount || 0), 0);
+      const expenses = filteredTransactions.filter((t: any) => t.type === 'expense').reduce((s: number, t: any) => s + (t.amount || 0), 0);
+      const netProfit = income - expenses;
+      return {
+        ...mockFinancialSummary,
+        totalIncome: income,
+        totalExpenses: expenses,
+        netProfit,
+      };
+    }
+    return mockFinancialSummary;
+  }, [filteredTransactions]);
 
   const handleAddTransaction = (data: any) => {
     // In a real app, this would make an API call
@@ -64,14 +155,26 @@ export default function FinanceDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Finance Dashboard</h1>
-          <p className="text-muted-foreground">
-            Track your gym's financial performance and manage transactions
-          </p>
+          <p className="text-muted-foreground">Track your gym's financial performance and manage transactions</p>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Branch selector */}
+          <div className="w-[200px]">
+            <Select value={selectedBranch} onValueChange={(v) => setSelectedBranch(v as any)}>
+              <SelectTrigger className="bg-card border-muted">
+                <SelectValue placeholder="Select Branch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Branches</SelectItem>
+                {getAccessibleBranches().map((bid) => (
+                  <SelectItem key={bid} value={bid}>{bid}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <PermissionGate permission="finance.view">
             <Button variant="outline" onClick={handleGenerateReport}>
               <FileText className="w-4 h-4 mr-2" />
@@ -98,7 +201,9 @@ export default function FinanceDashboard() {
       />
 
       {/* Overview Cards */}
-      <FinanceOverviewCards summary={mockFinancialSummary} />
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+        <FinanceOverviewCards summary={summaryForBranch} />
+      </div>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
@@ -112,41 +217,71 @@ export default function FinanceDashboard() {
         <TabsContent value="overview" className="space-y-6">
           {/* Charts and Analytics */}
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Monthly Trend Chart */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  Monthly Trends
-                </CardTitle>
-                <CardDescription>
-                  Income, expenses, and profit over the last 6 months
-                </CardDescription>
+            {/* Package Analytics */}
+            <Card className="lg:col-span-1 border bg-card shadow-sm">
+              <CardHeader className="flex flex-row items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Package Analytics
+                  </CardTitle>
+                  <CardDescription>
+                    You've earned 79% extra than last year
+                  </CardDescription>
+                </div>
+                <div className="w-[140px]">
+                  <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as any)}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="half-yearly">Half Yearly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
-                <MonthlyTrendChart data={mockMonthlyData} />
+                <MonthlyTrendChart data={chartDataForPeriod as any} />
               </CardContent>
             </Card>
 
-            {/* Category Breakdown */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PieChart className="w-5 h-5" />
-                  Category Breakdown
-                </CardTitle>
-                <CardDescription>
-                  Income and expense distribution by category
-                </CardDescription>
+            {/* Cost Analytics */}
+            <Card className="lg:col-span-1 border bg-card shadow-sm">
+              <CardHeader className="flex flex-row items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="w-5 h-5" />
+                    Cost Analytics
+                  </CardTitle>
+                  <CardDescription>
+                    You've earned 79% extra than last year
+                  </CardDescription>
+                </div>
+                <div className="w-[140px]">
+                  <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as any)}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="half-yearly">Half Yearly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
-                <CategoryBreakdownChart transactions={mockTransactions} />
+                <CategoryBreakdownChart transactions={filteredTransactions} />
               </CardContent>
             </Card>
           </div>
 
           {/* Recent Transactions Preview */}
-          <Card>
+          <Card className="border bg-card shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -162,7 +297,7 @@ export default function FinanceDashboard() {
               </Button>
             </CardHeader>
             <CardContent>
-              <RecentTransactions transactions={mockTransactions.slice(0, 5)} />
+              <RecentTransactions transactions={filteredTransactions.slice(0, 5)} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -170,7 +305,7 @@ export default function FinanceDashboard() {
         {/* Transactions Tab */}
         <TabsContent value="transactions" className="space-y-4">
           <TransactionTable
-            transactions={mockTransactions}
+            transactions={filteredTransactions}
             onExport={() => toast({
               title: "Export Started",
               description: "Your transaction export will be ready shortly.",
@@ -187,7 +322,7 @@ export default function FinanceDashboard() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${mockFinancialSummary.totalIncome.toLocaleString()}</div>
+                <div className="text-2xl font-bold">${(summaryForBranch.totalIncome ?? 0).toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">
                   +20.1% from last month
                 </p>
@@ -200,7 +335,7 @@ export default function FinanceDashboard() {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${mockFinancialSummary.totalExpenses.toLocaleString()}</div>
+                <div className="text-2xl font-bold">${(summaryForBranch.totalExpenses ?? 0).toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">
                   +5.2% from last month
                 </p>
@@ -213,7 +348,7 @@ export default function FinanceDashboard() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${mockFinancialSummary.netProfit.toLocaleString()}</div>
+                <div className="text-2xl font-bold">${(summaryForBranch.netProfit ?? 0).toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">
                   +12.5% from last month
                 </p>

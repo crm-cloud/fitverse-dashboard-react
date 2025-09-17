@@ -30,6 +30,7 @@ import { MemberProfilePage } from "./pages/members/[id]/profile";
 import { MembershipPlansPage } from "./pages/membership/plans";
 import { MemberDashboardPage } from "./pages/membership/dashboard";
 import { AddMembershipWorkflowPage } from "./pages/membership/add-membership";
+import { MembershipPlanCreatePage } from "./pages/membership/plans/create";
 import { ClassListPage } from "./pages/classes/list";
 import { ClassCreatePage } from "./pages/classes/create";
 import { MemberClassesPage } from "./pages/member/classes";
@@ -383,7 +384,7 @@ const App = () => (
                           element={
                             <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
                               <DashboardLayout>
-                                <MembershipPlansPage />
+                                <MembershipPlanCreatePage />
                               </DashboardLayout>
                             </ProtectedRoute>
                           } 

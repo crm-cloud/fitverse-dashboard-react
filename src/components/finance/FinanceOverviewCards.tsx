@@ -14,16 +14,20 @@ import { useCurrency } from '@/hooks/useCurrency';
 
 interface FinanceOverviewCardsProps {
   summary: FinancialSummary;
+  dueAmount?: number;
+  duePaymentsCount?: number; // number of members with dues or total due payments
 }
 
 export function FinanceOverviewCards({ summary }: FinanceOverviewCardsProps) {
   const { formatCurrency } = useCurrency();
 
-  const cards = [
+  const safe = (n: number | undefined | null) => Number.isFinite(Number(n)) ? Number(n) : 0;
+
+  const baseCards = [
     {
       title: 'Total Income',
-      value: formatCurrency(summary.totalIncome),
-      monthlyValue: formatCurrency(summary.monthlyIncome),
+      value: formatCurrency(safe(summary.totalIncome)),
+      monthlyValue: formatCurrency(safe((summary as any).monthlyIncome)),
       icon: TrendingUp,
       trend: 'up',
       trendValue: '+12.5%',
@@ -32,8 +36,8 @@ export function FinanceOverviewCards({ summary }: FinanceOverviewCardsProps) {
     },
     {
       title: 'Total Expenses',
-      value: formatCurrency(summary.totalExpenses),
-      monthlyValue: formatCurrency(summary.monthlyExpenses),
+      value: formatCurrency(safe(summary.totalExpenses)),
+      monthlyValue: formatCurrency(safe((summary as any).monthlyExpenses)),
       icon: TrendingDown,
       trend: 'down',
       trendValue: '-8.2%',
@@ -42,8 +46,8 @@ export function FinanceOverviewCards({ summary }: FinanceOverviewCardsProps) {
     },
     {
       title: 'Net Profit',
-      value: formatCurrency(summary.netProfit),
-      monthlyValue: formatCurrency(summary.monthlyProfit),
+      value: formatCurrency(safe(summary.netProfit)),
+      monthlyValue: formatCurrency(safe((summary as any).monthlyProfit)),
       icon: DollarSign,
       trend: 'up',
       trendValue: '+15.3%',
@@ -52,7 +56,7 @@ export function FinanceOverviewCards({ summary }: FinanceOverviewCardsProps) {
     },
     {
       title: 'Monthly Profit',
-      value: formatCurrency(summary.monthlyProfit),
+      value: formatCurrency(safe((summary as any).monthlyProfit)),
       monthlyValue: 'This month',
       icon: Wallet,
       trend: 'up',
@@ -62,10 +66,36 @@ export function FinanceOverviewCards({ summary }: FinanceOverviewCardsProps) {
     },
   ];
 
+  // Optional extras to match reference UI
+  const extras = [
+    {
+      title: 'Due Amount',
+      value: formatCurrency(safe((summary as any).dueAmount)),
+      monthlyValue: 'Outstanding',
+      icon: DollarSign,
+      trend: 'down',
+      trendValue: '—',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+    },
+    {
+      title: 'Due Payments',
+      value: `${safe((summary as any).duePaymentsCount)} / Person`,
+      monthlyValue: 'This period',
+      icon: Wallet,
+      trend: 'up',
+      trendValue: '—',
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
+    },
+  ];
+
+  const cards = [...baseCards, ...extras];
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {cards.map((card, index) => (
-        <Card key={index}>
+        <Card key={index} className="border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {card.title}

@@ -4,6 +4,15 @@ export type PaymentMethod = 'cash' | 'card' | 'upi' | 'bank-transfer';
 
 export type PaymentStatus = 'paid' | 'unpaid' | 'partial' | 'overdue';
 
+export interface BranchAmenity {
+  id: string;
+  branch_id: string;
+  name: string;
+  is_session_based: boolean; // true => show quantity field
+  default_quantity?: number | null; // optional suggested quantity
+  is_active?: boolean;
+}
+
 export interface MembershipPlan {
   id: string;
   name: string;
@@ -11,6 +20,10 @@ export interface MembershipPlan {
   duration_months: number;
   description: string;
   features: string[];
+  // Optional per-feature session allotments, e.g., { 'Yoga sessions': 2 }
+  sessionAllotments?: Record<string, number>;
+  // Branch association
+  branch_id?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;

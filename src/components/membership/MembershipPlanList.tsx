@@ -83,17 +83,38 @@ export const MembershipPlanList = () => {
                   </TableCell>
                   <TableCell>{formatDuration(plan.duration_months)}</TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {plan.features.slice(0, 2).map((feature) => (
-                        <Badge key={feature} variant="secondary" className="text-xs">
-                          {feature}
-                        </Badge>
-                      ))}
-                      {plan.features.length > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{plan.features.length - 2}
-                        </Badge>
-                      )}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex flex-wrap gap-1">
+                        {plan.features.slice(0, 2).map((feature) => (
+                          <Badge key={feature} variant="secondary" className="text-xs">
+                            {feature}
+                          </Badge>
+                        ))}
+                        {plan.features.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{plan.features.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Support both camelCase and snake_case from API */}
+                      {(() => {
+                        const allotments: Record<string, number> | undefined =
+                          (plan as any).sessionAllotments || (plan as any).session_allotments;
+                        if (!allotments || Object.keys(allotments).length === 0) return null;
+                        return (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {Object.entries(allotments).slice(0, 2).map(([name, qty]) => (
+                              <Badge key={name} variant="outline" className="text-[10px]">
+                                {name}: {qty}
+                              </Badge>
+                            ))}
+                            {Object.keys(allotments).length > 2 && (
+                              <Badge variant="outline" className="text-[10px]">+{Object.keys(allotments).length - 2}</Badge>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      
                     </div>
                   </TableCell>
                   <TableCell>
