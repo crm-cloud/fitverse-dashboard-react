@@ -50,17 +50,6 @@ export const MembershipPlanList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Membership Plans</h1>
-          <p className="text-muted-foreground">Manage membership plans and pricing</p>
-        </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Plan
-        </Button>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Available Plans</CardTitle>
