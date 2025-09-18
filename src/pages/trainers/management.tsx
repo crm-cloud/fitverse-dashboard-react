@@ -1,17 +1,19 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TrainerConfigurationPanel } from '@/components/trainer/TrainerConfigurationPanel';
 import { NotificationCenter } from '@/components/trainer/NotificationCenter';
 import { TrainerBookingInterface } from '@/components/trainer/TrainerBookingInterface';
-import { TrainerDashboard } from '@/components/trainer/TrainerDashboard';
 import { TrainerUtilizationDashboard } from '@/components/trainer/TrainerUtilizationDashboard';
-import { enhancedTrainers } from '@/utils/mockData';
-import { TeamMemberForm } from '@/components/team/TeamMemberForm';
-import { useTeamMembers } from '@/hooks/useTeamMembers';
+import { QuickTrainerForm } from '@/components/trainer/QuickTrainerForm';
+import { useTrainers } from '@/hooks/useTrainers';
 import { PermissionGate } from '@/components/PermissionGate';
 import { 
   Settings, 
@@ -21,19 +23,37 @@ import {
   Users, 
   Plus,
   TrendingUp,
-  Clock
+  Clock,
+  Search,
+  Eye,
+  Star,
+  MapPin,
+  Mail,
+  Phone
 } from 'lucide-react';
 
 export const TrainerManagementPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateTrainer, setShowCreateTrainer] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
   const branchId = 'branch_001';
-  const { createTeamMember } = useTeamMembers();
 
-  const totalTrainers = enhancedTrainers.length;
-  const activeTrainers = enhancedTrainers.filter(t => t.isActive && t.status === 'active').length;
-  const avgRating = enhancedTrainers.reduce((sum, t) => sum + t.rating, 0) / enhancedTrainers.length;
-  const totalSessions = enhancedTrainers.reduce((sum, t) => sum + t.totalSessions, 0);
+  const { data: trainers = [], isLoading } = useTrainers();
+
+  const filteredTrainers = trainers.filter(trainer =>
+    trainer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    trainer.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalTrainers = trainers.length;
+  const activeTrainers = trainers.filter(t => t.is_active && t.status === 'active').length;
+  const avgRating = trainers.length > 0 ? trainers.reduce((sum, t) => sum + (t.rating || 0), 0) / trainers.length : 0;
+  const totalSessions = trainers.reduce((sum, t) => sum + (t.total_sessions || 0), 0);
+
+  const handleTrainerCreated = (trainerId: string) => {
+    navigate(`/trainers/profile/${trainerId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -129,7 +149,127 @@ export const TrainerManagementPage = () => {
         </TabsList>
 
         <TabsContent value="overview">
-          <TrainerDashboard trainerId="trainer_001" />
+          <div className="space-y-6">
+            {/* Search and Filters */}
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search trainers..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-background border-border"
+                />
+              </div>
+            </div>
+
+            {/* Trainers Table */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Trainers ({filteredTrainers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : filteredTrainers.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      {searchTerm ? 'No trainers found matching your search' : 'No trainers added yet'}
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Trainer</TableHead>
+                        <TableHead>Specializations</TableHead>
+                        <TableHead>Branch</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Rating</TableHead>
+                        <TableHead>Clients</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTrainers.map((trainer) => (
+                        <TableRow key={trainer.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={trainer.avatar} />
+                                <AvatarFallback className="bg-muted text-xs">
+                                  {trainer.full_name.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-foreground">{trainer.full_name}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Mail className="h-3 w-3" />
+                                  {trainer.email}
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {trainer.specialties?.slice(0, 2).map((spec) => (
+                                <Badge key={spec} variant="secondary" className="text-xs">
+                                  {spec.replace('_', ' ')}
+                                </Badge>
+                              ))}
+                              {(trainer.specialties?.length || 0) > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{(trainer.specialties?.length || 0) - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <MapPin className="h-3 w-3" />
+                              {trainer.branch_name || 'Not assigned'}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={trainer.status === 'active' ? 'default' : 'secondary'}
+                              className="capitalize"
+                            >
+                              {trainer.status || 'inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3 w-3 text-yellow-500" />
+                              <span className="text-sm">{trainer.rating?.toFixed(1) || '0.0'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">{trainer.total_clients || 0}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(`/trainers/profile/${trainer.id}`)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="booking">
@@ -159,22 +299,11 @@ export const TrainerManagementPage = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Create Trainer Form */}
-      <TeamMemberForm
+      {/* Quick Trainer Creation Form */}
+      <QuickTrainerForm
         open={showCreateTrainer}
         onOpenChange={setShowCreateTrainer}
-        defaultRole="trainer"
-        onSubmit={(data) => {
-          createTeamMember({
-            full_name: data.name,
-            email: data.email,
-            phone: data.phone,
-            role: 'trainer',
-            branch_id: data.branchId,
-            password: 'TempPass123!'
-          });
-          setShowCreateTrainer(false);
-        }}
+        onSuccess={handleTrainerCreated}
       />
     </div>
   );

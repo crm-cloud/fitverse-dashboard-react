@@ -126,78 +126,29 @@ export function PlanForm() {
 
   // Load branch-specific amenities when branch changes
   useEffect(() => {
-    let active = true;
-    const load = async () => {
-      if (!currentBranchId) {
-        setBranchAmenities(null);
-        return;
-      }
-      setAmenitiesLoading(true);
-      try {
-        const amenities = await membershipService.getBranchAmenities(currentBranchId);
-        if (!active) return;
-        if (amenities && amenities.length > 0) {
-          setBranchAmenities(
-            amenities
-              .filter(a => a.is_active !== false)
-              .map(a => ({ name: a.name, isSessionBased: !!a.is_session_based }))
-          );
-        } else {
-          setBranchAmenities([]);
-        }
-      } catch (e) {
-        setBranchAmenities([]);
-      } finally {
-        if (active) setAmenitiesLoading(false);
-      }
-    };
-    load();
-    return () => { active = false; };
+    // Skip branch amenities loading - use fallback features instead
+    setBranchAmenities([]);
+    setAmenitiesLoading(false);
   }, [currentBranchId]);
 
   // Determine which features to display (branch amenities or fallback)
   const displayFeatures = useMemo(() => {
-    if (branchAmenities && branchAmenities.length > 0) {
-      return branchAmenities.map(a => a.name);
-    }
     return availableFeatures;
-  }, [branchAmenities]);
+  }, []);
 
   // Determine if a feature is session-based
   const isFeatureSessionBased = (feature: string) => {
-    if (branchAmenities && branchAmenities.length > 0) {
-      return !!branchAmenities.find(a => a.name === feature)?.isSessionBased;
-    }
     return sessionBasedFeatures.includes(feature);
   };
 
   const handleCreateAmenity = async () => {
-    if (!currentBranchId) {
-      showErrorToast('Please select a branch first');
-      return;
-    }
-    const name = newAmenityName.trim();
-    if (!name) {
-      showErrorToast('Amenity name is required');
-      return;
-    }
-    setCreatingAmenity(true);
-    try {
-      const created = await membershipService.createBranchAmenity({
-        branch_id: currentBranchId,
-        name,
-        is_session_based: newAmenitySessionBased,
-        default_quantity: newAmenitySessionBased ? (newAmenityQty || 0) : null,
-        is_active: true,
-      });
-
-      // Update local amenities list
-      setBranchAmenities(prev => (
-        (prev ?? [])
-          .concat({ name: created.name, isSessionBased: !!created.is_session_based })
-      ));
-
-      // Auto-select the new amenity in the form and apply default qty if any
+    showErrorToast('Amenity creation not available');
+    setCreatingAmenity(false);
+    setShowCreateAmenity(false);
+    setNewAmenityName('');
+    setNewAmenitySessionBased(false);
+    setNewAmenityQty(null);
+  };
       setFormData(prev => ({
         ...prev,
         features: [...new Set([...(prev.features || []), created.name])],

@@ -1,7 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { MembershipPlan, BranchAmenity } from '@/types/membership';
-
-// Use the types from the membership types file instead of redefining
+import type { MembershipPlan } from '@/types/membership';
 
 export interface CreateCheckoutSessionParams {
   planId: string;
@@ -44,49 +42,6 @@ export const membershipService = {
     } catch (error) {
       console.error('Failed to create membership plan:', error);
       throw error;
-    }
-  },
-  async createBranchAmenity(input: {
-    branch_id: string;
-    name: string;
-    is_session_based: boolean;
-    default_quantity?: number | null;
-    is_active?: boolean;
-  }): Promise<BranchAmenity> {
-    try {
-      const { data, error } = await supabase
-        .from('branch_amenities')
-        .insert({
-          branch_id: input.branch_id,
-          name: input.name,
-          is_session_based: input.is_session_based,
-          default_quantity: input.default_quantity ?? null,
-          is_active: input.is_active ?? true,
-        })
-        .select('id, branch_id, name, is_session_based, default_quantity, is_active')
-        .single();
-
-      if (error) throw error;
-      return data as BranchAmenity;
-    } catch (error) {
-      console.error('Failed to create branch amenity:', error);
-      throw error;
-    }
-  },
-  async getBranchAmenities(branchId: string): Promise<BranchAmenity[]> {
-    try {
-      const { data, error } = await supabase
-        .from('branch_amenities')
-        .select('id, branch_id, name, is_session_based, default_quantity, is_active')
-        .eq('branch_id', branchId)
-        .eq('is_active', true)
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      return (data || []) as BranchAmenity[];
-    } catch (error) {
-      console.error('Failed to fetch branch amenities:', error);
-      return [];
     }
   },
   async getAvailablePlans(): Promise<MembershipPlan[]> {
