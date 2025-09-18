@@ -51,9 +51,10 @@ interface TeamMemberFormProps {
   onOpenChange: (open: boolean) => void;
   member?: TeamMember;
   onSubmit: (data: TeamMemberFormData) => void;
+  defaultRole?: 'staff' | 'manager' | 'trainer';
 }
 
-export const TeamMemberForm = ({ open, onOpenChange, member, onSubmit }: TeamMemberFormProps) => {
+export const TeamMemberForm = ({ open, onOpenChange, member, onSubmit, defaultRole }: TeamMemberFormProps) => {
   const { authState } = useAuth();
   const { branches } = useBranches();
   const { hasPermission } = useRBAC();
@@ -66,7 +67,7 @@ export const TeamMemberForm = ({ open, onOpenChange, member, onSubmit }: TeamMem
       name: member?.name || '',
       email: member?.email || '',
       phone: member?.phone || '',
-      role: (member?.role as "manager" | "trainer" | "staff") || 'staff',
+      role: (member?.role as "manager" | "trainer" | "staff") || (defaultRole ?? 'staff'),
       branchId: member?.branchId || (authState.user?.role !== 'admin' ? branches[0]?.id || '' : ''),
       status: member?.status || 'active',
       avatar: member?.avatar || '',

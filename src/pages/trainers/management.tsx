@@ -10,6 +10,9 @@ import { TrainerBookingInterface } from '@/components/trainer/TrainerBookingInte
 import { TrainerDashboard } from '@/components/trainer/TrainerDashboard';
 import { TrainerUtilizationDashboard } from '@/components/trainer/TrainerUtilizationDashboard';
 import { enhancedTrainers } from '@/utils/mockData';
+import { TeamMemberForm } from '@/components/team/TeamMemberForm';
+import { useTeamMembers } from '@/hooks/useTeamMembers';
+import { PermissionGate } from '@/components/PermissionGate';
 import { 
   Settings, 
   Bell, 
@@ -23,7 +26,9 @@ import {
 
 export const TrainerManagementPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showCreateTrainer, setShowCreateTrainer] = useState(false);
   const branchId = 'branch_001';
+  const { createTeamMember } = useTeamMembers();
 
   const totalTrainers = enhancedTrainers.length;
   const activeTrainers = enhancedTrainers.filter(t => t.isActive && t.status === 'active').length;
@@ -41,10 +46,12 @@ export const TrainerManagementPage = () => {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Trainer
-          </Button>
+          <PermissionGate permission="team.create">
+            <Button variant="outline" onClick={() => setShowCreateTrainer(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Trainer
+            </Button>
+          </PermissionGate>
           <Button>
             <Calendar className="h-4 w-4 mr-2" />
             Book Session
@@ -151,6 +158,24 @@ export const TrainerManagementPage = () => {
           <NotificationCenter trainerId="trainer_001" />
         </TabsContent>
       </Tabs>
+
+      {/* Create Trainer Form */}
+      <TeamMemberForm
+        open={showCreateTrainer}
+        onOpenChange={setShowCreateTrainer}
+        defaultRole="trainer"
+        onSubmit={(data) => {
+          createTeamMember({
+            full_name: data.name,
+            email: data.email,
+            phone: data.phone,
+            role: 'trainer',
+            branch_id: data.branchId,
+            password: 'TempPass123!'
+          });
+          setShowCreateTrainer(false);
+        }}
+      />
     </div>
   );
 };

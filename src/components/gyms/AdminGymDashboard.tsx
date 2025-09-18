@@ -15,6 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 export const AdminGymDashboard = () => {
   const [showGymForm, setShowGymForm] = useState(false);
   const [showBranchForm, setShowBranchForm] = useState(false);
+  const [showEditBranchForm, setShowEditBranchForm] = useState(false);
+  const [branchToEdit, setBranchToEdit] = useState<any | null>(null);
   const queryClient = useQueryClient();
   const { authState } = useAuth();
 
@@ -312,7 +314,15 @@ export const AdminGymDashboard = () => {
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t">
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => {
+                      setBranchToEdit(branch);
+                      setShowEditBranchForm(true);
+                    }}
+                  >
                     Manage Branch
                   </Button>
                 </div>
@@ -321,6 +331,27 @@ export const AdminGymDashboard = () => {
           ))
         )}
       </div>
+      {/* Edit Branch Dialog */}
+      <Dialog open={showEditBranchForm} onOpenChange={setShowEditBranchForm}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Branch</DialogTitle>
+            <DialogDescription>
+              Update branch details like name, contact, address, and capacity.
+            </DialogDescription>
+          </DialogHeader>
+          {branchToEdit && (
+            <BranchForm 
+              branch={branchToEdit} 
+              onSuccess={() => {
+                setShowEditBranchForm(false);
+                setBranchToEdit(null);
+                queryClient.invalidateQueries({ queryKey: ['admin-branches'] });
+              }} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
