@@ -62,38 +62,23 @@ export const useTrainerById = (trainerId: string) => {
 export const useCreateTrainer = () => {
   return useSupabaseMutation(
     async (data: CreateTrainerData) => {
-      // First create the user account
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: data.email,
-        password: 'TempPass123!', // Temporary password - should be changed on first login
-        email_confirm: true,
-        user_metadata: {
-          full_name: data.full_name,
-          phone: data.phone,
-          role: 'trainer',
-          branch_id: data.branch_id,
-        }
-      });
-
-      if (authError) throw authError;
-
-      // Create a simple trainer profile - use the standard profiles table instead
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: authData.user.id,
+      // Call the secure edge function to create trainer account
+      const { data: result, error } = await supabase.functions.invoke('create-trainer-account', {
+        body: {
           full_name: data.full_name,
           email: data.email,
           phone: data.phone,
-          role: 'trainer',
           branch_id: data.branch_id,
+          specialties: data.specialties,
           is_active: data.is_active ?? true,
-        })
-        .select('user_id')
-        .single();
+          profile_photo: data.profile_photo
+        }
+      });
 
-      if (profileError) throw profileError;
-      return profileData.user_id;
+      if (error) throw error;
+      if (!result.success) throw new Error(result.error || 'Failed to create trainer');
+
+      return result.userId;
     },
     {
       onSuccess: () => {
