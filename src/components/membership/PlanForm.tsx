@@ -144,30 +144,9 @@ export function PlanForm() {
   const handleCreateAmenity = async () => {
     showErrorToast('Amenity creation not available');
     setCreatingAmenity(false);
-    setShowCreateAmenity(false);
     setNewAmenityName('');
     setNewAmenitySessionBased(false);
-    setNewAmenityQty(null);
-  };
-      setFormData(prev => ({
-        ...prev,
-        features: [...new Set([...(prev.features || []), created.name])],
-        featureQuantities: {
-          ...prev.featureQuantities,
-          ...(created.is_session_based && created.default_quantity != null ? { [created.name]: created.default_quantity } : {})
-        }
-      }));
-
-      // Reset input fields
-      setNewAmenityName('');
-      setNewAmenitySessionBased(false);
-      setNewAmenityQty(0);
-      showSuccessToast('Amenity added for this branch');
-    } catch (e) {
-      showErrorToast('Failed to add amenity');
-    } finally {
-      setCreatingAmenity(false);
-    }
+    setNewAmenityQty(0);
   };
 
   const handleInputChange = (field: keyof PlanFormData, value: any) => {
