@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { format, addMonths } from 'date-fns';
+import { format } from 'date-fns';
+import { assignMembership } from '@/services/memberships';
 import { Phone, Mail, MapPin, Calendar, User, Activity, AlertTriangle, CreditCard, Plus, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Member, MembershipStatus } from '@/types/member';
-import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
 import { MemberBillingCard } from '@/components/membership/MemberBillingCard';
+import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
 import { MembershipFormData } from '@/types/membership';
 import { useToast } from '@/hooks/use-toast';
 import { useRBAC } from '@/hooks/useRBAC';
@@ -18,7 +19,6 @@ import { MeasurementRecorderDrawer } from './MeasurementRecorderDrawer';
 import { ProgressCharts } from './ProgressCharts';
 import { MeasurementHistory } from '@/types/member-progress';
 import { mockMeasurementHistory, mockAttendanceRecords, mockProgressSummary } from '@/utils/mockData';
-import { membershipService } from '@/services/membershipService';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -167,168 +167,25 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
 
   const handleAssignMembership = async (data: MembershipFormData) => {
     try {
-      // Fetch plan details to get plan name and price
-      const plan = await membershipService.getPlanDetails(data.planId);
+      await assignMembership({
+        member: {
+          id: member.id,
+          fullName: member.fullName,
+          email: member.email,
+          userId: (member as any).userId ?? null,
+        },
+        data,
+      });
 
-      // Compute pricing summary with GST (forward or reverse)
-      const price = Number((plan as any).price || 0);
-      const referralCode = data.promoCode?.trim();
-      const referralDisc = referralCode ? Math.round(price * 0.1) : 0; // 10% referral
-      const pctDisc = Math.round(price * ((data.discountPercent || 0) / 100));
-      const flatDisc = Math.round(data.discountAmount || 0);
-      const base = Math.max(0, price - referralDisc - pctDisc - flatDisc);
-      const rate = data.gstEnabled ? ((data.gstRate || 0) / 100) : 0;
-      let gstAmount = 0;
-      let finalAmount = base;
-      if (data.gstEnabled) {
-        if (data.reverseGst && typeof data.totalInclGst === 'number' && data.totalInclGst > 0) {
-          const incl = Math.round(data.totalInclGst);
-          const baseFromIncl = Math.round(incl / (1 + rate));
-          gstAmount = Math.max(0, incl - baseFromIncl);
-          finalAmount = incl;
-        } else {
-          gstAmount = Math.round(base * rate);
-          finalAmount = base + gstAmount;
-        }
-      }
-
-      // Insert member_memberships record (per your schema)
-      const startDateISO = data.startDate.toISOString().slice(0, 10); // date only
-      const endDateISO = addMonths(data.startDate, (plan as any).duration_months || 0).toISOString().slice(0, 10);
-      try {
-        const { data: inserted, error: mmErr } = await supabase
-          .from('member_memberships')
-          .insert([
-            {
-              user_id: memberUserId, // may be null per schema
-              plan_id: plan.id,
-              start_date: startDateISO,
-              end_date: endDateISO,
-              payment_amount: finalAmount,
-            }
-          ])
-          .select('*')
-          .single();
-        if (mmErr) throw mmErr;
-        setLatestMembershipLocal(inserted);
-      } catch (e: any) {
-        console.error('member_memberships insert failed:', {
-          message: e?.message,
-          details: e?.details,
-          hint: e?.hint,
-          code: e?.code,
-        });
-      }
-
-      // Update member row to reflect assigned plan and active status + referral code used
-      const { error } = await supabase
-        .from('members')
-        .update({
-          membership_status: 'active',
-          membership_plan: plan.name,
-        })
-        .eq('id', member.id);
-
-      if (error) throw error;
-
-      // Create invoice matching your invoices schema (no need to refetch membership)
-      try {
-        const today = new Date();
-        const due = new Date();
-        due.setDate(today.getDate() + 7);
-        const shortId = Math.random().toString(36).slice(2, 8).toUpperCase();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        const invoiceNumber = `INV-${yyyy}${mm}${dd}-${shortId}`;
-
-        const discountTotal = (referralDisc + pctDisc + flatDisc);
-        const taxAmount = gstAmount;
-
-        await supabase
-          .from('invoices')
-          .insert([
-            {
-              invoice_number: invoiceNumber,
-              date: today.toISOString().slice(0, 10),
-              due_date: due.toISOString().slice(0, 10),
-              customer_id: member.id,
-              customer_name: member.fullName,
-              customer_email: member.email || null,
-              subtotal: base,
-              tax: taxAmount,
-              discount: discountTotal,
-              total: finalAmount,
-            }
-          ]);
-      } catch (invErr: any) {
-        console.error('Invoice creation failed:', {
-          message: invErr?.message,
-          details: invErr?.details,
-          hint: invErr?.hint,
-          code: invErr?.code,
-        });
-      }
-
-      // Referral bonuses: use referrals and referral_bonuses
-      try {
-        const referralCode = data.promoCode?.trim();
-        if (referralCode) {
-          const { data: referral } = await supabase
-            .from('referrals')
-            .select('id, referrer_id, referred_id, membership_bonus_amount, status')
-            .eq('referral_code', referralCode)
-            .maybeSingle();
-          const bonusAmount = Number(referral?.membership_bonus_amount ?? 2500);
-          // credit referrer
-          if (referral?.id && referral.referrer_id) {
-            await supabase.from('referral_bonuses').insert([
-              {
-                referral_id: referral.id,
-                user_id: referral.referrer_id,
-                bonus_type: 'referral_membership',
-                amount: bonusAmount,
-                description: `Referral bonus for ${member.fullName} membership`,
-              },
-            ]);
-          }
-          // credit referred user if linked
-          if (referral?.id && referral.referred_id) {
-            await supabase.from('referral_bonuses').insert([
-              {
-                referral_id: referral.id,
-                user_id: referral.referred_id,
-                bonus_type: 'referral_membership',
-                amount: bonusAmount,
-                description: 'Referral bonus (referred member)',
-              },
-            ]);
-          }
-          // mark referral completed
-          if (referral?.id) {
-            await supabase
-              .from('referrals')
-              .update({ status: 'completed', completed_at: new Date().toISOString() })
-              .eq('id', referral.id);
-          }
-        }
-      } catch (refErr: any) {
-        console.error('Referral bonus processing failed:', {
-          message: refErr?.message,
-          details: refErr?.details,
-          hint: refErr?.hint,
-          code: refErr?.code,
-        });
-      }
-
-      // Invalidate member queries to refresh UI
       await queryClient.invalidateQueries({ queryKey: ['members'] });
       await queryClient.invalidateQueries({ queryKey: ['members', member.id] });
       await queryClient.invalidateQueries({ queryKey: ['member-credits', member.id] });
+      await queryClient.invalidateQueries({ queryKey: ['member-membership', member.id] });
+      await queryClient.invalidateQueries({ queryKey: ['member-latest-invoice', member.id] });
 
       toast({
         title: 'Membership Assigned',
-        description: `${plan.name} has been assigned to ${member.fullName}.`,
+        description: `Membership has been assigned to ${member.fullName}.`,
       });
       setAssignMembershipOpen(false);
     } catch (err: any) {

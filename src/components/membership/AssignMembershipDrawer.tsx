@@ -64,8 +64,11 @@ export const AssignMembershipDrawer = ({
     defaultValues: {
       gstEnabled: false,
       discountPercent: 0,
+      discountAmount: 0,
+      promoCode: '',
       gstRate: 18,
       reverseGst: false,
+      totalInclGst: undefined,
     }
   });
 
@@ -140,7 +143,7 @@ export const AssignMembershipDrawer = ({
                       <FormItem>
                         <FormLabel>Promo / Referral Code</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter referral code (optional)" {...field} />
+                          <Input placeholder="Enter referral code (optional)" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

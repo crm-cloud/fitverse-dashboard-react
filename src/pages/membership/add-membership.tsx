@@ -13,6 +13,7 @@ import { MemberForm } from '@/components/member/MemberForm';
 import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
 import { MemberFormData } from '@/types/member';
 import { MembershipFormData } from '@/types/membership';
+import { assignMembership } from '@/services/memberships';
 
 type WorkflowStep = 'member-info' | 'membership-plan' | 'payment' | 'confirmation';
 
@@ -104,19 +105,28 @@ export const AddMembershipWorkflowPage = () => {
   const handlePaymentProcess = async () => {
     if (!workflowState.memberData || !workflowState.membershipData) return;
 
+    // We need a persisted member (members.id) to assign the membership
+    const memberId = (workflowState.memberData as any).id;
+    if (!memberId) {
+      return toast({
+        title: 'Member not created yet',
+        description: 'Please save or select a member to obtain a member ID before assigning a membership.',
+        variant: 'destructive',
+      });
+    }
+
     setIsProcessing(true);
     try {
-      // Simulate API calls
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Create member
-      console.log('Creating member:', workflowState.memberData);
-      
-      // Assign membership
-      console.log('Assigning membership:', workflowState.membershipData);
-      
-      // Process payment
-      console.log('Processing payment...');
+      // Assign via shared service
+      await assignMembership({
+        member: {
+          id: memberId,
+          fullName: workflowState.memberData.fullName,
+          email: workflowState.memberData.email,
+          userId: (workflowState.memberData as any).userId ?? null,
+        },
+        data: workflowState.membershipData,
+      });
 
       setWorkflowState(prev => ({
         ...prev,
@@ -129,10 +139,10 @@ export const AddMembershipWorkflowPage = () => {
         description: `${workflowState.memberData.fullName} has been registered with their membership plan.`,
       });
 
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to complete membership registration. Please try again.',
+        description: error?.message || 'Failed to complete membership registration. Please try again.',
         variant: 'destructive'
       });
     } finally {
