@@ -2,17 +2,28 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MemberProfileCard } from '@/components/member/MemberProfileCard';
-import { mockMembers } from '@/utils/mockData';
 import { useRBAC } from '@/hooks/useRBAC';
+import { useMemberById } from '@/hooks/useMembers';
+import { useBranches } from '@/hooks/useBranches';
+import { Member } from '@/types/member';
 
 export const MemberProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { hasPermission } = useRBAC();
+  const { branches } = useBranches();
+  const { data: row, isLoading, error } = useMemberById(id || '');
 
-  const member = mockMembers.find(m => m.id === id);
+  if (isLoading) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-semibold mb-2">Loading member...</h2>
+        <p className="text-muted-foreground">Please wait</p>
+      </div>
+    );
+  }
 
-  if (!member) {
+  if (error || !row) {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-2">Member Not Found</h2>
@@ -23,6 +34,38 @@ export const MemberProfilePage = () => {
       </div>
     );
   }
+
+  // Map DB row to Member type expected by the card
+  const branchNameFromList = branches.find(b => b.id === (row.branch_id ?? row.branchId))?.name;
+  const membershipPlan = row.membership_plan ?? row.membershipPlan;
+  let computedStatus = row.membership_status ?? row.membershipStatus;
+  if (!membershipPlan) {
+    computedStatus = 'not-assigned';
+  }
+
+  const member: Member = {
+    id: row.id,
+    fullName: row.full_name ?? row.fullName ?? '',
+    phone: row.phone ?? '',
+    email: row.email ?? '',
+    dateOfBirth: row.date_of_birth ? new Date(row.date_of_birth) : new Date(),
+    gender: row.gender,
+    address: row.address ?? { street: '', city: '', state: '', pincode: '' },
+    governmentId: row.government_id ?? row.governmentId,
+    measurements: row.measurements ?? {},
+    emergencyContact: row.emergency_contact ?? {},
+    profilePhoto: row.profile_photo ?? row.profilePhoto,
+    branchId: row.branch_id ?? row.branchId,
+    branchName: branchNameFromList ?? row.branchName ?? '—',
+    membershipStatus: computedStatus ?? 'not-assigned',
+    membershipPlan,
+    trainerId: row.trainer_id ?? row.trainerId,
+    trainerName: row.trainer_profiles?.name ?? row.trainerName,
+    joinedDate: row.joined_date ? new Date(row.joined_date) : (row.created_at ? new Date(row.created_at) : new Date()),
+    createdBy: row.created_by ?? '',
+    createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+    updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+  };
 
   return (
     <div className="space-y-6">

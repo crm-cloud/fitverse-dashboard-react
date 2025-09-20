@@ -1,23 +1,20 @@
 import { useSupabaseQuery } from './useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useMembers = () => {
+export const useMembers = (filters?: { branchId?: string; search?: string; membershipStatus?: string }) => {
   return useSupabaseQuery(
-    ['members'],
+    ['members', filters?.branchId ?? 'all'],
     async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('members')
-        .select(`
-          *,
-          branches!branch_id (
-            name
-          ),
-          trainer_profiles!trainer_id (
-            name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
+      if (filters?.branchId) {
+        query = query.eq('branch_id', filters.branchId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     }
@@ -30,15 +27,7 @@ export const useMemberById = (memberId: string) => {
     async () => {
       const { data, error } = await supabase
         .from('members')
-        .select(`
-          *,
-          branches!branch_id (
-            name
-          ),
-          trainer_profiles!trainer_id (
-            name
-          )
-        `)
+        .select('*')
         .eq('id', memberId)
         .single();
 

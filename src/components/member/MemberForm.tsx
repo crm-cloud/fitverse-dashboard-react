@@ -66,9 +66,13 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
   const form = useForm<z.infer<typeof memberFormSchema>>({
     resolver: zodResolver(memberFormSchema),
     defaultValues: {
+      fullName: '',
+      phone: '',
+      email: '',
       gender: 'prefer-not-to-say',
       governmentId: {
-        type: 'aadhaar'
+        type: 'aadhaar',
+        number: ''
       },
       address: {
         street: '',
@@ -85,7 +89,9 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
         relationship: '',
         phone: '',
         email: ''
-      }
+      },
+      branchId: '',
+      trainerId: undefined
     }
   });
 
@@ -145,7 +151,7 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
         email: data.emergencyContact.email || undefined
       },
       branchId: data.branchId,
-      trainerId: data.trainerId,
+      trainerId: data.trainerId && data.trainerId !== 'unassigned' ? data.trainerId : undefined,
       profilePhoto: profilePhoto || undefined
     };
 
@@ -496,6 +502,7 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
                         type="number" 
                         placeholder="15" 
                         {...field}
+                        value={field.value ?? ''}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -515,6 +522,7 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
                         type="number" 
                         placeholder="40" 
                         {...field}
+                        value={field.value ?? ''}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -630,14 +638,13 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Assign Trainer (optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? undefined}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select trainer" />
+                          <SelectValue placeholder="No trainer assigned" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="unassigned">No trainer assigned</SelectItem>
                         {trainers?.map((trainer) => (
                           <SelectItem key={trainer.id} value={trainer.id}>
                             {trainer.name}

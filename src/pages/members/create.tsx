@@ -4,21 +4,60 @@ import { Button } from '@/components/ui/button';
 import { MemberForm } from '@/components/member/MemberForm';
 import { MemberFormData } from '@/types/member';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const MemberCreatePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { authState } = useAuth();
+  const queryClient = useQueryClient();
 
-  const handleSubmit = (data: MemberFormData) => {
-    // Mock API call
-    console.log('Creating member:', data);
-    
-    toast({
-      title: 'Member Created',
-      description: `${data.fullName} has been successfully added as a member.`,
-    });
+  const handleSubmit = async (data: MemberFormData) => {
+    try {
+      // Map form data to DB columns (snake_case)
+      const payload: any = {
+        full_name: data.fullName,
+        phone: data.phone,
+        email: data.email,
+        date_of_birth: data.dateOfBirth?.toISOString?.() || data.dateOfBirth,
+        gender: data.gender,
+        address: data.address, // JSON
+        government_id: data.governmentId, // JSON
+        measurements: data.measurements, // JSON includes BMI if present
+        emergency_contact: data.emergencyContact, // JSON
+        profile_photo: data.profilePhoto ?? null,
+        branch_id: data.branchId,
+        trainer_id: data.trainerId ?? null,
+        created_by: authState.user?.id ?? null,
+      };
 
-    navigate('/members');
+      const { data: insertResult, error } = await supabase
+        .from('members')
+        .insert([payload])
+        .select('id')
+        .single();
+
+      if (error) throw error;
+
+      // Refresh members list
+      await queryClient.invalidateQueries({ queryKey: ['members'] });
+
+      toast({
+        title: 'Member Created',
+        description: `${data.fullName} has been successfully added as a member.`,
+      });
+
+      navigate('/members');
+    } catch (err: any) {
+      console.error('Failed to create member:', err);
+      toast({
+        title: 'Failed to create member',
+        description: err?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

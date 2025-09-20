@@ -90,7 +90,7 @@ export const MemberTable = ({ members, currentPage, totalPages, onPageChange }: 
                       </Avatar>
                       <div>
                         <div className="font-medium">{member.fullName}</div>
-                        <div className="text-sm text-muted-foreground">ID: {member.id}</div>
+                        <div className="text-sm text-muted-foreground">{member.branchName || '—'}</div>
                       </div>
                     </div>
                   </TableCell>
