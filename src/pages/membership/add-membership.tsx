@@ -11,6 +11,7 @@ import { useRBAC } from '@/hooks/useRBAC';
 import { useToast } from '@/hooks/use-toast';
 import { MemberForm } from '@/components/member/MemberForm';
 import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
+import { useMembershipWorkflow } from '@/hooks/useMembershipWorkflow';
 import { MemberFormData } from '@/types/member';
 import { MembershipFormData } from '@/types/membership';
 
@@ -19,7 +20,8 @@ type WorkflowStep = 'member-info' | 'membership-plan' | 'payment' | 'confirmatio
 interface WorkflowState {
   currentStep: WorkflowStep;
   memberData?: MemberFormData;
-  membershipData?: MembershipFormData;
+  membershipData?: MembershipFormData & { membershipPlanId: string };
+  workflowResult?: { memberId: string; membershipId: string; invoiceId: string };
   isComplete: boolean;
 }
 
@@ -28,6 +30,7 @@ export const AddMembershipWorkflowPage = () => {
   const { authState } = useAuth();
   const { hasPermission } = useRBAC();
   const { toast } = useToast();
+  const { executeWorkflow, processPayment, isLoading } = useMembershipWorkflow();
 
   const [workflowState, setWorkflowState] = useState<WorkflowState>({
     currentStep: 'member-info',
@@ -35,7 +38,6 @@ export const AddMembershipWorkflowPage = () => {
   });
 
   const [showMembershipDrawer, setShowMembershipDrawer] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   // Check permissions
   const canCreateMembers = hasPermission('members.create');
@@ -92,31 +94,50 @@ export const AddMembershipWorkflowPage = () => {
     setShowMembershipDrawer(true);
   };
 
-  const handleMembershipDataSubmit = (data: MembershipFormData) => {
-    setWorkflowState(prev => ({
-      ...prev,
-      membershipData: data,
-      currentStep: 'payment'
-    }));
-    setShowMembershipDrawer(false);
+  const handleMembershipDataSubmit = async (data: MembershipFormData & { membershipPlanId: string }) => {
+    if (!workflowState.memberData) return;
+
+    try {
+      // Execute the complete workflow: member + membership + invoice
+      const result = await executeWorkflow.mutateAsync({
+        memberData: workflowState.memberData,
+        membershipData: data,
+        membershipPlanId: data.membershipPlanId,
+      });
+
+      setWorkflowState(prev => ({
+        ...prev,
+        membershipData: data,
+        workflowResult: result,
+        currentStep: 'payment'
+      }));
+      setShowMembershipDrawer(false);
+
+      toast({
+        title: 'Member & Membership Created',
+        description: `${workflowState.memberData.fullName} has been registered. Please process payment to activate membership.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create member and membership. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handlePaymentProcess = async () => {
-    if (!workflowState.memberData || !workflowState.membershipData) return;
+    if (!workflowState.workflowResult || !workflowState.membershipData) return;
 
-    setIsProcessing(true);
     try {
-      // Simulate API calls
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Create member
-      console.log('Creating member:', workflowState.memberData);
-      
-      // Assign membership
-      console.log('Assigning membership:', workflowState.membershipData);
-      
-      // Process payment
-      console.log('Processing payment...');
+      // Process payment using the created membership and invoice
+      await processPayment.mutateAsync({
+        membershipId: workflowState.workflowResult.membershipId,
+        invoiceId: workflowState.workflowResult.invoiceId,
+        amount: workflowState.membershipData.totalInclGst || workflowState.membershipData.gstRate || 0,
+        paymentMethod: 'cash', // Default, could be made configurable
+        notes: 'Initial membership payment'
+      });
 
       setWorkflowState(prev => ({
         ...prev,
@@ -125,18 +146,16 @@ export const AddMembershipWorkflowPage = () => {
       }));
 
       toast({
-        title: 'Membership Created Successfully',
-        description: `${workflowState.memberData.fullName} has been registered with their membership plan.`,
+        title: 'Payment Processed Successfully',
+        description: `${workflowState.memberData?.fullName}'s membership is now active.`,
       });
 
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to complete membership registration. Please try again.',
+        title: 'Payment Error',
+        description: 'Failed to process payment. Please try again.',
         variant: 'destructive'
       });
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -148,8 +167,11 @@ export const AddMembershipWorkflowPage = () => {
   };
 
   const handleGoToMember = () => {
-    // In a real app, this would navigate to the created member's profile
-    navigate('/members');
+    if (workflowState.workflowResult) {
+      navigate(`/members/${workflowState.workflowResult.memberId}/profile`);
+    } else {
+      navigate('/members');
+    }
   };
 
   const getRoleSpecificTitle = () => {
@@ -341,13 +363,13 @@ export const AddMembershipWorkflowPage = () => {
                     </div>
 
                     <div className="flex gap-3">
-                      <Button 
-                        onClick={handlePaymentProcess}
-                        disabled={isProcessing}
-                        className="flex-1"
-                      >
-                        {isProcessing ? 'Processing...' : 'Process Payment & Complete Registration'}
-                      </Button>
+                    <Button 
+                      onClick={handlePaymentProcess}
+                      disabled={isLoading}
+                      className="flex-1"
+                    >
+                      {isLoading ? 'Processing...' : 'Process Payment & Complete Registration'}
+                    </Button>
                       <Button 
                         variant="outline"
                         onClick={() => setWorkflowState(prev => ({ ...prev, currentStep: 'membership-plan' }))}

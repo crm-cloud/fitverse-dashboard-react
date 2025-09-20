@@ -1197,6 +1197,7 @@ export type Database = {
           due_date: string
           id: string
           invoice_number: string
+          membership_id: string | null
           notes: string | null
           status: Database["public"]["Enums"]["invoice_status"] | null
           subtotal: number
@@ -1216,6 +1217,7 @@ export type Database = {
           due_date: string
           id?: string
           invoice_number: string
+          membership_id?: string | null
           notes?: string | null
           status?: Database["public"]["Enums"]["invoice_status"] | null
           subtotal?: number
@@ -1235,6 +1237,7 @@ export type Database = {
           due_date?: string
           id?: string
           invoice_number?: string
+          membership_id?: string | null
           notes?: string | null
           status?: Database["public"]["Enums"]["invoice_status"] | null
           subtotal?: number
@@ -1255,6 +1258,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "member_memberships"
             referencedColumns: ["id"]
           },
         ]
@@ -1886,6 +1896,7 @@ export type Database = {
           measured_by: string | null
           measured_date: string | null
           member_id: string | null
+          membership_id: string | null
           muscle_mass: number | null
           notes: string | null
           resting_heart_rate: number | null
@@ -1907,6 +1918,7 @@ export type Database = {
           measured_by?: string | null
           measured_date?: string | null
           member_id?: string | null
+          membership_id?: string | null
           muscle_mass?: number | null
           notes?: string | null
           resting_heart_rate?: number | null
@@ -1928,6 +1940,7 @@ export type Database = {
           measured_by?: string | null
           measured_date?: string | null
           member_id?: string | null
+          membership_id?: string | null
           muscle_mass?: number | null
           notes?: string | null
           resting_heart_rate?: number | null
@@ -1950,40 +1963,71 @@ export type Database = {
             referencedRelation: "members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "member_measurements_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "member_memberships"
+            referencedColumns: ["id"]
+          },
         ]
       }
       member_memberships: {
         Row: {
+          assigned_by: string | null
+          branch_id: string | null
           created_at: string
+          discount_amount: number | null
+          discount_percent: number | null
           end_date: string
+          final_amount: number | null
+          gst_amount: number | null
+          gst_enabled: boolean | null
           id: string
+          membership_plan_id: string | null
+          notes: string | null
           payment_amount: number
           payment_status: Database["public"]["Enums"]["payment_status"] | null
-          plan_id: string | null
           start_date: string
           status: Database["public"]["Enums"]["membership_status"] | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          assigned_by?: string | null
+          branch_id?: string | null
           created_at?: string
+          discount_amount?: number | null
+          discount_percent?: number | null
           end_date: string
+          final_amount?: number | null
+          gst_amount?: number | null
+          gst_enabled?: boolean | null
           id?: string
+          membership_plan_id?: string | null
+          notes?: string | null
           payment_amount: number
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
-          plan_id?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["membership_status"] | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          assigned_by?: string | null
+          branch_id?: string | null
           created_at?: string
+          discount_amount?: number | null
+          discount_percent?: number | null
           end_date?: string
+          final_amount?: number | null
+          gst_amount?: number | null
+          gst_enabled?: boolean | null
           id?: string
+          membership_plan_id?: string | null
+          notes?: string | null
           payment_amount?: number
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
-          plan_id?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["membership_status"] | null
           updated_at?: string
@@ -1991,8 +2035,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "member_memberships_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: "member_memberships_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_memberships_membership_plan_id_fkey"
+            columns: ["membership_plan_id"]
             isOneToOne: false
             referencedRelation: "membership_plans"
             referencedColumns: ["id"]
@@ -2667,9 +2718,11 @@ export type Database = {
       referrals: {
         Row: {
           completed_at: string | null
+          converted_at: string | null
           created_at: string
           id: string
           membership_bonus_amount: number | null
+          membership_id: string | null
           referral_code: string
           referred_email: string
           referred_id: string | null
@@ -2679,9 +2732,11 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
+          converted_at?: string | null
           created_at?: string
           id?: string
           membership_bonus_amount?: number | null
+          membership_id?: string | null
           referral_code: string
           referred_email: string
           referred_id?: string | null
@@ -2691,9 +2746,11 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
+          converted_at?: string | null
           created_at?: string
           id?: string
           membership_bonus_amount?: number | null
+          membership_id?: string | null
           referral_code?: string
           referred_email?: string
           referred_id?: string | null
@@ -2701,7 +2758,15 @@ export type Database = {
           signup_bonus_amount?: number | null
           status?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "referrals_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "member_memberships"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sms_templates: {
         Row: {
