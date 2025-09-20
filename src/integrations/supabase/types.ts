@@ -3957,6 +3957,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      is_gym_admin: {
+        Args: Record<PropertyKey, never> | { user_id: string }
+        Returns: boolean
+      }
       is_staff_or_above: {
         Args: { user_uuid: string }
         Returns: boolean
