@@ -87,6 +87,10 @@ export interface MembershipFormData {
   discountPercent?: number;
   discountAmount?: number;
   gstEnabled: boolean;
+  promoCode?: string;
+  gstRate?: number; // percent, e.g., 18
+  reverseGst?: boolean; // if true, totalInclGst is source of truth
+  totalInclGst?: number; // user-provided final total for reverse calc
 }
 
 export interface PaymentFormData {

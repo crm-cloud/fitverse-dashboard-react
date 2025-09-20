@@ -65,6 +65,8 @@ export const MemberProfilePage = () => {
     createdBy: row.created_by ?? '',
     createdAt: row.created_at ? new Date(row.created_at) : new Date(),
     updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+    pointsBalance: typeof row.points_balance === 'number' ? row.points_balance : 0,
+    referralCodeUsed: row.referral_code_used ?? undefined,
   };
 
   return (

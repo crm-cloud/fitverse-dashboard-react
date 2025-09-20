@@ -11,7 +11,11 @@ interface Invoice {
   invoiceNumber: string;
   customerName: string;
   customerEmail?: string;
-  amount: number;
+  amount: number; // total
+  subtotal?: number;
+  tax?: number;
+  discount?: number;
+  notes?: string;
   status: string;
   dueDate: string;
   createdAt: string;
@@ -91,12 +95,43 @@ export function InvoiceDetailsDialog({
               
               <Separator className="my-4" />
               
-              <div className="flex justify-between items-center">
-                <span className="text-xl font-bold">Total Amount:</span>
-                <span className="text-xl font-bold">{formatCurrency(invoice.amount)}</span>
+              <div className="space-y-2 text-sm">
+                {typeof invoice.subtotal === 'number' && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-medium">{formatCurrency(invoice.subtotal || 0)}</span>
+                  </div>
+                )}
+                {typeof invoice.tax === 'number' && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tax</span>
+                    <span className="font-medium">{formatCurrency(invoice.tax || 0)}</span>
+                  </div>
+                )}
+                {typeof invoice.discount === 'number' && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Discount</span>
+                    <span className="font-medium">{formatCurrency(invoice.discount || 0)}</span>
+                  </div>
+                )}
+                <Separator className="my-2" />
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold">Total</span>
+                  <span className="text-lg font-bold">{formatCurrency(invoice.amount)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Notes */}
+          {invoice.notes && (
+            <Card>
+              <CardContent className="pt-6">
+                <h4 className="font-semibold mb-2">Notes</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{invoice.notes}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2">

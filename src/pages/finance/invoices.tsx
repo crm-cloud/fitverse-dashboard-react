@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,8 +27,10 @@ import { InvoiceWorkflowDialog } from '@/components/finance/InvoiceWorkflowDialo
 import { PaymentRecorderDialog } from '@/components/finance/PaymentRecorderDialog';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-interface Invoice {
+interface InvoiceUI {
   id: string;
   invoiceNumber: string;
   customerName: string;
@@ -40,52 +42,46 @@ interface Invoice {
   description: string;
 }
 
-// Mock data
-const mockInvoices: Invoice[] = [
-  {
-    id: '1',
-    invoiceNumber: 'INV-2024-001',
-    customerName: 'John Doe',
-    customerEmail: 'john@example.com',
-    amount: 1500,
-    status: 'paid',
-    dueDate: '2024-01-15',
-    createdAt: '2024-01-01',
-    description: 'Annual Membership Premium'
-  },
-  {
-    id: '2', 
-    invoiceNumber: 'INV-2024-002',
-    customerName: 'Sarah Wilson',
-    customerEmail: 'sarah@example.com',
-    amount: 850,
-    status: 'sent',
-    dueDate: '2024-01-20',
-    createdAt: '2024-01-05',
-    description: 'Personal Training Package'
-  },
-  {
-    id: '3',
-    invoiceNumber: 'INV-2024-003', 
-    customerName: 'Mike Johnson',
-    amount: 2200,
-    status: 'overdue',
-    dueDate: '2024-01-10',
-    createdAt: '2023-12-28',
-    description: 'Corporate Membership - 5 Users'
-  }
-];
-
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
-  const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>(mockInvoices);
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const invoices: InvoiceUI[] = useMemo(() => {
+    return (rows as any[]).map((r) => ({
+      id: r.id,
+      invoiceNumber: r.invoice_number,
+      customerName: r.customer_name,
+      customerEmail: r.customer_email ?? undefined,
+      amount: Number(r.total) || 0,
+      status: (r.status as any) ?? 'draft',
+      dueDate: r.due_date,
+      createdAt: r.created_at,
+      description: r.notes || '',
+    }));
+  }, [rows]);
+
+  const [filteredInvoices, setFilteredInvoices] = useState<InvoiceUI[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [amountMin, setAmountMin] = useState<string>('');
+  const [amountMax, setAmountMax] = useState<string>('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceUI | null>(null);
   const { formatCurrency } = useCurrency();
   const { toast } = useToast();
 
@@ -111,52 +107,40 @@ export default function InvoicesPage() {
     }
   };
 
-  const handleCreateInvoice = (invoiceData: any) => {
-    const newInvoice: Invoice = {
-      id: Date.now().toString(),
-      ...invoiceData,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    
-    const updatedInvoices = [...invoices, newInvoice];
-    setInvoices(updatedInvoices);
-    setFilteredInvoices(updatedInvoices);
-    
-    toast({
-      title: 'Invoice Created',
-      description: `Invoice ${newInvoice.invoiceNumber} has been created successfully.`
-    });
+  const handleCreateInvoice = async (invoiceData: any) => {
+    // Optional: you can wire this to supabase inserts for manual creation
+    toast({ title: 'Not Implemented', description: 'Creation from this page is not wired yet.' });
   };
 
-  const handleViewInvoice = (invoice: Invoice) => {
+  const handleViewInvoice = (invoice: InvoiceUI) => {
     setSelectedInvoice(invoice);
     setShowDetailsDialog(true);
   };
 
-  const handleSendInvoice = (invoice: Invoice, method: 'email' | 'sms' | 'whatsapp') => {
+  const handleSendInvoice = (invoice: InvoiceUI, method: 'email' | 'sms' | 'whatsapp') => {
     setSelectedInvoice(invoice);
     setShowWorkflowDialog(true);
   };
 
-  const handlePayment = (invoice: Invoice) => {
+  const handlePayment = (invoice: InvoiceUI) => {
     setSelectedInvoice(invoice);
     setShowPaymentDialog(true);
   };
 
-  const handleMarkAsPaid = (invoiceId: string) => {
-    const updatedInvoices = invoices.map(inv => 
-      inv.id === invoiceId ? { ...inv, status: 'paid' as const } : inv
-    );
-    setInvoices(updatedInvoices);
-    setFilteredInvoices(updatedInvoices);
-    
-    toast({
-      title: 'Payment Recorded',
-      description: 'Invoice has been marked as paid successfully.'
-    });
+  const handleMarkAsPaid = async (invoiceId: string) => {
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: 'paid' })
+        .eq('id', invoiceId);
+      if (error) throw error;
+      toast({ title: 'Payment Recorded', description: 'Invoice has been marked as paid successfully.' });
+    } catch (e: any) {
+      toast({ title: 'Failed', description: e?.message || 'Could not update invoice', variant: 'destructive' });
+    }
   };
 
-  const handleDownloadInvoice = (invoice: Invoice, type: 'pdf' | 'gst' | 'non-gst') => {
+  const handleDownloadInvoice = (invoice: InvoiceUI, type: 'pdf' | 'gst' | 'non-gst') => {
     toast({
       title: 'Download Started',
       description: `Downloading ${type.toUpperCase()} invoice for ${invoice.invoiceNumber}`
@@ -178,14 +162,30 @@ export default function InvoicesPage() {
     if (statusFilter !== 'all') {
       filtered = filtered.filter(invoice => invoice.status === statusFilter);
     }
+    // Date range filters
+    if (dateFrom) {
+      filtered = filtered.filter(inv => !inv.createdAt || inv.createdAt >= dateFrom);
+    }
+    if (dateTo) {
+      filtered = filtered.filter(inv => !inv.createdAt || inv.createdAt <= dateTo);
+    }
+    // Amount filters
+    const min = amountMin ? Number(amountMin) : undefined;
+    const max = amountMax ? Number(amountMax) : undefined;
+    if (typeof min === 'number' && !Number.isNaN(min)) {
+      filtered = filtered.filter(inv => inv.amount >= min);
+    }
+    if (typeof max === 'number' && !Number.isNaN(max)) {
+      filtered = filtered.filter(inv => inv.amount <= max);
+    }
     
     setFilteredInvoices(filtered);
   };
 
-  // Update filters when search term or status filter changes
+  // Update filters when data, search term or status filter changes
   React.useEffect(() => {
     filterInvoices();
-  }, [searchTerm, statusFilter, invoices]);
+  }, [searchTerm, statusFilter, dateFrom, dateTo, amountMin, amountMax, invoices]);
 
   return (
     <div className="space-y-6">
@@ -228,6 +228,24 @@ export default function InvoicesPage() {
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Date Range */}
+        <div className="flex items-center gap-2">
+          <div>
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          </div>
+          <span className="text-sm text-muted-foreground">to</span>
+          <div>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+          </div>
+        </div>
+
+        {/* Amount Range */}
+        <div className="flex items-center gap-2">
+          <Input type="number" placeholder="Min" value={amountMin} onChange={(e) => setAmountMin(e.target.value)} className="w-24" />
+          <span className="text-sm text-muted-foreground">-</span>
+          <Input type="number" placeholder="Max" value={amountMax} onChange={(e) => setAmountMax(e.target.value)} className="w-24" />
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -282,6 +300,9 @@ export default function InvoicesPage() {
           <CardDescription>Manage all your invoices and their status</CardDescription>
         </CardHeader>
         <CardContent>
+          {isLoading && (
+            <div className="text-sm text-muted-foreground">Loading invoices...</div>
+          )}
           <div className="space-y-4">
             {filteredInvoices.map((invoice) => (
               <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50">

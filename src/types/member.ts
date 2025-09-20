@@ -51,6 +51,8 @@ export interface Member {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
+  pointsBalance?: number;
+  referralCodeUsed?: string;
 }
 
 export interface MemberFormData {
