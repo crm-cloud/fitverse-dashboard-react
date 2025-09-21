@@ -217,7 +217,7 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
               <Button 
                 size="sm" 
                 onClick={() => setAssignMembershipOpen(true)}
-                className="ml-4">
+                className="ml-4"
               >
                 <CreditCard className="h-4 w-4 mr-1" />
                 Assign Membership
