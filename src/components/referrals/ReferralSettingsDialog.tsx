@@ -50,7 +50,8 @@ export const ReferralSettingsDialog = ({
   const { hasPermission } = useRBAC();
   const queryClient = useQueryClient();
 
-  const canManageSettings = hasPermission('settings.manage');
+  // Check for the correct permission based on your RBAC system
+  const canManageSettings = hasPermission('admin.settings.manage') || hasPermission('settings.manage');
 
   // Fetch current settings
   const { data: settings, isLoading } = useQuery({
@@ -94,15 +95,21 @@ export const ReferralSettingsDialog = ({
       }));
 
       for (const setting of settingsToUpdate) {
+        const settingData = {
+          key: setting.key,
+          value: setting.value,
+          description: setting.description,
+          category: 'referral',
+          updated_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          is_encrypted: false,
+          branch_id: null
+        };
+
         const { error } = await supabase
           .from('system_settings')
           .upsert(
-            { 
-              key: setting.key, 
-              value: setting.value,
-              description: setting.description,
-              updated_at: new Date().toISOString()
-            },
+            settingData as any, // Type assertion to handle database types
             { onConflict: 'key' }
           );
 

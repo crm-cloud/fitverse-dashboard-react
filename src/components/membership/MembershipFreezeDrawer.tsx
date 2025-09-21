@@ -88,16 +88,17 @@ export const MembershipFreezeDrawer = ({
         .from('membership_freeze_requests')
         .insert({
           membership_id: member.membershipId,
-          requested_by: authState.user?.id,
+          user_id: authState.user?.id, // Changed from requested_by to user_id
           reason: data.reason,
           freeze_start_date: freezeStartDate.toISOString(),
           freeze_end_date: freezeEndDate.toISOString(),
-          duration_days: data.durationDays,
-          charge_fee: data.chargesFee,
-          fee_amount: data.feeAmount || 0,
+          requested_days: data.durationDays, // Changed from duration_days to requested_days
+          freeze_fee: data.chargesFee ? (data.feeAmount || 0) : 0, // Changed from charge_fee/fee_amount
           notes: data.notes,
-          status: 'approved' // Auto-approve for now
-        })
+          status: 'approved', // Auto-approve for now
+          approved_at: new Date().toISOString(),
+          approved_by: authState.user?.id
+        } as const)
         .select()
         .single();
 
@@ -141,10 +142,13 @@ export const MembershipFreezeDrawer = ({
         if (invoiceError) throw invoiceError;
         invoiceId = invoice.id;
 
-        // Update freeze request with invoice ID
+        // Update freeze request with invoice reference in notes
         await supabase
           .from('membership_freeze_requests')
-          .update({ invoice_id: invoiceId })
+          .update({ 
+            notes: `${data.notes ? data.notes + '\n' : ''}Invoice: ${invoiceNumber}`,
+            admin_notes: `Invoice generated: ${invoiceNumber}`
+          })
           .eq('id', freezeRequest.id);
       }
 

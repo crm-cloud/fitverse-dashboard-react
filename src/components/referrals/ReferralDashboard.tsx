@@ -13,14 +13,21 @@ import {
   CheckCircle, 
   Clock, 
   DollarSign,
-  Settings
+  Settings,
+  RefreshCw
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ReferralSettingsDialog } from './ReferralSettingsDialog';
 import { ReferralCodeGenerator } from './ReferralCodeGenerator';
 import { ReferralRewardsTable } from './ReferralRewardsTable';
+import {
+  fetchUserReferrals,
+  createReferral,
+  generateReferralCode as generateCode,
+  invalidateReferralQueries,
+  fetchReferralSettings
+} from '@/services/referrals';
 
 export const ReferralDashboard = () => {
   const { authState } = useAuth();
@@ -31,66 +38,35 @@ export const ReferralDashboard = () => {
   // Fetch referral settings
   const { data: settings } = useQuery({
     queryKey: ['referral-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('*')
-        .like('key', 'referral_%');
-      
-      if (error) throw error;
-      
-      // Convert to object for easier access
-      const settingsObj = data.reduce((acc, setting) => {
-        acc[setting.key] = setting.value;
-        return acc;
-      }, {} as Record<string, any>);
-      
-      return settingsObj;
-    }
+    queryFn: fetchReferralSettings,
+    enabled: !!authState.user?.id
   });
 
   // Fetch user's referral data
   const { data: referralData } = useQuery({
     queryKey: ['my-referrals', authState.user?.id],
-    queryFn: async () => {
-      if (!authState.user?.id) return null;
-
-      const { data, error } = await supabase
-        .from('referrals')
-        .select(`
-          *,
-          referral_bonuses (
-            id,
-            amount,
-            bonus_type,
-            created_at,
-            description
-          )
-        `)
-        .eq('referrer_id', authState.user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
+    queryFn: () => {
+      if (!authState.user?.id) return Promise.resolve([]);
+      return fetchUserReferrals(authState.user.id);
     },
     enabled: !!authState.user?.id
   });
 
-  // Fetch user's referral code
+  // Get or generate referral code
   const { data: myReferralCode } = useQuery({
     queryKey: ['my-referral-code', authState.user?.id],
     queryFn: async () => {
       if (!authState.user?.id) return null;
-
-      const { data, error } = await supabase
+      
+      // Try to get existing referral code
+      const { data: existing } = await supabase
         .from('referrals')
         .select('referral_code')
         .eq('referrer_id', authState.user.id)
         .eq('status', 'active')
         .maybeSingle();
-
-      if (error) throw error;
-      return data?.referral_code;
+        
+      return existing?.referral_code || null;
     },
     enabled: !!authState.user?.id
   });
@@ -99,34 +75,34 @@ export const ReferralDashboard = () => {
   const generateReferralCode = useMutation({
     mutationFn: async () => {
       if (!authState.user?.id) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .rpc('generate_referral_code')
-        .single();
-
-      if (error) throw error;
-
-      const { error: insertError } = await supabase
-        .from('referrals')
-        .insert({
-          referrer_id: authState.user.id,
-          referral_code: data,
-          status: 'active',
-          signup_bonus_amount: settings?.referral_signup_bonus || 500,
-          membership_bonus_amount: settings?.referral_membership_bonus || 2500
-        });
-
-      if (insertError) throw insertError;
-      return data;
+      
+      const code = await generateCode(authState.user.id);
+      
+      await createReferral({
+        referrer_id: authState.user.id,
+        referred_email: authState.user.email || 'self@example.com',
+        referral_code: code,
+        status: 'active',
+        signup_bonus_amount: settings?.referral_signup_bonus || 500,
+        membership_bonus_amount: settings?.referral_membership_bonus || 2500,
+        converted_at: null,
+        membership_id: null,
+        referred_id: null
+      });
+      
+      return code;
     },
-    onSuccess: () => {
+    onSuccess: (code) => {
+      queryClient.setQueryData(['my-referral-code', authState.user?.id], code);
+      queryClient.invalidateQueries({ queryKey: ['my-referrals', authState.user?.id] });
+      
       toast({
         title: 'Success',
         description: 'New referral code generated successfully!'
       });
-      queryClient.invalidateQueries({ queryKey: ['my-referral-code'] });
     },
     onError: (error: any) => {
+      console.error('Error generating referral code:', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to generate referral code',
@@ -146,24 +122,43 @@ export const ReferralDashboard = () => {
   };
 
   const shareReferralCode = () => {
-    if (myReferralCode && navigator.share) {
-      navigator.share({
-        title: 'Join our gym with my referral code!',
-        text: `Use my referral code ${myReferralCode} to get exclusive bonuses when you join!`,
-        url: `${window.location.origin}?ref=${myReferralCode}`
+    if (!myReferralCode) return;
+    
+    const shareData = {
+      title: 'Join me on Fitverse!',
+      text: `Use my referral code ${myReferralCode} to get started on Fitverse.`,
+      url: window.location.origin
+    };
+
+    if (navigator.share) {
+      navigator.share(shareData).catch(err => {
+        console.error('Error sharing:', err);
+        copyReferralCode();
       });
+    } else {
+      // Fallback to copy if Web Share API is not supported
+      copyReferralCode();
     }
   };
 
   // Calculate stats
   const stats = {
     totalReferrals: referralData?.length || 0,
-    completedReferrals: referralData?.filter(r => r.status === 'completed').length || 0,
+    completedReferrals: referralData?.filter(r => r.status === 'completed' || r.status === 'paid').length || 0,
     totalEarnings: referralData?.reduce((sum, r) => {
-      const bonuses = Array.isArray(r.referral_bonuses) ? r.referral_bonuses : [];
-      return sum + bonuses.reduce((bonusSum: number, b: any) => bonusSum + (b.amount || 0), 0);
+      // Sum up both signup and membership bonuses for completed/paid referrals
+      if (r.status === 'completed' || r.status === 'paid') {
+        return sum + (r.signup_bonus_amount || 0) + (r.membership_bonus_amount || 0);
+      }
+      return sum;
     }, 0) || 0,
-    pendingReferrals: referralData?.filter(r => r.status === 'pending').length || 0
+    pendingEarnings: referralData?.reduce((sum, r) => {
+      // Only include pending referrals in pending earnings
+      if (r.status === 'pending') {
+        return sum + (r.signup_bonus_amount || 0) + (r.membership_bonus_amount || 0);
+      }
+      return sum;
+    }, 0) || 0,
   };
 
   const formatCurrency = (amount: number) => {
