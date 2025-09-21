@@ -217,7 +217,7 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
               <Button 
                 size="sm" 
                 onClick={() => setAssignMembershipOpen(true)}
-                className="ml-4"
+                className="ml-4">
               >
                 <CreditCard className="h-4 w-4 mr-1" />
                 Assign Membership
@@ -442,6 +442,26 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                     {member.emergencyContact.email && <p>{member.emergencyContact.email}</p>}
                   </div>
                 </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-2">Rewards Balance</h4>
+                  <p className="text-sm">{computedPointsBalance.toLocaleString()} points</p>
+                  
+                  {/* Rewards History */}
+                  <div className="text-sm space-y-2 mt-2">
+                    {(creditTx as any[]).slice(0, 3).map((tx) => (
+                      <div key={tx.id} className="flex justify-between text-muted-foreground">
+                        <span className="truncate max-w-[120px]">{tx.description || tx.transaction_type}</span>
+                        <span className="text-foreground font-medium">+{tx.amount}</span>
+                      </div>
+                    ))}
+                    {(!creditTx || (creditTx as any[]).length === 0) && (
+                      <p className="text-muted-foreground text-xs">No rewards yet</p>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -478,26 +498,6 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                       <p className="text-sm text-muted-foreground">Plan: {member.membershipPlan}</p>
                     )}
                   </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h4 className="font-medium mb-2">Rewards Balance</h4>
-                  <p className="text-sm">{computedPointsBalance.toLocaleString()} points</p>
-                </div>
-
-                {/* Rewards History */}
-                <div className="text-sm space-y-2">
-                  {(creditTx as any[]).slice(0, 5).map((tx) => (
-                    <div key={tx.id} className="flex justify-between text-muted-foreground">
-                      <span>{tx.description || tx.transaction_type}</span>
-                      <span className="text-foreground font-medium">+{tx.amount}</span>
-                    </div>
-                  ))}
-                  {(!creditTx || (creditTx as any[]).length === 0) && (
-                    <p className="text-muted-foreground">No rewards yet</p>
-                  )}
                 </div>
 
                 <Separator />
