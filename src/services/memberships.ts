@@ -75,9 +75,9 @@ export async function assignMembership({
     membership_plan_id: data.planId,
     start_date: startDateISO,
     end_date: endDateISO,
-    status: 'active',
+    status: 'active' as 'active',
     payment_amount: finalAmount,
-    payment_status: 'pending',
+    payment_status: 'pending' as 'pending',
     final_amount: finalAmount,
     gst_enabled: data.gstEnabled,
     gst_amount: gstAmount,
@@ -91,7 +91,7 @@ export async function assignMembership({
   // 1. First, create the membership
   const { data: insertedMembership, error: mmErr } = await supabase
     .from('member_memberships')
-    .insert([membershipData])
+    .insert(membershipData)
     .select('id')
     .single();
 
@@ -129,7 +129,7 @@ const invoiceData = {
   tax: gstAmount,
   discount: flatDisc + (data.promoCode ? referralDisc : 0),
   total: finalAmount,
-  status: 'draft',
+  status: 'draft' as 'draft',
   branch_id: branchId,
   membership_id: insertedMembership.id,
   created_by: assignedBy,
@@ -139,10 +139,11 @@ const invoiceData = {
 
 console.log('Attempting to create invoice with data:', invoiceData);
 
+let invoice;
 try {
-  const { data: invoice, error: invErr } = await supabase
+  const { data: invoiceResult, error: invErr } = await supabase
     .from('invoices')
-    .insert([invoiceData])
+    .insert(invoiceData)
     .select('id')
     .single();
 
@@ -160,8 +161,8 @@ try {
     throw invErr;
   }
 
+  invoice = invoiceResult;
   console.log('Invoice created successfully:', invoice);
-  // Rest of your code...
 } catch (error) {
   console.error('Unexpected error during invoice creation:', {
     error,

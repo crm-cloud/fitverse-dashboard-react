@@ -14,6 +14,7 @@ import { MemberBillingCard } from '@/components/membership/MemberBillingCard';
 import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
 import { MembershipFormData } from '@/types/membership';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { useRBAC } from '@/hooks/useRBAC';
 import { MeasurementRecorderDrawer } from './MeasurementRecorderDrawer';
 import { ProgressCharts } from './ProgressCharts';
@@ -81,6 +82,7 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
     mockMeasurementHistory.filter(m => m.memberId === member.id)
   );
   const { toast } = useToast();
+  const { authState } = useAuth();
   const { hasPermission } = useRBAC();
   const queryClient = useQueryClient();
 
@@ -175,6 +177,8 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
           userId: (member as any).userId ?? null,
         },
         data,
+        assignedBy: authState.user?.id || '',
+        branchId: (member as any).branchId
       });
 
       await queryClient.invalidateQueries({ queryKey: ['members'] });

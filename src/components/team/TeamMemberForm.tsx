@@ -32,8 +32,20 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBranches } from '@/hooks/useBranches';
 import { useRBAC } from '@/hooks/useRBAC';
 import { useToast } from '@/hooks/use-toast';
-import { TeamMember, getTeamMemberByEmail } from '@/utils/mockData';
+import { supabase } from '@/integrations/supabase/client';
 
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: 'staff' | 'manager' | 'trainer';
+  branchId: string;
+  branchName: string;
+  status: 'active' | 'inactive';
+  avatar?: string;
+  createdAt: Date;
+}
 const teamMemberSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
@@ -77,32 +89,54 @@ export const TeamMemberForm = ({ open, onOpenChange, member, onSubmit, defaultRo
   const isAdmin = authState.user?.role === 'admin';
   const canAssignManager = hasPermission('staff.create') && isAdmin;
 
-  const handleSubmit = (data: TeamMemberFormData) => {
-    // Check email uniqueness
-    const existingMember = getTeamMemberByEmail(data.email);
-    if (existingMember && existingMember.id !== member?.id) {
+  const handleSubmit = async (data: TeamMemberFormData) => {
+    try {
+      // Check email uniqueness against database
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', data.email)
+        .maybeSingle();
+
+      if (checkError) {
+        toast({
+          title: 'Error',
+          description: 'Failed to check email uniqueness',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (existingUser && existingUser.id !== member?.id) {
+        toast({
+          title: 'Error',
+          description: 'This email is already in use by another team member',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Role validation
+      if (data.role === 'manager' && !canAssignManager) {
+        toast({
+          title: 'Permission Denied',
+          description: 'Only administrators can assign Manager role',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      onSubmit(data);
+      onOpenChange(false);
+      form.reset();
+      setAvatarPreview(null);
+    } catch (error) {
       toast({
         title: 'Error',
-        description: 'This email is already in use by another team member',
+        description: 'An unexpected error occurred',
         variant: 'destructive',
       });
-      return;
     }
-
-    // Role validation
-    if (data.role === 'manager' && !canAssignManager) {
-      toast({
-        title: 'Permission Denied',
-        description: 'Only administrators can assign Manager role',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    onSubmit(data);
-    onOpenChange(false);
-    form.reset();
-    setAvatarPreview(null);
   };
 
   const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
