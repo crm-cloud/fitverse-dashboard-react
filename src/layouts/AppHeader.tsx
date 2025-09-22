@@ -1,5 +1,6 @@
 
-import { Bell, User, LogOut, Settings } from 'lucide-react';
+import { Bell, User, LogOut, Settings, Clock as ClockIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +22,29 @@ import { useNavigate } from 'react-router-dom';
 export const AppHeader = () => {
   const { authState, logout } = useAuth();
   const navigate = useNavigate();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   if (!authState.user) return null;
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).toLowerCase();
+  };
+
+  const formatDay = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -51,23 +73,38 @@ export const AppHeader = () => {
           {authState.user.role === 'admin' && (
             <BranchSelector />
           )}
-          
-          <div className="hidden md:block">
-            <h1 className="text-lg font-semibold text-foreground">
-              Welcome back, {authState.user.name.split(' ')[0]}!
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </p>
-          </div>
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 px-3 py-1.5 bg-muted/30 rounded-lg">
+            <div className="flex items-center gap-1.5 text-foreground">
+              <ClockIcon className="w-3.5 h-3.5" />
+              <span className="text-sm font-medium">
+                {formatTime(currentTime)}
+              </span>
+            </div>
+            <div className="h-4 w-px bg-border mx-1" />
+            <div className="text-right">
+              <div className="text-xs font-medium text-foreground">
+                {formatDay(currentTime)}
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                {currentTime.toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </div>
+            </div>
+          </div>
+          
+          {/* Welcome Message */}
+          <div className="hidden md:block text-right mr-2">
+            <div className="text-sm font-medium text-foreground">
+              Welcome, {authState.user.name.split(' ')[0]}!
+            </div>
+          </div>
+          
           {/* Notifications */}
           <NotificationCenter />
 
