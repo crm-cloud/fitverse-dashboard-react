@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { ReferralSettingsDialog } from './ReferralSettingsDialog';
 import { ReferralCodeGenerator } from './ReferralCodeGenerator';
 import { ReferralRewardsTable } from './ReferralRewardsTable';
@@ -145,6 +146,7 @@ export const ReferralDashboard = () => {
   const stats = {
     totalReferrals: referralData?.length || 0,
     completedReferrals: referralData?.filter(r => r.status === 'completed' || r.status === 'paid').length || 0,
+    pendingReferrals: referralData?.filter(r => r.status === 'pending').length || 0,
     totalEarnings: referralData?.reduce((sum, r) => {
       // Sum up both signup and membership bonuses for completed/paid referrals
       if (r.status === 'completed' || r.status === 'paid') {
@@ -326,12 +328,14 @@ export const ReferralDashboard = () => {
         </TabsContent>
 
         <TabsContent value="rewards">
-          <ReferralRewardsTable userId={authState.user?.id} />
+          <ReferralRewardsTable rewards={referralData || []} />
         </TabsContent>
 
         <TabsContent value="generate">
           <ReferralCodeGenerator 
-            onCodeGenerated={() => queryClient.invalidateQueries({ queryKey: ['my-referral-code'] })}
+            referralCode={myReferralCode || ''}
+            onGenerate={async () => generateReferralCode.mutate()}
+            isLoading={generateReferralCode.isPending}
           />
         </TabsContent>
       </Tabs>

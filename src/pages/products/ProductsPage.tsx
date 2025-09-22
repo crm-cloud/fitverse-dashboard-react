@@ -6,8 +6,6 @@ export const ProductsPage = () => {
   return (
     <Routes>
       <Route index element={<ProductsList />} />
-      <Route path="new" element={<ProductForm />} />
-      <Route path=":id" element={<ProductForm />} />
       <Route path="*" element={<Navigate to="/products" replace />} />
     </Routes>
   );

@@ -51,7 +51,7 @@ export const ReferralSettingsDialog = ({
   const queryClient = useQueryClient();
 
   // Check for the correct permission based on your RBAC system
-  const canManageSettings = hasPermission('admin.settings.manage') || hasPermission('settings.manage');
+  const canManageSettings = hasPermission('settings.edit');
 
   // Fetch current settings
   const { data: settings, isLoading } = useQuery({
