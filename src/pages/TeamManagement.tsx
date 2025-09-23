@@ -161,7 +161,7 @@ export default function TeamManagement() {
             Manage staff, trainers, and managers across your organization
           </p>
         </div>
-        <PermissionGate permission="staff.create">
+        <PermissionGate permission="team.create">
           <Button onClick={() => setShowCreateForm(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Team Member

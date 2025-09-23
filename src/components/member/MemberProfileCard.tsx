@@ -526,9 +526,15 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                 <div>
                   <h4 className="font-medium mb-2 flex items-center justify-between">
                     Membership Timeline
-                    <Button size="sm" variant="outline" onClick={() => setShowFreezeForm(!showFreezeForm)}>
-                      Freeze
-                    </Button>
+                    {latestMembership?.status === 'frozen' ? (
+                      <Button size="sm" variant="outline">
+                        Unfreeze
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => setShowFreezeForm(!showFreezeForm)}>
+                        Freeze
+                      </Button>
+                    )}
                   </h4>
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p>Start: {latestMembership?.start_date ? format(new Date(latestMembership.start_date), 'MMM dd, yyyy') : '—'}</p>
