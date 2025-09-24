@@ -21,11 +21,98 @@ import {
   Star
 } from 'lucide-react';
 import { useBranchContext } from '@/hooks/useBranchContext';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
 
 export const ModernAdminDashboard = () => {
   const { currentBranchId } = useBranchContext();
 
-  const revenueData = [
+  // Fetch real dashboard data
+  const { data: analyticsData } = useSupabaseQuery(
+    ['revenue_analytics', currentBranchId],
+    async () => {
+      const { data, error } = await supabase
+        .from('branch_analytics')
+        .select('*')
+        .eq('branch_id', currentBranchId)
+        .order('month_year', { ascending: false })
+        .limit(7);
+
+      if (error) throw error;
+      return data || [];
+    },
+    { enabled: !!currentBranchId }
+  );
+
+  const { data: membersData } = useSupabaseQuery(
+    ['members_count', currentBranchId],
+    async () => {
+      const { count, error } = await supabase
+        .from('members')
+        .select('*', { count: 'exact', head: true })
+        .eq('branch_id', currentBranchId);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    { enabled: !!currentBranchId }
+  );
+
+  const { data: todayRevenue } = useSupabaseQuery(
+    ['today_revenue', currentBranchId],
+    async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('total')
+        .eq('branch_id', currentBranchId)
+        .gte('created_at', today)
+        .eq('status', 'paid');
+
+      if (error) throw error;
+      return data?.reduce((sum, invoice) => sum + (invoice.total || 0), 0) || 0;
+    },
+    { enabled: !!currentBranchId }
+  );
+
+  const { data: newMembersToday } = useSupabaseQuery(
+    ['new_members_today', currentBranchId],
+    async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { count, error } = await supabase
+        .from('members')
+        .select('*', { count: 'exact', head: true })
+        .eq('branch_id', currentBranchId)
+        .gte('created_at', today);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    { enabled: !!currentBranchId }
+  );
+
+  const { data: attendanceToday } = useSupabaseQuery(
+    ['attendance_today', currentBranchId],
+    async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { count, error } = await supabase
+        .from('attendance_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('branch_id', currentBranchId)
+        .gte('check_in_time', today);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    { enabled: !!currentBranchId }
+  );
+
+  // Process revenue chart data
+  const processedRevenueData = analyticsData?.slice(0, 7).reverse().map((item, index) => ({
+    month: new Date(item.month_year).toLocaleDateString('en-US', { month: 'short' }),
+    value: item.total_revenue || 0,
+    percentage: Math.min((item.total_revenue || 0) / 1000 * 100, 100)
+  })) || [
     { month: 'Apr', value: 32, percentage: 32 },
     { month: 'May', value: 48, percentage: 48 },
     { month: 'Jun', value: 78, percentage: 78 },
@@ -34,6 +121,8 @@ export const ModernAdminDashboard = () => {
     { month: 'Sep', value: 68, percentage: 68 },
     { month: 'Oct', value: 48, percentage: 48 }
   ];
+
+  const revenueData = processedRevenueData;
 
   const followUpTasks = [
     { name: 'Sarah Wilson', email: 'sarah.wilson@gmail.com', completed: true, type: 'membership' },
@@ -123,7 +212,7 @@ export const ModernAdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="text-2xl font-bold text-primary">$3,256.32</div>
+              <div className="text-2xl font-bold text-primary">${todayRevenue?.toFixed(2) || '0.00'}</div>
               
               {/* Revenue Chart Bar */}
               <div className="relative">
@@ -143,7 +232,7 @@ export const ModernAdminDashboard = () => {
                 </div>
               </div>
               
-              <div className="text-4xl font-bold text-foreground">$13,852.64</div>
+              <div className="text-4xl font-bold text-foreground">Total: ${analyticsData?.reduce((sum, item) => sum + (item.total_revenue || 0), 0)?.toFixed(2) || '0.00'}</div>
             </div>
           </CardContent>
         </Card>
@@ -315,8 +404,8 @@ export const ModernAdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="text-3xl font-bold text-foreground">46</div>
-                <div className="text-2xl font-bold text-foreground">38</div>
+                <div className="text-3xl font-bold text-foreground">New today: {newMembersToday || 0}</div>
+                <div className="text-3xl font-bold text-foreground">Sessions: {attendanceToday || 0}</div>
                 <div className="flex items-center gap-2">
                   <ArrowUpRight className="w-4 h-4 text-primary" />
                   <span className="text-sm text-muted-foreground">Completed rate</span>

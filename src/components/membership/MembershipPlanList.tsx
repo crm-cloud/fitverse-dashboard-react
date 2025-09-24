@@ -3,6 +3,8 @@ import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Table,
   TableBody,
@@ -22,22 +24,47 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { MembershipPlan } from '@/types/membership';
-import { mockMembershipPlans, accessTypeLabels } from '@/utils/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrency } from '@/hooks/useCurrency';
 
 export const MembershipPlanList = () => {
-  const [plans, setPlans] = useState<MembershipPlan[]>(mockMembershipPlans);
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
 
-  const handleDeletePlan = (planId: string) => {
-    setPlans(plans.filter(plan => plan.id !== planId));
-    toast({
-      title: 'Plan Deleted',
-      description: 'Membership plan has been successfully deleted.',
-    });
+  const { data: plans = [], isLoading, error } = useSupabaseQuery(
+    ['membership_plans'],
+    async () => {
+      const { data, error } = await supabase
+        .from('membership_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    }
+  );
+
+  const handleDeletePlan = async (planId: string) => {
+    try {
+      const { error } = await supabase
+        .from('membership_plans')
+        .update({ is_active: false })
+        .eq('id', planId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Plan Deleted',
+        description: 'Membership plan has been successfully deleted.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete membership plan.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const formatDuration = (months: number) => {
@@ -47,6 +74,14 @@ export const MembershipPlanList = () => {
     if (months === 12) return '1 Year';
     return `${months} Months`;
   };
+
+  if (isLoading) {
+    return <div className="text-center py-4">Loading membership plans...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-4 text-destructive">Error loading membership plans.</div>;
+  }
 
   return (
     <div className="space-y-6">

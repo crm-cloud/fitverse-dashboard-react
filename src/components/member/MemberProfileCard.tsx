@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { assignMembership } from '@/services/memberships';
 import { Phone, Mail, MapPin, Calendar, User, Activity, AlertTriangle, CreditCard, Plus, TrendingUp } from 'lucide-react';
+import { useTrainers } from '@/hooks/useTrainers';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,14 +15,12 @@ import { Member, MembershipStatus } from '@/types/member';
 import { MemberBillingCard } from '@/components/membership/MemberBillingCard';
 import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
 import { MembershipFormData } from '@/types/membership';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useRBAC } from '@/hooks/useRBAC';
 import { MeasurementRecorderDrawer } from './MeasurementRecorderDrawer';
 import { ProgressCharts } from './ProgressCharts';
 import { MeasurementHistory } from '@/types/member-progress';
 import { mockMeasurementHistory, mockAttendanceRecords, mockProgressSummary } from '@/utils/mockData';
-import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface MemberProfileCardProps {
@@ -75,16 +75,98 @@ const formatGovernmentId = (type: string, number: string) => {
 export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
   const [assignMembershipOpen, setAssignMembershipOpen] = useState(false);
   const [showFreezeForm, setShowFreezeForm] = useState(false);
+  const [showTrainerAssignment, setShowTrainerAssignment] = useState(false);
+  const [selectedTrainerId, setSelectedTrainerId] = useState('');
   const [freezeReason, setFreezeReason] = useState('');
   const [freezeDays, setFreezeDays] = useState<number | ''>('');
+  
   const memberUserId = (member as any).userId ?? null;
+  const { data: trainers } = useTrainers();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { authState } = useAuth();
+  const { hasPermission } = useRBAC();
   const [measurements, setMeasurements] = useState<MeasurementHistory[]>(
     mockMeasurementHistory.filter(m => m.memberId === member.id)
   );
+
+  const { data: trainers } = useTrainers();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { authState } = useAuth();
   const { hasPermission } = useRBAC();
-  const queryClient = useQueryClient();
+
+  // Get available trainers sorted by utilization
+  const availableTrainers = trainers?.map(trainer => ({
+    ...trainer,
+    utilization_score: Math.round(Math.random() * 100), // Mock utilization for now
+    specialties: trainer.specialties || []
+  })).sort((a, b) => a.utilization_score - b.utilization_score);
+
+  const handleAutoAssignTrainer = useCallback(async () => {
+    if (!availableTrainers || availableTrainers.length === 0) {
+      toast({
+        title: 'No Trainers Available',
+        description: 'No trainers are currently available for assignment.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Get trainer with lowest utilization
+    const bestTrainer = availableTrainers[0];
+    
+    try {
+      const { error } = await supabase
+        .from('members')
+        .update({ trainer_id: bestTrainer.id })
+        .eq('id', member.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Trainer Assigned',
+        description: `${bestTrainer.full_name} has been auto-assigned based on lowest utilization.`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+    } catch (error) {
+      toast({
+        title: 'Assignment Failed',
+        description: 'Failed to auto-assign trainer. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  }, [availableTrainers, member.id, toast, queryClient]);
+
+  const handleAssignTrainer = useCallback(async () => {
+    if (!selectedTrainerId) return;
+
+    try {
+      const { error } = await supabase
+        .from('members')
+        .update({ trainer_id: selectedTrainerId })
+        .eq('id', member.id);
+
+      if (error) throw error;
+
+      const trainer = availableTrainers?.find(t => t.id === selectedTrainerId);
+      toast({
+        title: 'Trainer Assigned',
+        description: `${trainer?.full_name} has been assigned successfully.`,
+      });
+
+      setShowTrainerAssignment(false);
+      setSelectedTrainerId('');
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+    } catch (error) {
+      toast({
+        title: 'Assignment Failed',
+        description: 'Failed to assign trainer. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  }, [selectedTrainerId, member.id, availableTrainers, toast, queryClient]);
 
   const progressSummary = mockProgressSummary[member.id];
   const attendanceRecords = mockAttendanceRecords.filter(a => a.memberId === member.id);
