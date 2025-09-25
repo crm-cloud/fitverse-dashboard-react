@@ -87,9 +87,21 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
   const queryClient = useQueryClient();
   const { authState } = useAuth();
   const { hasPermission } = useRBAC();
-  const [measurements, setMeasurements] = useState<MeasurementHistory[]>(
-    mockMeasurementHistory.filter(m => m.memberId === member.id)
-  );
+  const [measurements, setMeasurements] = useState<MeasurementHistory[]>([]);
+
+  // Fetch real measurements from database
+  const { data: dbMeasurements = [] } = useQuery<any[]>({
+    queryKey: ['member-measurements', member.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('member_measurements')
+        .select('*')
+        .eq('member_id', member.id)
+        .order('measured_date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    }
+  });
 
   // Get available trainers sorted by utilization
   const availableTrainers = trainers?.map(trainer => ({
@@ -183,18 +195,51 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
   const computedPointsBalance = (creditTx as any[]).reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
   const [latestMembershipLocal, setLatestMembershipLocal] = useState<any | null>(null);
-  // Latest membership for this member
+  // Latest membership for this member with plan details
   const { data: latestMembershipFetched } = useQuery<any>({
     queryKey: ['member-membership', member.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('member_memberships')
-        .select('*')
+        .select(`
+          *,
+          membership_plans!inner(
+            id,
+            name,
+            price,
+            duration_months,
+            features
+          )
+        `)
         .eq('user_id', memberUserId)
         .order('start_date', { ascending: false })
         .limit(1);
       if (error) throw error;
       return (data && data[0]) || null;
+    },
+    enabled: !!memberUserId
+  });
+
+  // Membership history for timeline
+  const { data: membershipHistory = [] } = useQuery<any[]>({
+    queryKey: ['member-membership-history', member.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('member_memberships')
+        .select(`
+          *,
+          membership_plans!inner(
+            id,
+            name,
+            price,
+            duration_months,
+            features
+          )
+        `)
+        .eq('user_id', memberUserId)
+        .order('start_date', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!memberUserId
   });
@@ -281,10 +326,28 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
 
   const handleSaveMeasurement = (measurement: MeasurementHistory) => {
     setMeasurements(prev => [...prev, measurement]);
-    console.log('Saving measurement:', measurement);
+    queryClient.invalidateQueries({ queryKey: ['member-measurements', member.id] });
   };
 
-  const latestMeasurement = measurements[measurements.length - 1];
+  // Use database measurements, fallback to local state for newly added ones
+  const allMeasurements = [...dbMeasurements.map(m => ({
+    id: m.id,
+    memberId: member.id,
+    date: new Date(m.measured_date || m.created_at),
+    weight: m.weight || 0,
+    height: m.height || 0,
+    bodyFat: m.body_fat_percentage || 0,
+    muscleMass: m.muscle_mass || 0,
+    bmi: m.bmi || 0,
+    chest: m.chest || 0,
+    waist: m.waist || 0,
+    hips: m.hips || 0,
+    arms: m.arms || 0,
+    thighs: m.thighs || 0,
+    notes: m.notes || ''
+  })), ...measurements].sort((a, b) => b.date.getTime() - a.date.getTime());
+  
+  const latestMeasurement = allMeasurements[0];
 
   return (
     <div className="space-y-6">
@@ -616,8 +679,25 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p>Start: {latestMembership?.start_date ? format(new Date(latestMembership.start_date), 'MMM dd, yyyy') : '—'}</p>
                     <p>End: {latestMembership?.end_date ? format(new Date(latestMembership.end_date), 'MMM dd, yyyy') : '—'}</p>
-                    <p>Status: <span className="capitalize">{latestMembership?.status || '—'}</span></p>
+                    <p>Status: <span className="capitalize text-foreground font-medium">{latestMembership?.status || '—'}</span></p>
                     <p>Remaining Days: {remainingDays != null ? Math.max(0, remainingDays) : '—'}</p>
+                    {membershipHistory.length > 1 && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-xs text-primary hover:underline">
+                          View {membershipHistory.length - 1} previous memberships
+                        </summary>
+                        <div className="mt-2 space-y-1 pl-2 border-l-2 border-muted">
+                          {membershipHistory.slice(1).map((membership) => (
+                            <div key={membership.id} className="text-xs">
+                              <span className="font-medium">{membership.membership_plans.name}</span>
+                              <span className="text-muted-foreground ml-2">
+                                ({format(new Date(membership.start_date), 'MMM yyyy')} - {format(new Date(membership.end_date), 'MMM yyyy')})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                   </div>
 
                   {showFreezeForm && (
