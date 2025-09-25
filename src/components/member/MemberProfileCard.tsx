@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { assignMembership } from '@/services/memberships';
+import { supabase } from '@/integrations/supabase/client';
 import { Phone, Mail, MapPin, Calendar, User, Activity, AlertTriangle, CreditCard, Plus, TrendingUp } from 'lucide-react';
 import { useTrainers } from '@/hooks/useTrainers';
 import { useToast } from '@/hooks/use-toast';
@@ -89,12 +90,6 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
   const [measurements, setMeasurements] = useState<MeasurementHistory[]>(
     mockMeasurementHistory.filter(m => m.memberId === member.id)
   );
-
-  const { data: trainers } = useTrainers();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { authState } = useAuth();
-  const { hasPermission } = useRBAC();
 
   // Get available trainers sorted by utilization
   const availableTrainers = trainers?.map(trainer => ({
