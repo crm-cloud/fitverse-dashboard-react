@@ -68,47 +68,43 @@ export default function FinanceDashboard() {
     },
   });
 
-  // Fetch monthly analytics
+  // Fetch monthly analytics - simplified version
   const { data: monthlyData = [], isLoading: monthlyLoading } = useQuery({
     queryKey: ['monthly-analytics', selectedBranch],
     queryFn: async () => {
-      // Get transactions grouped by month
-      const { data, error } = await supabase.rpc('get_monthly_financial_summary', {
-        branch_filter: selectedBranch === 'all' ? null : selectedBranch
-      }).catch(() => {
-        // Fallback if function doesn't exist - calculate manually
-        return supabase
-          .from('transactions')
-          .select('date, type, amount')
-          .gte('date', new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]);
-      });
+      // Fallback calculation - get transactions grouped by month
+      let query = supabase
+        .from('transactions')
+        .select('date, type, amount')
+        .gte('date', new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]);
       
-      if (error) throw error;
-      
-      // Process data to monthly format if manual calculation
-      if (Array.isArray(data)) {
-        const monthlyMap: Record<string, {month: string, income: number, expenses: number, profit: number}> = {};
-        
-        data.forEach((transaction: any) => {
-          const date = new Date(transaction.date);
-          const monthKey = date.toLocaleDateString('en-US', { month: 'short' });
-          
-          if (!monthlyMap[monthKey]) {
-            monthlyMap[monthKey] = { month: monthKey, income: 0, expenses: 0, profit: 0 };
-          }
-          
-          if (transaction.type === 'income') {
-            monthlyMap[monthKey].income += Number(transaction.amount);
-          } else {
-            monthlyMap[monthKey].expenses += Number(transaction.amount);
-          }
-          monthlyMap[monthKey].profit = monthlyMap[monthKey].income - monthlyMap[monthKey].expenses;
-        });
-        
-        return Object.values(monthlyMap);
+      if (selectedBranch !== 'all') {
+        query = query.eq('branch_id', selectedBranch);
       }
       
-      return data || [];
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      // Process data to monthly format
+      const monthlyMap: Record<string, {month: string, income: number, expenses: number, profit: number}> = {};
+      
+      (data || []).forEach((transaction: any) => {
+        const date = new Date(transaction.date);
+        const monthKey = date.toLocaleDateString('en-US', { month: 'short' });
+        
+        if (!monthlyMap[monthKey]) {
+          monthlyMap[monthKey] = { month: monthKey, income: 0, expenses: 0, profit: 0 };
+        }
+        
+        if (transaction.type === 'income') {
+          monthlyMap[monthKey].income += Number(transaction.amount);
+        } else {
+          monthlyMap[monthKey].expenses += Number(transaction.amount);
+        }
+        monthlyMap[monthKey].profit = monthlyMap[monthKey].income - monthlyMap[monthKey].expenses;
+      });
+      
+      return Object.values(monthlyMap);
     },
   });
 

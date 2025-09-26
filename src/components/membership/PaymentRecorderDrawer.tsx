@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Sheet,
   SheetContent,
@@ -25,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const paymentFormSchema = z.object({
   amount: z.number().min(1, 'Amount must be greater than 0'),
-  paymentMethod: z.enum(['cash', 'card', 'upi', 'bank-transfer']),
+  paymentMethod: z.enum(['cash', 'card', 'digital_wallet', 'bank_transfer']),
   referenceNumber: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -40,8 +41,8 @@ interface PaymentRecorderDrawerProps {
 const paymentMethodOptions = [
   { value: 'cash' as PaymentMethod, label: 'Cash', icon: Banknote },
   { value: 'card' as PaymentMethod, label: 'Credit/Debit Card', icon: CreditCard },
-  { value: 'upi' as PaymentMethod, label: 'UPI', icon: Smartphone },
-  { value: 'bank-transfer' as PaymentMethod, label: 'Bank Transfer', icon: Building2 },
+  { value: 'digital_wallet' as PaymentMethod, label: 'UPI', icon: Smartphone },
+  { value: 'bank_transfer' as PaymentMethod, label: 'Bank Transfer', icon: Building2 },
 ];
 
 export const PaymentRecorderDrawer = ({ 
@@ -68,8 +69,6 @@ export const PaymentRecorderDrawer = ({
     setIsProcessing(true);
     
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      
       // Get payment method record
       const { data: paymentMethodRecord } = await supabase
         .from('payment_methods')
@@ -172,8 +171,8 @@ export const PaymentRecorderDrawer = ({
   };
 
   const needsReference = watchedPaymentMethod === 'card' || 
-                        watchedPaymentMethod === 'upi' || 
-                        watchedPaymentMethod === 'bank-transfer';
+                        watchedPaymentMethod === 'digital_wallet' || 
+                        watchedPaymentMethod === 'bank_transfer';
 
   const isPartialPayment = watchedAmount < invoice.finalAmount;
   const isOverPayment = watchedAmount > invoice.finalAmount;
