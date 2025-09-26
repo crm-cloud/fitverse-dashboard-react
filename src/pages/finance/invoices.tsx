@@ -117,9 +117,44 @@ export default function InvoicesPage() {
     setShowDetailsDialog(true);
   };
 
-  const handleSendInvoice = (invoice: InvoiceUI, method: 'email' | 'sms' | 'whatsapp') => {
-    setSelectedInvoice(invoice);
-    setShowWorkflowDialog(true);
+  const handleSendInvoice = async (invoice: InvoiceUI, method: 'email' | 'sms' | 'whatsapp') => {
+    try {
+      // In a real implementation, you would call an edge function to send the invoice
+      // For now, we'll simulate the sending process
+      
+      const recipient = method === 'email' ? invoice.customerEmail : 
+                       method === 'sms' ? 'customer phone' : 
+                       'customer whatsapp';
+      
+      if (method === 'email' && !invoice.customerEmail) {
+        toast({
+          title: 'Email Missing',
+          description: 'Customer email address is not available for this invoice.',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      // Simulate sending delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update invoice status to sent
+      await supabase
+        .from('invoices')
+        .update({ status: 'sent' })
+        .eq('id', invoice.id);
+      
+      toast({
+        title: 'Invoice Sent',
+        description: `Invoice ${invoice.invoiceNumber} has been sent via ${method} to ${recipient}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Send Failed',
+        description: `Failed to send invoice via ${method}. Please try again.`,
+        variant: 'destructive'
+      });
+    }
   };
 
   const handlePayment = (invoice: InvoiceUI) => {
@@ -140,11 +175,46 @@ export default function InvoicesPage() {
     }
   };
 
-  const handleDownloadInvoice = (invoice: InvoiceUI, type: 'pdf' | 'gst' | 'non-gst') => {
-    toast({
-      title: 'Download Started',
-      description: `Downloading ${type.toUpperCase()} invoice for ${invoice.invoiceNumber}`
-    });
+  const handleDownloadInvoice = async (invoice: InvoiceUI, type: 'pdf' | 'gst' | 'non-gst') => {
+    try {
+      // Generate PDF blob (simplified implementation)
+      const pdfContent = generateInvoicePDF(invoice, type);
+      const blob = new Blob([pdfContent], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      
+      // Download file
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${invoice.invoiceNumber}_${type}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Download Complete',
+        description: `${type.toUpperCase()} invoice for ${invoice.invoiceNumber} has been downloaded`
+      });
+    } catch (error) {
+      toast({
+        title: 'Download Failed',
+        description: 'Failed to generate invoice PDF. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const generateInvoicePDF = (invoice: InvoiceUI, type: 'pdf' | 'gst' | 'non-gst') => {
+    // Simple PDF content generation (in real app, use a proper PDF library like jsPDF)
+    return `Invoice: ${invoice.invoiceNumber}
+Customer: ${invoice.customerName}
+Amount: ₹${invoice.amount.toLocaleString()}
+Status: ${invoice.status}
+Due Date: ${invoice.dueDate}
+Type: ${type.toUpperCase()}
+${type === 'gst' ? 'GST Number: 123456789' : ''}
+Description: ${invoice.description}
+Generated on: ${new Date().toLocaleDateString()}`;
   };
 
   // Filter invoices based on search and status

@@ -153,9 +153,38 @@ export const useMembershipWorkflow = () => {
       notes?: string;
     }) => {
       try {
-        // Step 1: Create Transaction Record (using existing transactions table if available)
-        // For now, update the membership and invoice directly
-        // In a real implementation, you'd use the transactions table we created
+        // Step 1: Create Transaction Record
+        const { data: paymentMethodRecord } = await supabase
+          .from('payment_methods')
+          .select('id')
+          .eq('type', paymentMethod)
+          .single();
+
+        const { data: categoryRecord } = await supabase
+          .from('transaction_categories')
+          .select('id')
+          .eq('name', 'Membership Payment')
+          .eq('type', 'income')
+          .single();
+
+        const transactionData = {
+          date: new Date().toISOString().split('T')[0],
+          type: 'income' as const,
+          category_id: categoryRecord?.id,
+          amount: amount,
+          description: `Membership payment - Reference: ${referenceNumber || 'N/A'}`,
+          payment_method_id: paymentMethodRecord?.id,
+          reference: referenceNumber,
+          status: 'completed' as const
+        };
+
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert(transactionData);
+
+        if (transactionError) {
+          console.warn('Failed to create transaction record:', transactionError);
+        }
 
         // Step 2: Update Invoice Status
         const { data: invoice } = await supabase

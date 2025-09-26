@@ -68,17 +68,81 @@ export const PaymentRecorderDrawer = ({
     setIsProcessing(true);
     
     try {
-      // Mock API call to record payment
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { supabase } = await import('@/integrations/supabase/client');
       
-      const paymentData: PaymentFormData = {
+      // Get payment method record
+      const { data: paymentMethodRecord } = await supabase
+        .from('payment_methods')
+        .select('id')
+        .eq('type', data.paymentMethod)
+        .single();
+
+      // Get or create transaction category for membership payments
+      const { data: categoryRecord } = await supabase
+        .from('transaction_categories')
+        .select('id')
+        .eq('name', 'Membership Payment')
+        .eq('type', 'income')
+        .single();
+
+      let categoryId = categoryRecord?.id;
+      if (!categoryId) {
+        const { data: newCategory } = await supabase
+          .from('transaction_categories')
+          .insert({
+            name: 'Membership Payment',
+            type: 'income',
+            color: '#10B981',
+            icon: 'CreditCard',
+            description: 'Payments received for gym memberships',
+            is_active: true
+          })
+          .select('id')
+          .single();
+        categoryId = newCategory?.id;
+      }
+
+      // Create transaction record
+      const transactionData = {
+        date: new Date().toISOString().split('T')[0],
+        type: 'income' as const,
+        category_id: categoryId,
         amount: data.amount,
-        paymentMethod: data.paymentMethod,
-        referenceNumber: data.referenceNumber,
-        notes: data.notes,
+        description: `Payment for invoice ${invoice.invoiceNumber}`,
+        payment_method_id: paymentMethodRecord?.id,
+        reference: data.referenceNumber,
+        member_id: invoice.memberId,
+        member_name: invoice.memberName,
+        status: 'completed' as const
       };
 
-      console.log('Recording payment:', { invoice: invoice.id, payment: paymentData });
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert(transactionData);
+
+      if (transactionError) throw transactionError;
+
+      // Update invoice status
+      const { error: invoiceError } = await supabase
+        .from('invoices')
+        .update({ 
+          status: data.amount >= invoice.finalAmount ? 'paid' : 'sent'
+        })
+        .eq('id', invoice.id);
+
+      if (invoiceError) throw invoiceError;
+
+      // Update membership payment status if linked
+      if (invoice.membershipId) {
+        const { error: membershipError } = await supabase
+          .from('member_memberships')
+          .update({ 
+            payment_status: data.amount >= invoice.finalAmount ? 'completed' : 'pending'
+          })
+          .eq('id', invoice.membershipId);
+        
+        if (membershipError) console.warn('Failed to update membership status:', membershipError);
+      }
 
       toast({
         title: 'Payment Recorded',
@@ -87,10 +151,11 @@ export const PaymentRecorderDrawer = ({
 
       onPaymentRecorded();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Payment recording error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to record payment. Please try again.',
+        description: error.message || 'Failed to record payment. Please try again.',
         variant: 'destructive',
       });
     } finally {
