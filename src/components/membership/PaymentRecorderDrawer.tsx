@@ -91,34 +91,41 @@ export const PaymentRecorderDrawer = ({
 
       if (paymentError) throw paymentError;
 
-      // 2. Create finance transaction
+      // 2. Get category and payment method IDs
+      const { data: categoryData } = await supabase
+        .from('transaction_categories')
+        .select('id')
+        .eq('name', 'Membership')
+        .eq('is_active', true)
+        .single();
+
+      const { data: paymentMethodData } = await supabase
+        .from('payment_methods')
+        .select('id')
+        .eq('code', data.paymentMethod)
+        .eq('is_active', true)
+        .single();
+
+      // 3. Create finance transaction
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert([{
           id: uuidv4(),
           type: 'income',
           amount: data.amount,
-          category: 'membership',
-          payment_method: data.paymentMethod,
-          reference: `Payment for Invoice #${invoice.invoiceNumber}`,
-          notes: data.notes,
+          category_id: categoryData?.id,
+          payment_method_id: paymentMethodData?.id,
+          description: `Payment for Invoice #${invoice.invoiceNumber}${data.notes ? ' - ' + data.notes : ''}`,
+          reference: data.referenceNumber,
+          member_id: invoice.memberId,
+          branch_id: invoice.branchId,
           status: 'completed',
           date: now,
           created_at: now,
           updated_at: now,
-          related_entity_type: 'payment',
-          related_entity_id: paymentId,
         }]);
 
       if (transactionError) throw transactionError;
-
-      // 3. Update member's balance
-      const { error: balanceError } = await supabase.rpc('update_member_balance', {
-        member_id: invoice.memberId,
-        amount: -data.amount, // Negative because we're reducing the balance
-      });
-
-      if (balanceError) throw balanceError;
 
       // 4. Update invoice status if fully paid
       if (data.amount >= invoice.finalAmount) {
