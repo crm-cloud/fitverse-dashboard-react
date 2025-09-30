@@ -4013,6 +4013,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_monthly_financial_summary: {
+        Args: { branch_filter?: string }
+        Returns: {
+          expenses: number
+          income: number
+          month: string
+          profit: number
+        }[]
+      }
       get_user_gym_id: {
         Args: { user_uuid: string }
         Returns: string

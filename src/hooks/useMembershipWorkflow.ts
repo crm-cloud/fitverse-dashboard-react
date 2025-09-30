@@ -148,7 +148,7 @@ export const useMembershipWorkflow = () => {
       membershipId: string;
       invoiceId: string;
       amount: number;
-      paymentMethod: string;
+      paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'digital_wallet' | 'other';
       referenceNumber?: string;
       notes?: string;
     }) => {
