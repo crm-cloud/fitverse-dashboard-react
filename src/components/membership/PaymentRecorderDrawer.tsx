@@ -70,7 +70,7 @@ export const PaymentRecorderDrawer = ({
     setIsProcessing(true);
     
     try {
-      const now = new Date().toISOString();
+      const today = format(new Date(), 'yyyy-MM-dd');
       
       // 2. Create finance transaction (using default values if lookups fail)
       const { error: transactionError } = await supabase
@@ -84,9 +84,7 @@ export const PaymentRecorderDrawer = ({
           member_id: invoice.memberId,
           branch_id: invoice.branchId,
           status: 'completed',
-          date: now,
-          created_at: now,
-          updated_at: now,
+          date: today,
         });
 
       if (transactionError) throw transactionError;
@@ -96,8 +94,7 @@ export const PaymentRecorderDrawer = ({
         const { error: invoiceError } = await supabase
           .from('invoices')
           .update({ 
-            status: 'paid',
-            updated_at: now,
+            status: 'paid'
           })
           .eq('id', invoice.id);
 
@@ -115,7 +112,7 @@ export const PaymentRecorderDrawer = ({
       console.error('Error recording payment:', error);
       toast({
         title: 'Error',
-        description: 'Failed to record payment. Please try again.',
+        description: (error as any)?.message || (error as any)?.error_description || 'Failed to record payment. Please try again.',
         variant: 'destructive',
       });
     } finally {
