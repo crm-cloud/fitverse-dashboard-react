@@ -184,7 +184,36 @@ export const mockClassEnrollments: any[] = [];
 export const mockMemberships: any[] = [];
 export const mockPaymentHistory: any[] = [];
 export const mockFinanceCategories: any[] = [];
-export const mockFinancialSummary: any = {};
+export const mockFinancialSummary = {
+  totalIncome: 125000,
+  totalExpenses: 75000,
+  netProfit: 50000,
+  monthlyIncome: 10416.67,
+  monthlyExpenses: 6250,
+  monthlyProfit: 4166.67,
+  outstandingPayments: 12000,
+  totalMembers: 150,
+  activeMembers: 120,
+  monthlyRevenueGrowth: 12.5,
+  expenseBreakdown: {
+    rent: 20000,
+    salaries: 35000,
+    utilities: 5000,
+    equipment: 10000,
+    other: 5000
+  },
+  revenueByCategory: {
+    memberships: 80000,
+    personalTraining: 30000,
+    merchandise: 10000,
+    other: 5000
+  },
+  monthlyData: Array.from({ length: 12 }, (_, i) => ({
+    month: new Date(2024, i, 1).toLocaleString('default', { month: 'short' }),
+    income: Math.floor(Math.random() * 15000) + 5000,
+    expenses: Math.floor(Math.random() * 10000) + 2000,
+  }))
+};
 
 export const generateMockAttendanceRecords = (count: number) => [];
 

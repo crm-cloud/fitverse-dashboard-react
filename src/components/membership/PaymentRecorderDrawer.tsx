@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
 import { CreditCard, Banknote, Smartphone, Building2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,17 +70,69 @@ export const PaymentRecorderDrawer = ({
     setIsProcessing(true);
     
     try {
-      // Mock API call to record payment
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const paymentId = uuidv4();
+      const now = new Date().toISOString();
       
-      const paymentData: PaymentFormData = {
-        amount: data.amount,
-        paymentMethod: data.paymentMethod,
-        referenceNumber: data.referenceNumber,
-        notes: data.notes,
-      };
+      // 1. Create payment record
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert([{
+          id: paymentId,
+          invoice_id: invoice.id,
+          member_id: invoice.memberId,
+          amount: data.amount,
+          payment_method: data.paymentMethod,
+          reference_number: data.referenceNumber,
+          notes: data.notes,
+          status: 'completed',
+          created_at: now,
+          updated_at: now,
+        }]);
 
-      console.log('Recording payment:', { invoice: invoice.id, payment: paymentData });
+      if (paymentError) throw paymentError;
+
+      // 2. Create finance transaction
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert([{
+          id: uuidv4(),
+          type: 'income',
+          amount: data.amount,
+          category: 'membership',
+          payment_method: data.paymentMethod,
+          reference: `Payment for Invoice #${invoice.invoiceNumber}`,
+          notes: data.notes,
+          status: 'completed',
+          date: now,
+          created_at: now,
+          updated_at: now,
+          related_entity_type: 'payment',
+          related_entity_id: paymentId,
+        }]);
+
+      if (transactionError) throw transactionError;
+
+      // 3. Update member's balance
+      const { error: balanceError } = await supabase.rpc('update_member_balance', {
+        member_id: invoice.memberId,
+        amount: -data.amount, // Negative because we're reducing the balance
+      });
+
+      if (balanceError) throw balanceError;
+
+      // 4. Update invoice status if fully paid
+      if (data.amount >= invoice.finalAmount) {
+        const { error: invoiceError } = await supabase
+          .from('invoices')
+          .update({ 
+            status: 'paid',
+            updated_at: now,
+            paid_at: now
+          })
+          .eq('id', invoice.id);
+
+        if (invoiceError) throw invoiceError;
+      }
 
       toast({
         title: 'Payment Recorded',
@@ -88,6 +142,7 @@ export const PaymentRecorderDrawer = ({
       onPaymentRecorded();
       onClose();
     } catch (error) {
+      console.error('Error recording payment:', error);
       toast({
         title: 'Error',
         description: 'Failed to record payment. Please try again.',

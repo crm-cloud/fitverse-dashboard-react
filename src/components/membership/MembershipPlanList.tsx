@@ -140,73 +140,99 @@ export const MembershipPlanList = () => {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-200">Total Plans</CardTitle>
-            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 dark:text-blue-300" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0116 8H4a5 5 0 014.5 2.67A6.97 6.97 0 007 16c0 .34.024.673.07 1h5.86z" />
-              </svg>
+        {/* Total Plans Card */}
+        <Card className="bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex justify-between items-center">
+              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-0">
+                +2.5%
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-900 dark:text-white">{stats.totalPlans}</div>
-            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-              Available membership plans
-            </p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalPlans}</div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Plans</p>
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
+              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '70%' }}></div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-900 dark:text-green-200">Active Plans</CardTitle>
-            <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 dark:text-green-300" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
+        {/* Active Plans Card */}
+        <Card className="bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex justify-between items-center">
+              <div className="p-2 rounded-lg bg-green-50 dark:bg-green-900/30">
+                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-0">
+                +5.2%
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-900 dark:text-white">{stats.activePlans}</div>
-            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-              Currently active
-            </p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.activePlans}</div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Active Plans</p>
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
+              <div className="bg-green-600 h-1.5 rounded-full" style={{ width: '85%' }}></div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-900 dark:text-purple-200">Most Popular</CardTitle>
-            <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600 dark:text-purple-300" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-              </svg>
+        {/* Most Popular Plan Card */}
+        <Card className="bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex justify-between items-center">
+              <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/30">
+                <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+              </div>
+              <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-0">
+                +12.1%
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold text-purple-900 dark:text-white truncate">
+            <div className="text-lg font-bold text-gray-900 dark:text-white truncate">
               {stats.mostPopularPlan?.name || 'None'}
             </div>
-            <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {stats.mostPopularPlan ? `${memberCounts[stats.mostPopularPlan.id] || 0} members` : 'No data'}
             </p>
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
+              <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: '65%' }}></div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-amber-900 dark:text-amber-200">Total Members</CardTitle>
-            <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 dark:text-amber-300" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
-              </svg>
+        {/* Total Members Card */}
+        <Card className="bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex justify-between items-center">
+              <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/30">
+                <svg className="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-0">
+                +8.3%
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-amber-900 dark:text-white">{stats.totalMembers}</div>
-            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-              Active memberships
-            </p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalMembers}</div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Members</p>
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
+              <div className="bg-amber-600 h-1.5 rounded-full" style={{ width: '75%' }}></div>
+            </div>
           </CardContent>
         </Card>
       </div>

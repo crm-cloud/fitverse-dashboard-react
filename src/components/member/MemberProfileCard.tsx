@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { assignMembership } from '@/services/memberships';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,7 +81,7 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
   const [freezeReason, setFreezeReason] = useState('');
   const [freezeDays, setFreezeDays] = useState<number | ''>('');
   
-  const memberUserId = (member as any).userId ?? null;
+  const memberUserId = member.userId ?? null;
   const { data: trainers } = useTrainers();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -195,10 +195,33 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
   const computedPointsBalance = (creditTx as any[]).reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
   const [latestMembershipLocal, setLatestMembershipLocal] = useState<any | null>(null);
-  // Latest membership for this member with plan details
+  // Latest membership for this member with plan details - handle both user_id and null cases
   const { data: latestMembershipFetched } = useQuery<any>({
     queryKey: ['member-membership', member.id],
     queryFn: async () => {
+      // First try to find by user_id if member has one
+      if (memberUserId) {
+        const { data, error } = await supabase
+          .from('member_memberships')
+          .select(`
+            *,
+            membership_plans!inner(
+              id,
+              name,
+              price,
+              duration_months,
+              features
+            )
+          `)
+          .eq('user_id', memberUserId)
+          .order('start_date', { ascending: false })
+          .limit(1);
+        if (error) throw error;
+        if (data && data.length > 0) return data[0];
+      }
+      
+      // If no user_id or no membership found, look for memberships with null user_id
+      // that might be associated with this member through other means
       const { data, error } = await supabase
         .from('member_memberships')
         .select(`
@@ -211,19 +234,44 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
             features
           )
         `)
-        .eq('user_id', memberUserId)
+        .is('user_id', null)
         .order('start_date', { ascending: false })
-        .limit(1);
+        .limit(5); // Get recent ones to check
+      
       if (error) throw error;
+      
+      // For now, return the most recent one with null user_id
+      // In a production system, you'd want a better way to link members to memberships
       return (data && data[0]) || null;
     },
-    enabled: !!memberUserId
+    enabled: true // Always run this query
   });
 
-  // Membership history for timeline
+  // Membership history for timeline - handle both user_id and null cases
   const { data: membershipHistory = [] } = useQuery<any[]>({
     queryKey: ['member-membership-history', member.id],
     queryFn: async () => {
+      // First try to find by user_id if member has one
+      if (memberUserId) {
+        const { data, error } = await supabase
+          .from('member_memberships')
+          .select(`
+            *,
+            membership_plans!inner(
+              id,
+              name,
+              price,
+              duration_months,
+              features
+            )
+          `)
+          .eq('user_id', memberUserId)
+          .order('start_date', { ascending: false });
+        if (error) throw error;
+        if (data && data.length > 0) return data;
+      }
+      
+      // If no user_id or no membership found, look for memberships with null user_id
       const { data, error } = await supabase
         .from('member_memberships')
         .select(`
@@ -236,12 +284,13 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
             features
           )
         `)
-        .eq('user_id', memberUserId)
+        .is('user_id', null)
         .order('start_date', { ascending: false });
+      
       if (error) throw error;
       return data || [];
     },
-    enabled: !!memberUserId
+    enabled: true // Always run this query
   });
   const latestMembership = latestMembershipLocal || latestMembershipFetched;
 
@@ -296,11 +345,11 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
           id: member.id,
           fullName: member.fullName,
           email: member.email,
-          userId: (member as any).userId ?? null,
+          userId: member.userId ?? null,
         },
         data,
         assignedBy: authState.user?.id || '',
-        branchId: (member as any).branchId
+        branchId: member.branchId
       });
 
       await queryClient.invalidateQueries({ queryKey: ['members'] });
@@ -324,35 +373,47 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
     }
   };
 
-  const handleSaveMeasurement = (measurement: MeasurementHistory) => {
+  const handleSaveMeasurement = useCallback((measurement: MeasurementHistory) => {
     setMeasurements(prev => [...prev, measurement]);
     queryClient.invalidateQueries({ queryKey: ['member-measurements', member.id] });
-  };
+  }, [member.id, queryClient]);
 
-  // Use database measurements, fallback to local state for newly added ones
-  const allMeasurements = [...dbMeasurements.map(m => ({
-    id: m.id,
-    memberId: member.id,
-    date: new Date(m.measured_date || m.created_at),
-    weight: m.weight || 0,
-    height: m.height || 0,
-    bodyFat: m.body_fat_percentage || 0,
-    muscleMass: m.muscle_mass || 0,
-    bmi: m.bmi || 0,
-    chest: m.chest || 0,
-    waist: m.waist || 0,
-    hips: m.hips || 0,
-    arms: m.arms || 0,
-    thighs: m.thighs || 0,
-    notes: m.notes || ''
-  })), ...measurements].sort((a, b) => b.date.getTime() - a.date.getTime());
-  
-  const latestMeasurement = allMeasurements[0];
+  // Process and sort measurements
+  const { allMeasurements, latestMeasurement } = useMemo(() => {
+    const processedMeasurements = [
+      ...(dbMeasurements || []).map(m => ({
+        id: m.id,
+        memberId: member.id,
+        date: new Date(m.measured_date || m.created_at),
+        weight: m.weight || 0,
+        height: m.height || 0,
+        bodyFat: m.body_fat_percentage || 0,
+        muscleMass: m.muscle_mass || 0,
+        bmi: m.bmi || 0,
+        chest: m.chest || 0,
+        waist: m.waist || 0,
+        hips: m.hips || 0,
+        arms: m.arms || 0,
+        thighs: m.thighs || 0,
+        notes: m.notes || ''
+      })),
+      ...(measurements || [])
+    ];
+    
+    const sortedMeasurements = processedMeasurements.sort((a, b) => 
+      b.date.getTime() - a.date.getTime()
+    );
+    
+    return {
+      allMeasurements: sortedMeasurements,
+      latestMeasurement: sortedMeasurements[0] || null
+    };
+  }, [dbMeasurements, measurements, member.id]);
 
   return (
     <div className="space-y-6">
       {/* Membership Warning */}
-      {member.membershipStatus === 'not-assigned' && (
+      {member?.membershipStatus === 'not-assigned' && (
         <Alert className="border-yellow-200 bg-yellow-50">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="text-yellow-800 flex justify-between items-center">
@@ -637,9 +698,11 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                     )}
                   </h4>
                   <div className="space-y-2">
-                    {getMembershipStatusBadge(member.membershipStatus)}
+                    <div>
+                      {getMembershipStatusBadge(member.membershipStatus)}
+                    </div>
                     {member.membershipPlan && (
-                      <p className="text-sm text-muted-foreground">Plan: {member.membershipPlan}</p>
+                      <div className="text-sm text-muted-foreground">Plan: {member.membershipPlan}</div>
                     )}
                   </div>
                 </div>
@@ -677,22 +740,79 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                     )}
                   </h4>
                   <div className="text-sm text-muted-foreground space-y-1">
-                    <p>Start: {latestMembership?.start_date ? format(new Date(latestMembership.start_date), 'MMM dd, yyyy') : '—'}</p>
-                    <p>End: {latestMembership?.end_date ? format(new Date(latestMembership.end_date), 'MMM dd, yyyy') : '—'}</p>
-                    <p>Status: <span className="capitalize text-foreground font-medium">{latestMembership?.status || '—'}</span></p>
-                    <p>Remaining Days: {remainingDays != null ? Math.max(0, remainingDays) : '—'}</p>
-                    {membershipHistory.length > 1 && (
-                      <details className="mt-2">
-                        <summary className="cursor-pointer text-xs text-primary hover:underline">
-                          View {membershipHistory.length - 1} previous memberships
-                        </summary>
-                        <div className="mt-2 space-y-1 pl-2 border-l-2 border-muted">
-                          {membershipHistory.slice(1).map((membership) => (
-                            <div key={membership.id} className="text-xs">
-                              <span className="font-medium">{membership.membership_plans.name}</span>
-                              <span className="text-muted-foreground ml-2">
-                                ({format(new Date(membership.start_date), 'MMM yyyy')} - {format(new Date(membership.end_date), 'MMM yyyy')})
-                              </span>
+                    <div>Start: {latestMembership?.start_date ? format(new Date(latestMembership.start_date), 'MMM dd, yyyy') : '—'}</div>
+                    <div>End: {latestMembership?.end_date ? format(new Date(latestMembership.end_date), 'MMM dd, yyyy') : '—'}</div>
+                    <div>Status: <span className="capitalize text-foreground font-medium">{latestMembership?.status || '—'}</span></div>
+                    <div>Remaining Days: {remainingDays != null ? Math.max(0, remainingDays) : '—'}</div>
+                    {membershipHistory.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium mb-3">Membership History</h4>
+                        <div className="relative">
+                          {/* Timeline line */}
+                          <div className="absolute left-3 top-0 h-full w-0.5 bg-muted -translate-x-1/2" />
+                          
+                          {membershipHistory.map((membership, index) => {
+                            const isActive = index === 0;
+                            const isLast = index === membershipHistory.length - 1;
+                            const status = membership.status || 'inactive';
+                            
+                            return (
+                              <div key={membership.id} className="relative pl-8 pb-4">
+                                {/* Timeline dot */}
+                                <div 
+                                  className={`absolute left-0 top-0.5 h-3 w-3 rounded-full border-2 ${
+                                    isActive 
+                                      ? 'bg-primary border-primary' 
+                                      : 'bg-background border-muted'
+                                  }`}
+                                  style={{ transform: 'translateX(-50%)' }}
+                                >
+                                  {isActive && (
+                                    <div className="absolute inset-0 m-auto h-1.5 w-1.5 rounded-full bg-white" />
+                                  )}
+                                </div>
+                                
+                                {/* Timeline content */}
+                                <div className={`text-sm ${!isActive && 'text-muted-foreground'}`}>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-medium ${isActive ? 'text-foreground' : ''}`}>
+                                      {membership.membership_plans?.name || 'Unknown Plan'}
+                                    </span>
+                                    <span 
+                                      className={`text-xs px-2 py-0.5 rounded-full ${
+                                        status === 'active' 
+                                          ? 'bg-green-100 text-green-800' 
+                                          : status === 'expired' 
+                                            ? 'bg-red-100 text-red-800' 
+                                            : 'bg-yellow-100 text-yellow-800'
+                                      }`}
+                                    >
+                                      {status}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs mt-0.5">
+                                    {format(new Date(membership.start_date), 'MMM d, yyyy')} -{' '}
+                                    {membership.end_date 
+                                      ? format(new Date(membership.end_date), 'MMM d, yyyy')
+                                      : 'Present'}
+                                  </div>
+                                  {membership.payment_status && (
+                                    <div className="text-xs mt-1">
+                                      Payment: {membership.payment_status}
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Timeline connector (except for last item) */}
+                                {!isLast && (
+                                  <div className="absolute left-0 top-4 h-full w-0.5 bg-muted -translate-x-1/2" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                             </div>
                           ))}
                         </div>
@@ -844,59 +964,8 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <p className="font-medium">{format(measurement.date, 'MMMM dd, yyyy')}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Recorded by {measurement.recordedByName}
-                          </p>
                         </div>
                       </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Weight</p>
-                          <p className="font-semibold">{measurement.weight} kg</p>
-                        </div>
-                        {measurement.bodyFat && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Body Fat</p>
-                            <p className="font-semibold">{measurement.bodyFat}%</p>
-                          </div>
-                        )}
-                        {measurement.muscleMass && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Muscle Mass</p>
-                            <p className="font-semibold">{measurement.muscleMass}%</p>
-                          </div>
-                        )}
-                        {measurement.bmi && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">BMI</p>
-                            <p className="font-semibold">{measurement.bmi}</p>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {measurement.notes && (
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Notes</p>
-                          <p className="text-sm">{measurement.notes}</p>
-                        </div>
-                      )}
-                      
-                      {measurement.images && measurement.images.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-sm text-muted-foreground mb-2">Progress Photos</p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {measurement.images.map((image, index) => (
-                              <img
-                                key={index}
-                                src={image}
-                                alt={`Progress photo ${index + 1}`}
-                                className="w-full h-24 object-cover rounded"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>

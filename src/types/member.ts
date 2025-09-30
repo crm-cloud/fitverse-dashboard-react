@@ -53,6 +53,7 @@ export interface Member {
   updatedAt: Date;
   pointsBalance?: number;
   referralCodeUsed?: string;
+  userId?: string; // Add this field for linking to user accounts
 }
 
 export interface MemberFormData {
