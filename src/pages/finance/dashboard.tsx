@@ -15,7 +15,8 @@ import {
   FileText,
   CreditCard
 } from 'lucide-react';
-import { mockFinancialSummary, mockMonthlyData, mockTransactions } from '@/utils/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { FinanceOverviewCards } from '@/components/finance/FinanceOverviewCards';
 import { MonthlyTrendChart } from '@/components/finance/MonthlyTrendChart';
 import { CategoryBreakdownChart } from '@/components/finance/CategoryBreakdownChart';
@@ -44,6 +45,69 @@ export default function FinanceDashboard() {
   const navigate = useNavigate();
   const { currentBranchId, getAccessibleBranches } = useBranchContext();
 
+  // Fetch transactions from Supabase
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ['transactions', selectedBranch],
+    queryFn: async () => {
+      let query = supabase
+        .from('transactions')
+        .select(`
+          *,
+          transaction_categories(name, type, color),
+          payment_methods(name, type)
+        `)
+        .order('date', { ascending: false });
+      
+      if (selectedBranch !== 'all') {
+        query = query.eq('branch_id', selectedBranch);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch monthly analytics - simplified version
+  const { data: monthlyData = [], isLoading: monthlyLoading } = useQuery({
+    queryKey: ['monthly-analytics', selectedBranch],
+    queryFn: async () => {
+      // Fallback calculation - get transactions grouped by month
+      let query = supabase
+        .from('transactions')
+        .select('date, type, amount')
+        .gte('date', new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]);
+      
+      if (selectedBranch !== 'all') {
+        query = query.eq('branch_id', selectedBranch);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      // Process data to monthly format
+      const monthlyMap: Record<string, {month: string, income: number, expenses: number, profit: number}> = {};
+      
+      (data || []).forEach((transaction: any) => {
+        const date = new Date(transaction.date);
+        const monthKey = date.toLocaleDateString('en-US', { month: 'short' });
+        
+        if (!monthlyMap[monthKey]) {
+          monthlyMap[monthKey] = { month: monthKey, income: 0, expenses: 0, profit: 0 };
+        }
+        
+        if (transaction.type === 'income') {
+          monthlyMap[monthKey].income += Number(transaction.amount);
+        } else {
+          monthlyMap[monthKey].expenses += Number(transaction.amount);
+        }
+        monthlyMap[monthKey].profit = monthlyMap[monthKey].income - monthlyMap[monthKey].expenses;
+      });
+      
+      return Object.values(monthlyMap);
+    },
+  });
+
   // Initialize selected branch with current context branch if available
   // Users can switch to "All Branches" to aggregate
   useMemo(() => {
@@ -52,24 +116,45 @@ export default function FinanceDashboard() {
     }
   }, [currentBranchId]);
 
-  // Filter helpers — expect transactions to optionally have branchId
+  // Transform transactions for UI consumption
   const filteredTransactions = useMemo(() => {
-    if (selectedBranch === 'all') return mockTransactions;
-    return mockTransactions.filter((t: any) => !t.branchId || t.branchId === selectedBranch);
-  }, [selectedBranch]);
+    return transactions.map((t: any) => ({
+      id: t.id,
+      date: t.date,
+      type: t.type,
+      category: {
+        id: t.transaction_categories?.id || '',
+        name: t.transaction_categories?.name || 'Uncategorized',
+        type: t.transaction_categories?.type || t.type,
+        color: t.transaction_categories?.color || '#6B7280',
+        icon: 'DollarSign',
+        isActive: true
+      },
+      amount: Number(t.amount),
+      description: t.description || '',
+      paymentMethod: {
+        id: t.payment_methods?.id || '',
+        name: t.payment_methods?.name || 'Unknown',
+        type: t.payment_methods?.type || 'other',
+        isActive: true
+      },
+      reference: t.reference,
+      memberId: t.member_id,
+      memberName: t.member_name,
+      status: t.status,
+      createdAt: t.created_at,
+      updatedAt: t.updated_at
+    }));
+  }, [transactions]);
 
   const filteredMonthly = useMemo(() => {
-    if (selectedBranch === 'all') return mockMonthlyData;
-    return mockMonthlyData.map((m: any) => ({
-      ...m,
-      // If your monthly data supports per-branch values, filter/aggregate here
-    }));
-  }, [selectedBranch]);
+    return monthlyData;
+  }, [monthlyData]);
 
   // Aggregate monthly data by selected period for the Package Analytics line chart
   const chartDataForPeriod = useMemo(() => {
     const source = filteredMonthly;
-    if (!Array.isArray(source) || source.length === 0) return [] as any[];
+    if (!Array.isArray(source) || source.length === 0) return [];
     if (selectedPeriod === 'monthly') return source;
 
     const monthToQuarter = (month: string) => {
@@ -116,19 +201,53 @@ export default function FinanceDashboard() {
   }, [filteredMonthly, selectedPeriod]);
 
   const summaryForBranch = useMemo(() => {
-    // If you have per-transaction data, compute summary dynamically
     if (Array.isArray(filteredTransactions) && filteredTransactions.length > 0) {
       const income = filteredTransactions.filter((t: any) => t.type === 'income').reduce((s: number, t: any) => s + (t.amount || 0), 0);
       const expenses = filteredTransactions.filter((t: any) => t.type === 'expense').reduce((s: number, t: any) => s + (t.amount || 0), 0);
       const netProfit = income - expenses;
+      
+      // Calculate monthly averages
+      const monthlyIncome = income / 12;
+      const monthlyExpenses = expenses / 12;
+      const monthlyProfit = netProfit / 12;
+      
+      // Find top categories
+      const categoryTotals: Record<string, number> = {};
+      filteredTransactions.forEach((t: any) => {
+        const categoryName = t.category?.name || 'Uncategorized';
+        categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + t.amount;
+      });
+      
+      const topIncomeCategory = Object.entries(categoryTotals)
+        .filter(([_, amount]) => amount > 0)
+        .sort(([,a], [,b]) => b - a)[0]?.[0] || 'None';
+        
+      const topExpenseCategory = Object.entries(categoryTotals)
+        .filter(([_, amount]) => amount < 0)
+        .sort(([,a], [,b]) => a - b)[0]?.[0] || 'None';
+      
       return {
-        ...mockFinancialSummary,
         totalIncome: income,
         totalExpenses: expenses,
         netProfit,
+        monthlyIncome,
+        monthlyExpenses,
+        monthlyProfit,
+        topIncomeCategory,
+        topExpenseCategory,
       };
     }
-    return mockFinancialSummary;
+    
+    return {
+      totalIncome: 0,
+      totalExpenses: 0,
+      netProfit: 0,
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      monthlyProfit: 0,
+      topIncomeCategory: 'None',
+      topExpenseCategory: 'None',
+    };
   }, [filteredTransactions]);
 
   const handleAddTransaction = (data: any) => {
@@ -379,7 +498,7 @@ export default function FinanceDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <MonthlyTrendChart data={mockMonthlyData} />
+                <MonthlyTrendChart data={filteredMonthly} />
               </CardContent>
             </Card>
           </div>
