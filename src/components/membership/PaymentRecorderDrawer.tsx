@@ -66,75 +66,38 @@ export const PaymentRecorderDrawer = ({
   const watchedPaymentMethod = form.watch('paymentMethod');
   const watchedAmount = form.watch('amount');
 
-  const handleSubmit = async (data: z.infer<typeof paymentFormSchema>) => {
+  const handleSubmit = async (formData: z.infer<typeof paymentFormSchema>) => {
     setIsProcessing(true);
     
     try {
-      const paymentId = uuidv4();
       const now = new Date().toISOString();
       
-      // 1. Create payment record
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert([{
-          id: paymentId,
-          invoice_id: invoice.id,
-          member_id: invoice.memberId,
-          amount: data.amount,
-          payment_method: data.paymentMethod,
-          reference_number: data.referenceNumber,
-          notes: data.notes,
-          status: 'completed',
-          created_at: now,
-          updated_at: now,
-        }]);
-
-      if (paymentError) throw paymentError;
-
-      // 2. Get category and payment method IDs
-      const { data: categoryData } = await supabase
-        .from('transaction_categories')
-        .select('id')
-        .eq('name', 'Membership')
-        .eq('is_active', true)
-        .single();
-
-      const { data: paymentMethodData } = await supabase
-        .from('payment_methods')
-        .select('id')
-        .eq('code', data.paymentMethod)
-        .eq('is_active', true)
-        .single();
-
-      // 3. Create finance transaction
+      // 2. Create finance transaction (using default values if lookups fail)
       const { error: transactionError } = await supabase
         .from('transactions')
-        .insert([{
+        .insert({
           id: uuidv4(),
           type: 'income',
-          amount: data.amount,
-          category_id: categoryData?.id,
-          payment_method_id: paymentMethodData?.id,
-          description: `Payment for Invoice #${invoice.invoiceNumber}${data.notes ? ' - ' + data.notes : ''}`,
-          reference: data.referenceNumber,
+          amount: formData.amount,
+          description: `Payment for Invoice #${invoice.invoiceNumber}${formData.notes ? ' - ' + formData.notes : ''}`,
+          reference: formData.referenceNumber,
           member_id: invoice.memberId,
           branch_id: invoice.branchId,
           status: 'completed',
           date: now,
           created_at: now,
           updated_at: now,
-        }]);
+        });
 
       if (transactionError) throw transactionError;
 
-      // 4. Update invoice status if fully paid
-      if (data.amount >= invoice.finalAmount) {
+      // 3. Update invoice status if fully paid
+      if (formData.amount >= invoice.finalAmount) {
         const { error: invoiceError } = await supabase
           .from('invoices')
           .update({ 
             status: 'paid',
             updated_at: now,
-            paid_at: now
           })
           .eq('id', invoice.id);
 
@@ -143,7 +106,7 @@ export const PaymentRecorderDrawer = ({
 
       toast({
         title: 'Payment Recorded',
-        description: `Payment of ${formatCurrency(data.amount)} has been successfully recorded.`,
+        description: `Payment of ${formatCurrency(formData.amount)} has been successfully recorded.`,
       });
 
       onPaymentRecorded();

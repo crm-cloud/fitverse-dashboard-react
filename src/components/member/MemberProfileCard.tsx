@@ -813,11 +813,6 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                         </div>
                       </div>
                     )}
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    )}
                   </div>
 
                   {showFreezeForm && (
