@@ -79,24 +79,27 @@ export const useTeamMembers = () => {
         throw new Error('Gym ID not found');
       }
 
-      // Create user account first
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Phase 2: Use unified service instead of auth.admin (security risk)
+      const { createUserWithRole, generateTempPassword } = await import('@/services/userManagement');
+      
+      const tempPassword = generateTempPassword();
+      
+      // Create user with role using unified service
+      const result = await createUserWithRole({
         email: memberData.email,
-        password: memberData.password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: memberData.full_name,
-          role: memberData.role,
-          gym_id: authState.user.gym_id,
-          branch_id: memberData.branch_id,
-          phone: memberData.phone
-        }
+        password: tempPassword,
+        full_name: memberData.full_name,
+        phone: memberData.phone,
+        role: memberData.role as any, // staff, manager, or trainer
+        gym_id: authState.user.gym_id,
+        branch_id: memberData.branch_id,
       });
-
-      if (authError) throw authError;
-
-      // The profile will be created automatically via the trigger
-      return authData.user;
+      
+      if (result.error) {
+        throw result.error;
+      }
+      
+      return result.user;
     },
     onSuccess: () => {
       toast({

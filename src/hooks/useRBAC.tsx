@@ -352,47 +352,57 @@ const getUserRoleDefinition = (role: UserRole, teamRole?: string): RoleDefinitio
 export const RBACProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
   const [currentUser, setCurrentUser] = useState<UserWithRoles | null>(null);
+  const [userRoles, setUserRoles] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
+  // Phase 3: Fetch roles from user_roles table instead of profiles
   useEffect(() => {
     const loadUserWithRoles = async () => {
       if (!authState.user) {
         setCurrentUser(null);
+        setUserRoles([]);
         return;
       }
 
-      // First try to get from mock data
-      const mockUser = mockUsersWithRoles[authState.user.email];
-      if (mockUser) {
-        setCurrentUser(mockUser);
-        return;
-      }
-
-      // If not in mock data, create from Supabase profile
       try {
+        // Fetch roles from user_roles table
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role, branch_id')
+          .eq('user_id', authState.user.id);
+
+        if (rolesError) {
+          console.error('Error fetching user roles:', rolesError);
+          setUserRoles([]);
+        } else {
+          setUserRoles(rolesData || []);
+        }
+
+        // Fetch profile data
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', authState.user.id)
           .maybeSingle();
 
-        if (profile) {
-          const roleDefinition = getUserRoleDefinition(profile.role as UserRole, profile.team_role);
+        if (profile && rolesData && rolesData.length > 0) {
+          // Build roles array from user_roles data
+          const roles = rolesData.map(r => mockRoles[r.role]).filter(Boolean);
+          
           const userWithRoles: UserWithRoles = {
             id: profile.user_id,
             email: profile.email,
             name: profile.full_name,
-            role: profile.role as UserRole,
-            teamRole: profile.team_role as 'manager' | 'staff' | 'trainer' | undefined,
+            role: rolesData[0].role as UserRole, // Primary role
             avatar: profile.avatar_url,
             phone: profile.phone,
             joinDate: profile.created_at?.split('T')[0],
             branchId: profile.branch_id,
             branchName: authState.user.branchName,
-            roles: [roleDefinition],
+            roles: roles,
             isActive: profile.is_active,
             lastLogin: new Date(),
-            assignedBranches: (profile.role === 'super-admin' || profile.role === 'admin') ? ['all'] : [profile.branch_id].filter(Boolean),
+            assignedBranches: rolesData.map(r => r.branch_id).filter(Boolean),
             primaryBranchId: profile.branch_id
           };
           setCurrentUser(userWithRoles);
@@ -402,6 +412,7 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Error loading user roles:', error);
         setCurrentUser(null);
+        setUserRoles([]);
       }
     };
 
@@ -411,17 +422,39 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
   const getUserPermissions = (): Permission[] => {
     if (!currentUser) return [];
     
-    const rolePermissions = currentUser.roles.flatMap(role => role.permissions);
-    const customPermissions = currentUser.customPermissions || [];
-    const deniedPermissions = currentUser.deniedPermissions || [];
-    
-    const allPermissions = [...new Set([...rolePermissions, ...customPermissions])];
-    return allPermissions.filter(permission => !deniedPermissions.includes(permission));
+    // Phase 3: Combine permissions from all roles in user_roles table
+    const permissions = new Set<Permission>();
+    userRoles.forEach(userRole => {
+      const roleDef = mockRoles[userRole.role];
+      if (roleDef) {
+        roleDef.permissions.forEach(permission => permissions.add(permission));
+      }
+    });
+
+    // Add custom permissions
+    if (currentUser.customPermissions) {
+      currentUser.customPermissions.forEach(permission => permissions.add(permission));
+    }
+
+    // Remove denied permissions
+    if (currentUser.deniedPermissions) {
+      currentUser.deniedPermissions.forEach(permission => permissions.delete(permission));
+    }
+
+    return Array.from(permissions);
   };
 
   const hasPermission = (permission: Permission): boolean => {
-    const permissions = getUserPermissions();
-    return permissions.includes(permission);
+    if (!currentUser) return false;
+
+    // Super admin has all permissions
+    if (currentUser.role === 'super-admin') return true;
+
+    // Phase 3: Check permissions based on roles from user_roles table
+    return userRoles.some(userRole => {
+      const roleDef = mockRoles[userRole.role];
+      return roleDef?.permissions.includes(permission);
+    });
   };
 
   const hasAnyPermission = (permissions: Permission[]): boolean => {

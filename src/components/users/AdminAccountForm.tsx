@@ -222,40 +222,79 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           throw new Error('A user with this email already exists');
         }
 
-        // Let the Edge Function handle gym creation/assignment
-        console.log('Creating admin user account via Edge Function...');
+        // Phase 2: Use unified service instead of Edge Function
+        const { createUserWithRole, generateTempPassword } = await import('@/services/userManagement');
         
-        const { data: result, error: createError } = await supabase.functions.invoke('create-admin-account', {
-          body: {
-            email: data.email,
-            full_name: data.full_name,
-            phone: data.phone,
-            date_of_birth: data.date_of_birth,
-            subscription_plan: data.subscription_plan,
-            gym_name: data.gym_name,
-            create_new_gym: data.create_new_gym,
-            existing_gym_id: data.existing_gym_id,
-            branch_id: data.branch_id,
-            address: data.address
-          }
+        let gym_id = data.existing_gym_id;
+        
+        // Create new gym if requested
+        if (data.create_new_gym && data.gym_name) {
+          const { data: newGym, error: gymError } = await supabase
+            .from('gyms')
+            .insert({
+              name: data.gym_name,
+              subscription_plan: data.subscription_plan || 'basic',
+              status: 'active',
+              billing_email: data.email,
+            })
+            .select()
+            .single();
+          
+          if (gymError) throw new Error(`Failed to create gym: ${gymError.message}`);
+          gym_id = newGym.id;
+          
+          // Create default branch for new gym
+          const { data: newBranch, error: branchError } = await supabase
+            .from('branches')
+            .insert({
+              gym_id: gym_id,
+              name: 'Main Branch',
+              capacity: 100,
+              status: 'active',
+              address: { street: '', city: '', state: '', pincode: '' },
+              contact: { phone: data.phone || '', email: data.email },
+              hours: {
+                monday: { open: '06:00', close: '22:00' },
+                tuesday: { open: '06:00', close: '22:00' },
+                wednesday: { open: '06:00', close: '22:00' },
+                thursday: { open: '06:00', close: '22:00' },
+                friday: { open: '06:00', close: '22:00' },
+                saturday: { open: '08:00', close: '20:00' },
+                sunday: { open: '08:00', close: '20:00' },
+              }
+            })
+            .select()
+            .single();
+          
+          if (branchError) throw new Error(`Failed to create branch: ${branchError.message}`);
+          data.branch_id = newBranch.id;
+        }
+        
+        // Generate temporary password
+        const tempPassword = generateTempPassword();
+        
+        // Create admin user with unified service
+        const result = await createUserWithRole({
+          email: data.email,
+          password: tempPassword,
+          full_name: data.full_name,
+          phone: data.phone,
+          role: 'admin',
+          gym_id: gym_id,
+          branch_id: data.branch_id,
+          date_of_birth: data.date_of_birth ? new Date(data.date_of_birth) : undefined,
+          address: data.address,
         });
-
-        if (createError) {
-          console.error('Admin creation error:', createError);
-          throw new Error(`Failed to create admin account: ${createError.message}`);
+        
+        if (result.error) {
+          throw result.error;
         }
-
-        if (!result || !result.success) {
-          throw new Error(result?.error || 'Admin account creation failed');
-        }
-
-        console.log('Admin account created successfully:', result);
-
+        
         return {
           success: true,
-          user_id: result.userId,
-          gym_id: result.gymId,
-          tempPassword: result.tempPassword,
+          user_id: result.user.id,
+          gym_id: gym_id,
+          tempPassword: tempPassword,
           message: 'Admin account created successfully'
         };
 

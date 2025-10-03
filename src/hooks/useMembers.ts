@@ -39,3 +39,9 @@ export const useMemberById = (memberId: string) => {
     }
   );
 };
+
+/**
+ * Phase 5: Enable login capability for existing members
+ * Re-exports the service function for convenience
+ */
+export { enableMemberLogin } from '@/services/userManagement';
