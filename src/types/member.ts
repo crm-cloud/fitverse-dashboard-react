@@ -74,6 +74,8 @@ export interface MemberFormData {
   profilePhoto?: string;
   branchId: string;
   trainerId?: string;
+  enableLogin?: boolean;
+  password?: string;
 }
 
 export interface MemberFilters {

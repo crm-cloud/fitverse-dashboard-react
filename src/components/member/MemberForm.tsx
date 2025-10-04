@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, Upload } from 'lucide-react';
+import { CalendarIcon, Upload, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,6 +51,16 @@ const memberFormSchema = z.object({
   }),
   branchId: z.string().min(1, 'Please select a branch'),
   trainerId: z.string().optional(),
+  enableLogin: z.boolean().optional(),
+  password: z.string().min(8, 'Password must be at least 8 characters').optional(),
+}).refine((data) => {
+  if (data.enableLogin && !data.password) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Password is required when login is enabled',
+  path: ['password'],
 });
 
 interface MemberFormProps {
@@ -91,7 +101,9 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
         email: ''
       },
       branchId: '',
-      trainerId: undefined
+      trainerId: undefined,
+      enableLogin: false,
+      password: ''
     }
   });
 
@@ -152,7 +164,9 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
       },
       branchId: data.branchId,
       trainerId: data.trainerId && data.trainerId !== 'unassigned' ? data.trainerId : undefined,
-      profilePhoto: profilePhoto || undefined
+      profilePhoto: profilePhoto || undefined,
+      enableLogin: data.enableLogin,
+      password: data.password
     };
 
     onSubmit(memberData);
@@ -597,6 +611,62 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
                 )}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Login Credentials Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <UserCircle className="h-5 w-5 text-primary" />
+              <span>Login Credentials (Optional)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="enableLogin"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="h-4 w-4 rounded border-gray-300 mt-1"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Enable login access for this member
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      Allow this member to log in and access their dashboard
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {form.watch('enableLogin') && (
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter password (min 8 characters)"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </CardContent>
         </Card>
 

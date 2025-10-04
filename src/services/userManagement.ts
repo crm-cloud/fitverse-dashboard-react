@@ -157,15 +157,14 @@ export const enableMemberLogin = async (
   memberId: string, 
   email: string, 
   full_name: string,
+  password: string,
   branch_id?: string
 ): Promise<CreateUserResult> => {
   try {
-    const tempPassword = generateTempPassword();
-
     // Create auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      password: tempPassword,
+      password,
       options: {
         emailRedirectTo: `${window.location.origin}/member/dashboard`,
         data: {

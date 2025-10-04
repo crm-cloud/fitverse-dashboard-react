@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
+import { enableMemberLogin } from '@/hooks/useMembers';
 
 export const MemberCreatePage = () => {
   const navigate = useNavigate();
@@ -41,13 +42,37 @@ export const MemberCreatePage = () => {
 
       if (error) throw error;
 
+      // Enable login if requested
+      if (data.enableLogin && data.password) {
+        const loginResult = await enableMemberLogin(
+          insertResult.id,
+          data.email,
+          data.fullName,
+          data.password,
+          data.branchId
+        );
+
+        if (loginResult.error) {
+          toast({
+            title: 'Member Created (Login Setup Failed)',
+            description: `${data.fullName} was created but login setup failed: ${loginResult.error.message}`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Member Created with Login Access',
+            description: `${data.fullName} has been added and can now log in.`,
+          });
+        }
+      } else {
+        toast({
+          title: 'Member Created',
+          description: `${data.fullName} has been successfully added as a member.`,
+        });
+      }
+
       // Refresh members list
       await queryClient.invalidateQueries({ queryKey: ['members'] });
-
-      toast({
-        title: 'Member Created',
-        description: `${data.fullName} has been successfully added as a member.`,
-      });
 
       navigate('/members');
     } catch (err: any) {
