@@ -53,6 +53,7 @@ import SystemSettings from "./pages/system/SystemSettings";
 // Communication & Marketing pages
 import AnnouncementManagement from "./pages/announcements/AnnouncementManagement";
 import ReferralManagement from "./pages/referrals/ReferralManagement";
+import MemberReferralsPage from "./pages/member/referrals";
 import EmailSettings from "./pages/system/EmailSettings";
 import SMSSettings from "./pages/system/SMSSettings";
 import SystemBackup from "./pages/system/SystemBackup";
@@ -763,6 +764,16 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['member']}>
                             <DashboardLayout>
                               <MemberFeedbackPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/referrals" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberReferralsPage />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 

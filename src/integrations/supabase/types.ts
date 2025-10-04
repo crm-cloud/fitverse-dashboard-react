@@ -2674,6 +2674,89 @@ export type Database = {
           },
         ]
       }
+      referral_analytics: {
+        Row: {
+          completed_referrals: number
+          conversion_rate: number | null
+          created_at: string
+          id: string
+          pending_referrals: number
+          period_end: string
+          period_start: string
+          total_bonus_earned: number
+          total_referrals: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_referrals?: number
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          pending_referrals?: number
+          period_end: string
+          period_start: string
+          total_bonus_earned?: number
+          total_referrals?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_referrals?: number
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          pending_referrals?: number
+          period_end?: string
+          period_start?: string
+          total_bonus_earned?: number
+          total_referrals?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referral_bonus_history: {
+        Row: {
+          amount: number
+          bonus_type: string
+          created_at: string
+          id: string
+          notes: string | null
+          processed_at: string
+          processed_by: string | null
+          referral_id: string
+        }
+        Insert: {
+          amount: number
+          bonus_type: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string
+          processed_by?: string | null
+          referral_id: string
+        }
+        Update: {
+          amount?: number
+          bonus_type?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string
+          processed_by?: string | null
+          referral_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_bonus_history_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_bonuses: {
         Row: {
           amount: number
@@ -2717,6 +2800,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referral_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expiry_days: number
+          id: string
+          is_active: boolean
+          max_referrals_per_user: number | null
+          membership_bonus_amount: number
+          min_purchase_amount: number | null
+          signup_bonus_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expiry_days?: number
+          id?: string
+          is_active?: boolean
+          max_referrals_per_user?: number | null
+          membership_bonus_amount?: number
+          min_purchase_amount?: number | null
+          signup_bonus_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expiry_days?: number
+          id?: string
+          is_active?: boolean
+          max_referrals_per_user?: number | null
+          membership_bonus_amount?: number
+          min_purchase_amount?: number | null
+          signup_bonus_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       referrals: {
         Row: {
@@ -4005,6 +4127,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_referral_analytics: {
+        Args: { p_end_date: string; p_start_date: string; p_user_id: string }
+        Returns: {
+          completed_referrals: number
+          conversion_rate: number
+          pending_referrals: number
+          total_bonus: number
+          total_referrals: number
+        }[]
+      }
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -4052,6 +4184,23 @@ export type Database = {
       is_super_admin: {
         Args: { user_uuid: string }
         Returns: boolean
+      }
+      process_membership_referral_bonus: {
+        Args: { p_member_id: string; p_membership_id: string }
+        Returns: undefined
+      }
+      record_invoice_payment: {
+        Args: {
+          p_amount: number
+          p_invoice_id: string
+          p_member_id?: string
+          p_member_name?: string
+          p_notes?: string
+          p_payment_date?: string
+          p_payment_method: string
+          p_reference?: string
+        }
+        Returns: Json
       }
     }
     Enums: {

@@ -28,6 +28,7 @@ import {
   Car,
   Wrench,
   HelpCircle,
+  Gift,
   Target,
   Mail,
   Smartphone,
@@ -636,6 +637,14 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'Feedback',
         url: '/member/feedback',
         icon: MessageSquare,
+        group: 'member',
+        memberOnly: true,
+      },
+      {
+        id: 'member-referrals',
+        title: 'Referrals',
+        url: '/member/referrals',
+        icon: Gift,
         group: 'member',
         memberOnly: true,
       }
