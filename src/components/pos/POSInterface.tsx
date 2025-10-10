@@ -9,13 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Plus, Minus, Trash2, CreditCard, Banknote, Smartphone, User, Receipt } from 'lucide-react';
-import { mockProducts, mockOrders, mockMembers } from '@/utils/mockData';
+import { Search, Plus, Minus, Trash2, CreditCard, Banknote, Smartphone, User, Receipt, Loader2 } from 'lucide-react';
 import { Product, CartItem, PaymentMethod, Order } from '@/types/product';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ProductCard } from '@/components/store/ProductCard';
 import { InvoiceGenerator } from '@/components/pos/InvoiceGenerator';
+import { useProducts } from '@/hooks/useProducts';
+import { useMembers } from '@/hooks/useMembers';
+import { useCreateOrder } from '@/hooks/useOrders';
 
 export const POSInterface = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -31,16 +33,17 @@ export const POSInterface = () => {
   const { authState } = useAuth();
   const { toast } = useToast();
 
+  // Fetch products and members from Supabase
+  const { data: products = [], isLoading: productsLoading } = useProducts({ 
+    category: selectedCategory,
+    search: searchTerm 
+  });
+  const { data: members = [], isLoading: membersLoading } = useMembers();
+  const createOrderMutation = useCreateOrder();
+
   const categories = ['all', 'supplements', 'apparel', 'equipment', 'accessories', 'beverages', 'snacks'];
   
-  const filteredProducts = useMemo(() => {
-    return mockProducts.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-      return matchesSearch && matchesCategory && product.isActive;
-    });
-  }, [searchTerm, selectedCategory]);
+  const filteredProducts = products;
 
   const addToCart = (product: Product, quantity = 1) => {
     setCart(prev => {
@@ -99,40 +102,56 @@ export const POSInterface = () => {
 
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const { subtotal, tax, total } = calculateTotals();
-    const selectedMemberData = selectedMember !== 'walk-in' ? mockMembers.find(m => m.id === selectedMember) : null;
-    
-    const newOrder: Order = {
-      id: `pos-${Date.now()}`,
-      orderNumber: `POS-${String(mockOrders.length + 1).padStart(3, '0')}`,
-      items: [...cart],
-      subtotal,
-      tax,
-      total,
-      customerId: selectedMember !== 'walk-in' ? selectedMember : undefined,
-      customerName: selectedMemberData?.fullName || 'Walk-in Customer',
-      customerEmail: selectedMemberData?.email,
-      paymentMethod,
-      paymentStatus: 'paid',
-      orderStatus: 'completed',
-      createdAt: new Date().toISOString(),
-      createdBy: authState.user?.id || 'unknown',
-      notes: notes || undefined
-    };
+    try {
+      const selectedMemberData = selectedMember !== 'walk-in' ? members.find(m => m.id === selectedMember) : null;
+      
+      const order = await createOrderMutation.mutateAsync({
+        cart,
+        customerId: selectedMember !== 'walk-in' ? selectedMember : undefined,
+        customerName: selectedMemberData?.full_name || 'Walk-in Customer',
+        customerEmail: selectedMemberData?.email,
+        paymentMethod,
+        notes: notes || undefined
+      });
 
-    setLastOrder(newOrder);
-    clearCart();
-    setIsProcessing(false);
-    
-    toast({
-      title: "Payment Processed",
-      description: `Order ${newOrder.orderNumber} completed successfully`,
-    });
+      // Convert to Order type for display
+      const { subtotal, tax, total } = calculateTotals();
+      const newOrder: Order = {
+        id: order.id,
+        orderNumber: order.order_number,
+        items: [...cart],
+        subtotal,
+        tax,
+        total,
+        customerId: order.customer_id,
+        customerName: order.customer_name,
+        customerEmail: order.customer_email,
+        paymentMethod: order.payment_method as PaymentMethod,
+        paymentStatus: order.payment_status as any,
+        orderStatus: order.order_status as any,
+        createdAt: order.created_at,
+        createdBy: order.created_by || '',
+        notes: order.notes
+      };
 
-    setShowInvoice(true);
+      setLastOrder(newOrder);
+      clearCart();
+      
+      toast({
+        title: "Payment Processed",
+        description: `Order ${newOrder.orderNumber} completed successfully`,
+      });
+
+      setShowInvoice(true);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process payment",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const { subtotal, tax, total } = calculateTotals();
@@ -177,16 +196,22 @@ export const POSInterface = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredProducts.map(product => (
+              {productsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredProducts.map(product => (
                   <ProductCard
                     key={product.id}
                     product={product}
                     onQuickAdd={addToCart}
                     showAddToCart={true}
                   />
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -208,9 +233,9 @@ export const POSInterface = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="walk-in">Walk-in Customer</SelectItem>
-                  {mockMembers.map(member => (
+                  {members.map(member => (
                     <SelectItem key={member.id} value={member.id}>
-                      {member.fullName} - {member.email}
+                      {member.full_name} - {member.email}
                     </SelectItem>
                   ))}
                 </SelectContent>

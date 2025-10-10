@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Dumbbell, Clock, Users, Star, Timer } from 'lucide-react';
-import { mockWorkoutPlans } from '@/utils/mockData';
+import { Plus, Search, Dumbbell, Clock, Users, Star, Timer, Loader2 } from 'lucide-react';
+import { useWorkoutPlans } from '@/hooks/useWorkoutPlans';
 
 interface WorkoutPlanListProps {
   canCreate: boolean;
@@ -17,13 +17,15 @@ export const WorkoutPlanList = ({ canCreate }: WorkoutPlanListProps) => {
   const [filterDifficulty, setFilterDifficulty] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
 
-  const filteredPlans = mockWorkoutPlans.filter(plan => {
+  const { data: workoutPlans = [], isLoading } = useWorkoutPlans({
+    difficulty: filterDifficulty,
+    type: filterType
+  });
+
+  const filteredPlans = workoutPlans.filter(plan => {
     const matchesSearch = plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         plan.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDifficulty = filterDifficulty === 'all' || plan.difficulty === filterDifficulty;
-    const matchesType = filterType === 'all' || plan.workoutType === filterType;
-    
-    return matchesSearch && matchesDifficulty && matchesType;
+                         (plan.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   const getDifficultyColor = (difficulty: string) => {
@@ -101,8 +103,15 @@ export const WorkoutPlanList = ({ canCreate }: WorkoutPlanListProps) => {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {!isLoading && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredPlans.map((plan) => (
           <Card key={plan.id} className="hover:shadow-lg transition-all duration-200">
             <CardHeader>
@@ -123,36 +132,36 @@ export const WorkoutPlanList = ({ canCreate }: WorkoutPlanListProps) => {
                 <Badge className={getDifficultyColor(plan.difficulty)}>
                   {plan.difficulty}
                 </Badge>
-                <Badge className={getWorkoutTypeColor(plan.workoutType)}>
-                  {plan.workoutType}
+                <Badge className={getWorkoutTypeColor(plan.workout_type)}>
+                  {plan.workout_type}
                 </Badge>
               </div>
 
               <div className="space-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center justify-between">
                   <span>Duration:</span>
-                  <span className="font-medium">{plan.duration} weeks</span>
+                  <span className="font-medium">{plan.duration_weeks} weeks</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Session Time:</span>
                   <div className="flex items-center gap-1">
                     <Timer className="w-3 h-3" />
-                    <span className="font-medium">{plan.estimatedDuration} min</span>
+                    <span className="font-medium">{plan.estimated_duration} min</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Target:</span>
-                  <span className="font-medium">{plan.targetMuscleGroups.slice(0, 2).join(', ')}</span>
+                  <span className="font-medium">{plan.target_muscle_groups?.slice(0, 2).join(', ') || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Created by:</span>
-                  <span className="font-medium">{plan.createdByName}</span>
+                  <span className="font-medium">{plan.created_by_name || 'System'}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="w-4 h-4" />
-                <span>Created {plan.createdAt.toLocaleDateString()}</span>
+                <span>Created {new Date(plan.created_at).toLocaleDateString()}</span>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -167,9 +176,9 @@ export const WorkoutPlanList = ({ canCreate }: WorkoutPlanListProps) => {
             </CardContent>
           </Card>
         ))}
-      </div>
+      </div>}
 
-      {filteredPlans.length === 0 && (
+      {!isLoading && filteredPlans.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
             <Dumbbell className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
