@@ -103,6 +103,50 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
     }
   });
 
+  // Helper function to calculate membership progress percentage
+  const calculateMembershipProgress = (startDate: string, endDate: string) => {
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+    const now = Date.now();
+    
+    // If the membership hasn't started yet
+    if (now < start) return 0;
+    
+    // If the membership has already ended
+    if (now > end) return 100;
+    
+    // Calculate the progress percentage
+    const totalDuration = end - start;
+    const elapsed = now - start;
+    return Math.min(100, (elapsed / totalDuration) * 100);
+  };
+
+  // Helper function to get the appropriate gradient based on remaining days
+  const getProgressBarGradient = (daysLeft: number | null | undefined) => {
+    if (daysLeft === null || daysLeft === undefined) {
+      return 'linear-gradient(90deg, hsl(215.4, 16.3%, 56.9%), hsl(215.4, 16.3%, 66.9%))'; // Gray gradient
+    }
+    
+    if (daysLeft > 30) {
+      return 'linear-gradient(90deg, hsl(142.1, 76.2%, 46.3%), hsl(120, 73.4%, 54.9%))'; // Green gradient
+    } else if (daysLeft > 7) {
+      return 'linear-gradient(90deg, hsl(24.6, 95%, 63.1%), hsl(37, 98%, 60%))'; // Orange gradient
+    } else {
+      return 'linear-gradient(90deg, hsl(0, 84.2%, 70.2%), hsl(0, 91%, 71%))'; // Red gradient
+    }
+  };
+
+  // Helper function to calculate days elapsed since start date
+  const getDaysElapsed = (startDate: string) => {
+    const start = new Date(startDate).getTime();
+    const now = Date.now();
+    
+    if (now < start) return 0;
+    
+    const elapsedMs = now - start;
+    return Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+  };
+
   // Get available trainers sorted by utilization
   const availableTrainers = trainers?.map(trainer => ({
     ...trainer,
@@ -606,7 +650,7 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                   <h4 className="font-medium mb-2">Billing Summary</h4>
                   {latestInvoice ? (
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <p className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-1">
                         <span>Latest Invoice: <span className="text-foreground font-medium">{latestInvoice.invoice_number}</span></span>
                         <span>
                           {(() => {
@@ -619,7 +663,7 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                             return <Badge variant="secondary">Due</Badge>;
                           })()}
                         </span>
-                      </p>
+                      </div>
                       <p>Total: <span className="text-foreground font-medium">₹{Number(latestInvoice.total || 0).toLocaleString()}</span></p>
                       <p>Due: {latestInvoice.due_date}</p>
                     </div>
@@ -743,7 +787,67 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
                     <div>Start: {latestMembership?.start_date ? format(new Date(latestMembership.start_date), 'MMM dd, yyyy') : '—'}</div>
                     <div>End: {latestMembership?.end_date ? format(new Date(latestMembership.end_date), 'MMM dd, yyyy') : '—'}</div>
                     <div>Status: <span className="capitalize text-foreground font-medium">{latestMembership?.status || '—'}</span></div>
-                    <div>Remaining Days: {remainingDays != null ? Math.max(0, remainingDays) : '—'}</div>
+                    <div className="mt-6 group">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="space-y-0.5">
+                          <h4 className="text-sm font-medium text-foreground/90">Membership Progress</h4>
+                          <p className="text-xs text-muted-foreground">
+                            {latestMembership?.start_date && latestMembership?.end_date ? (
+                              `Valid until ${format(new Date(latestMembership.end_date), 'MMM d, yyyy')}`
+                            ) : 'No active membership'}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                            {remainingDays != null ? Math.max(0, remainingDays) : '—'}
+                          </span>
+                          <span className="text-sm text-muted-foreground">days left</span>
+                        </div>
+                      </div>
+                      
+                      <div className="relative">
+                        <div className="relative h-2.5 bg-muted/50 rounded-full overflow-hidden mb-1.5 group">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-20 animate-pulse-slow"></div>
+                          </div>
+                          <div 
+                            className="h-full rounded-full relative overflow-hidden transition-all duration-1000 ease-out group-hover:opacity-90"
+                            style={{
+                              width: latestMembership?.start_date && latestMembership?.end_date 
+                                ? `${calculateMembershipProgress(latestMembership.start_date, latestMembership.end_date)}%`
+                                : '0%',
+                              background: getProgressBarGradient(remainingDays),
+                              boxShadow: '0 2px 8px -1px rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            <div className="absolute inset-0 bg-white/20 animate-pulse-slow"></div>
+                          </div>
+                        </div>
+                        
+                        {/* Tooltip on hover */}
+                        {latestMembership?.start_date && latestMembership?.end_date && (
+                          <div className="absolute -top-10 left-0 right-0 flex justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <div className="bg-foreground text-background text-xs px-2 py-1 rounded-md shadow-lg whitespace-nowrap">
+                              {getDaysElapsed(latestMembership.start_date)} days elapsed
+                            </div>
+                            <div className="bg-foreground text-background text-xs px-2 py-1 rounded-md shadow-lg whitespace-nowrap">
+                              {Math.max(0, remainingDays || 0)} days remaining
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-between text-xs text-muted-foreground px-0.5">
+                        <span className="flex items-center">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-muted-foreground/40 mr-1"></span>
+                          {latestMembership?.start_date ? format(new Date(latestMembership.start_date), 'MMM d') : '—'}
+                        </span>
+                        <span className="flex items-center">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-muted-foreground/40 mr-1"></span>
+                          {latestMembership?.end_date ? format(new Date(latestMembership.end_date), 'MMM d, yyyy') : '—'}
+                        </span>
+                      </div>
+                    </div>
                     {membershipHistory.length > 0 && (
                       <div className="mt-4">
                         <h4 className="text-sm font-medium mb-3">Membership History</h4>
@@ -976,7 +1080,10 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
         </TabsContent>
 
         <TabsContent value="billing">
-          <MemberBillingCard memberId={member.id} />
+          <MemberBillingCard 
+            memberId={member.id} 
+            branchId={member.branchId || ''} 
+          />
         </TabsContent>
       </Tabs>
 

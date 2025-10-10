@@ -48,6 +48,7 @@ export function RecentTransactions({
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
+          <TableHead>Member</TableHead>
           <TableHead>Description</TableHead>
           <TableHead>Category</TableHead>
           <TableHead>Type</TableHead>
@@ -59,18 +60,14 @@ export function RecentTransactions({
       <TableBody>
         {transactions.map((transaction) => (
           <TableRow key={transaction.id}>
-            <TableCell className="font-medium">
+            <TableCell className="font-medium whitespace-nowrap">
               {format(new Date(transaction.date), 'MMM dd, yyyy')}
             </TableCell>
+            <TableCell className="font-medium">
+              {transaction.memberName || '-'}
+            </TableCell>
             <TableCell>
-              <div>
-                <div className="font-medium">{transaction.description}</div>
-                {transaction.memberName && (
-                  <div className="text-sm text-muted-foreground">
-                    {transaction.memberName}
-                  </div>
-                )}
-              </div>
+              <div className="font-medium">{transaction.description}</div>
             </TableCell>
             <TableCell>
               <div className="flex items-center gap-2">

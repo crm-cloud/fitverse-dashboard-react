@@ -21,6 +21,7 @@ import { useInvoices } from '@/hooks/useInvoices';
 
 interface MemberBillingCardProps {
   memberId: string;
+  branchId: string; // Add branchId to props
 }
 
 const getPaymentStatusInfo = (status: PaymentStatus) => {
@@ -87,7 +88,7 @@ const getDueDateAlert = (dueDate: Date, paymentStatus: PaymentStatus) => {
   return null;
 };
 
-export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
+export const MemberBillingCard = ({ memberId, branchId }: MemberBillingCardProps) => {
   const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
@@ -170,9 +171,12 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
                 finalAmount: invoice.total,
                 issueDate: new Date(invoice.date),
                 dueDate: new Date(invoice.dueDate),
-                paymentStatus: invoice.status === 'paid' ? 'paid' as PaymentStatus : 'unpaid' as PaymentStatus,
-                branchId: '',
-                branchName: '',
+                amountPaid: invoice.amountPaid || 0,
+                paymentStatus: (invoice.amountPaid && invoice.amountPaid > 0) 
+                  ? (invoice.amountPaid < invoice.total ? 'partial' : 'paid')
+                  : (invoice.status === 'draft' ? 'unpaid' : (invoice.status as PaymentStatus) || 'unpaid'),
+branchId: branchId,
+                branchName: 'Main Branch', // You might want to fetch the actual branch name
                 createdAt: new Date(invoice.createdAt)
               };
               
@@ -215,7 +219,19 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
                       <p className="text-sm text-muted-foreground">{membershipInvoice.planName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-lg">{formatCurrency(membershipInvoice.finalAmount)}</p>
+                      <p className="font-bold text-lg">
+                        {formatCurrency(membershipInvoice.finalAmount)}
+                        {membershipInvoice.paymentStatus === 'partial' && (
+                          <span className="block text-sm font-normal text-yellow-600">
+                            Paid: {formatCurrency(membershipInvoice.amountPaid)}
+                          </span>
+                        )}
+                      </p>
+                      {membershipInvoice.paymentStatus === 'partial' && (
+                        <p className="text-sm text-yellow-600 font-medium">
+                          Due: {formatCurrency(membershipInvoice.finalAmount - membershipInvoice.amountPaid)}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -260,18 +276,30 @@ export const MemberBillingCard = ({ memberId }: MemberBillingCardProps) => {
                   </div>
 
                   {/* Payment Action */}
-                  {membershipInvoice.paymentStatus !== 'paid' && (
-                    <div className="mt-4 pt-4 border-t">
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="grid grid-cols-2 gap-2">
                       <Button 
-                        onClick={() => handleRecordPayment(membershipInvoice)}
+                        variant="outline" 
                         className="w-full"
-                        variant={membershipInvoice.paymentStatus === 'overdue' ? 'destructive' : 'default'}
+                        onClick={() => window.open(`/finance/invoices/${membershipInvoice.id}`, '_blank')}
                       >
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Record Payment
+                        <Receipt className="h-4 w-4 mr-2" />
+                        View Invoice
                       </Button>
+                      {membershipInvoice.paymentStatus !== 'paid' ? (
+                        <Button 
+                          onClick={() => handleRecordPayment(membershipInvoice)}
+                          className="w-full"
+                          variant={membershipInvoice.paymentStatus === 'overdue' ? 'destructive' : 'default'}
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Record Payment
+                        </Button>
+                      ) : (
+                        <div></div> // Empty div to maintain grid layout
+                      )}
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             );

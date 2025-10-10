@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { CreditCard, Banknote, Smartphone, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { CreditCard, Banknote, Smartphone, Building2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,11 +54,64 @@ export const PaymentRecorderDrawer = ({
 }: PaymentRecorderDrawerProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch payments for this member from transactions table
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        // First, get the member ID from the invoice
+        const { data: memberData, error: memberError } = await supabase
+          .from('members')
+          .select('id')
+          .eq('id', invoice.memberId)
+          .single();
+          
+        if (memberError) throw memberError;
+        
+        if (!memberData) {
+          throw new Error('Member not found');
+        }
+        
+        // Then get all payment transactions for this member
+        const { data: transactions, error: txError } = await supabase
+          .from('transactions')
+          .select('amount, description, date')
+          .eq('member_id', memberData.id)
+          .eq('type', 'income')
+          .order('date', { ascending: false });
+          
+        if (txError) throw txError;
+        
+        // Sum up all payment amounts
+        const totalPaid = transactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+        setPaidAmount(totalPaid);
+        
+      } catch (error) {
+        console.error('Error fetching payment transactions:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch payment history',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (open) {
+      fetchPayments();
+    }
+  }, [open, invoice.id, toast]);
+
+  // Calculate remaining amount after any previous payments
+  const remainingAmount = invoice.finalAmount - paidAmount;
 
   const form = useForm<z.infer<typeof paymentFormSchema>>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-      amount: invoice.finalAmount,
+      amount: remainingAmount > 0 ? remainingAmount : 0,
       paymentMethod: 'cash',
     }
   });
@@ -72,20 +125,27 @@ export const PaymentRecorderDrawer = ({
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
       
-      // 2. Create finance transaction (using default values if lookups fail)
+      // Validate required IDs
+      if (!invoice.memberId || !invoice.branchId) {
+        throw new Error('Member ID or Branch ID is missing. Cannot process payment.');
+      }
+      
+      // 2. Create finance transaction
+      const transactionData = {
+        id: uuidv4(),
+        type: 'income',
+        amount: formData.amount,
+        description: `Payment for Invoice #${invoice.invoiceNumber}${formData.notes ? ' - ' + formData.notes : ''}`,
+        reference: formData.referenceNumber || null,
+        member_id: invoice.memberId,
+        branch_id: invoice.branchId,
+        status: 'completed',
+        date: today,
+      };
+      
       const { error: transactionError } = await supabase
         .from('transactions')
-        .insert({
-          id: uuidv4(),
-          type: 'income',
-          amount: formData.amount,
-          description: `Payment for Invoice #${invoice.invoiceNumber}${formData.notes ? ' - ' + formData.notes : ''}`,
-          reference: formData.referenceNumber,
-          member_id: invoice.memberId,
-          branch_id: invoice.branchId,
-          status: 'completed',
-          date: today,
-        });
+        .insert(transactionData);
 
       if (transactionError) throw transactionError;
 
@@ -125,15 +185,34 @@ export const PaymentRecorderDrawer = ({
       style: 'currency',
       currency: 'INR',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  if (isLoading) {
+    return (
+      <Sheet open={open} onOpenChange={onClose}>
+        <SheetContent className="w-[500px] sm:max-w-[500px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Loading Payment Information</SheetTitle>
+            <SheetDescription>
+              Please wait while we load the payment details...
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   const needsReference = watchedPaymentMethod === 'card' || 
                         watchedPaymentMethod === 'upi' || 
                         watchedPaymentMethod === 'bank-transfer';
 
-  const isPartialPayment = watchedAmount < invoice.finalAmount;
-  const isOverPayment = watchedAmount > invoice.finalAmount;
+  const isPartialPayment = watchedAmount < remainingAmount;
+  const isOverPayment = watchedAmount > remainingAmount;
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -144,6 +223,8 @@ export const PaymentRecorderDrawer = ({
             Record payment for invoice {invoice.invoiceNumber}
           </SheetDescription>
         </SheetHeader>
+        
+        <div className="space-y-4">
 
         {/* Invoice Summary */}
         <Card className="mt-6">
@@ -164,9 +245,21 @@ export const PaymentRecorderDrawer = ({
               <span>{format(invoice.dueDate, 'MMM dd, yyyy')}</span>
             </div>
             <Separator />
+            <div className="flex justify-between">
+              <span>Total Amount:</span>
+              <span>{formatCurrency(invoice.finalAmount)}</span>
+            </div>
+            {paidAmount > 0 && (
+              <div className="flex justify-between">
+                <span>Amount Paid:</span>
+                <span className="text-green-600">-{formatCurrency(paidAmount)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold">
               <span>Amount Due:</span>
-              <span>{formatCurrency(invoice.finalAmount)}</span>
+              <span className={remainingAmount > 0 ? 'text-amber-600' : 'text-green-600'}>
+                {formatCurrency(remainingAmount > 0 ? remainingAmount : 0)}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -186,7 +279,7 @@ export const PaymentRecorderDrawer = ({
                       placeholder="Enter amount"
                       step="0.01"
                       min="0.01"
-                      max={invoice.finalAmount * 1.1} // Allow 10% overpayment
+                      max={remainingAmount > 0 ? remainingAmount : 0} // Prevent overpayment
                       {...field}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                     />
@@ -196,18 +289,12 @@ export const PaymentRecorderDrawer = ({
                   {/* Payment Amount Alerts */}
                   {isPartialPayment && (
                     <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded-md">
-                      ⚠️ Partial payment: {formatCurrency(invoice.finalAmount - watchedAmount)} remaining
-                    </div>
-                  )}
-                  {isOverPayment && (
-                    <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded-md">
-                      ℹ️ Overpayment: {formatCurrency(watchedAmount - invoice.finalAmount)} excess
+                      ⚠️ Partial payment: {formatCurrency(remainingAmount - watchedAmount)} remaining
                     </div>
                   )}
                 </FormItem>
               )}
             />
-
             {/* Quick Amount Buttons */}
             <div className="flex space-x-2">
               <Button
@@ -314,6 +401,7 @@ export const PaymentRecorderDrawer = ({
             </SheetFooter>
           </form>
         </Form>
+        </div>
       </SheetContent>
     </Sheet>
   );

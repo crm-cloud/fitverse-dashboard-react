@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +35,10 @@ interface InvoiceUI {
   invoiceNumber: string;
   customerName: string;
   customerEmail?: string;
+  memberId?: string;
+  memberName?: string;
   amount: number;
+  amountPaid: number;
   status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
   dueDate: string;
   createdAt: string;
@@ -43,26 +46,33 @@ interface InvoiceUI {
 }
 
 export default function InvoicesPage() {
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: rows = [], isLoading, refetch: refetchInvoices } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*')
+        .select(`
+          *,
+          member:customer_id (id, full_name)
+        `)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     },
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const invoices: InvoiceUI[] = useMemo(() => {
     return (rows as any[]).map((r) => ({
       id: r.id,
       invoiceNumber: r.invoice_number,
-      customerName: r.customer_name,
+customerName: r.customer_name,
       customerEmail: r.customer_email ?? undefined,
+      memberId: r.member_id,
+      memberName: r.member?.full_name,
       amount: Number(r.total) || 0,
+      amountPaid: Number(r.amount_paid) || 0,
       status: (r.status as any) ?? 'draft',
       dueDate: r.due_date,
       createdAt: r.created_at,
@@ -70,7 +80,7 @@ export default function InvoicesPage() {
     }));
   }, [rows]);
 
-  const [filteredInvoices, setFilteredInvoices] = useState<InvoiceUI[]>([]);
+  const [filteredInvoices, setFilteredInvoices] = useState<InvoiceUI[]>(invoices);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<string>('');
@@ -161,7 +171,6 @@ export default function InvoicesPage() {
     setSelectedInvoice(invoice);
     setShowPaymentDialog(true);
   };
-
   const handleMarkAsPaid = async (invoiceId: string) => {
     try {
       const { error } = await supabase
@@ -169,7 +178,11 @@ export default function InvoicesPage() {
         .update({ status: 'paid' })
         .eq('id', invoiceId);
       if (error) throw error;
-      toast({ title: 'Payment Recorded', description: 'Invoice has been marked as paid successfully.' });
+      await refetchInvoices();
+      toast({
+        title: 'Payment recorded',
+        description: 'The payment has been successfully recorded.',
+      });
     } catch (e: any) {
       toast({ title: 'Failed', description: e?.message || 'Could not update invoice', variant: 'destructive' });
     }
@@ -218,7 +231,8 @@ Generated on: ${new Date().toLocaleDateString()}`;
   };
 
   // Filter invoices based on search and status
-  const filterInvoices = () => {
+  const filterInvoices = useCallback(() => {
+    if (!invoices.length) return;
     let filtered = invoices;
     
     if (searchTerm) {
@@ -250,9 +264,14 @@ Generated on: ${new Date().toLocaleDateString()}`;
     }
     
     setFilteredInvoices(filtered);
-  };
+  }, [invoices, searchTerm, statusFilter, dateFrom, dateTo, amountMin, amountMax]);
 
-  // Update filters when data, search term or status filter changes
+  // Update filteredInvoices when invoices data changes
+  React.useEffect(() => {
+    setFilteredInvoices(invoices);
+  }, [invoices]);
+
+  // Update filters when search term or filter values change
   React.useEffect(() => {
     filterInvoices();
   }, [searchTerm, statusFilter, dateFrom, dateTo, amountMin, amountMax, invoices]);

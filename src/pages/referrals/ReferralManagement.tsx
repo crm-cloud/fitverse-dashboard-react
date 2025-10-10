@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,18 +8,25 @@ import { Label } from '@/components/ui/label';
 import { Share2, Plus, Users, TrendingUp, DollarSign, Gift, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Referral {
   id: string;
-  referrerName: string;
-  referrerEmail: string;
-  referredName: string;
-  referredEmail: string;
-  status: 'pending' | 'converted' | 'expired';
-  referralCode: string;
-  bonusAmount: number;
-  createdAt: Date;
-  convertedAt?: Date;
+  referrer_id: string | null;
+  referrer_name?: string;
+  referrer_email?: string;
+  referred_email: string;
+  referred_id?: string | null;
+  referred_name?: string;
+  referral_code: string;
+  status: 'pending' | 'completed' | 'expired';
+  signup_bonus_amount: number;
+  membership_bonus_amount: number;
+  created_at: string;
+  completed_at?: string | null;
+  membership_id?: string | null;
+  converted_at?: string | null;
 }
 
 interface ReferralSettings {
@@ -28,50 +35,117 @@ interface ReferralSettings {
   isActive: boolean;
 }
 
-// TODO: Replace with real database queries once referrals table is properly configured
-const mockReferrals: Referral[] = [
-  {
-    id: '1',
-    referrerName: 'John Smith',
-    referrerEmail: 'john@email.com',
-    referredName: 'Jane Doe',
-    referredEmail: 'jane@email.com',
-    status: 'converted',
-    referralCode: 'GYM123ABC',
-    bonusAmount: 50,
-    createdAt: new Date('2024-01-10'),
-    convertedAt: new Date('2024-01-15')
-  },
-  {
-    id: '2',
-    referrerName: 'Mike Johnson',
-    referrerEmail: 'mike@email.com',
-    referredName: 'Sarah Wilson',
-    referredEmail: 'sarah@email.com',
-    status: 'pending',
-    referralCode: 'GYM456DEF',
-    bonusAmount: 50,
-    createdAt: new Date('2024-01-20')
+// Fetch referrals from the database with user information
+const fetchReferrals = async (): Promise<Referral[]> => {
+  // First, get all referrals
+  const { data: referralsData, error: referralsError } = await supabase
+    .from('referrals')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (referralsError) {
+    console.error('Error fetching referrals:', referralsError);
+    throw referralsError;
   }
-];
+
+  if (!referralsData || referralsData.length === 0) {
+    return [];
+  }
+
+  // Get unique user IDs from referrers and referred users
+  const userIds = [
+    ...new Set(
+      referralsData.flatMap(ref => [
+        ref.referrer_id,
+        ref.referred_id
+      ]).filter(Boolean) as string[]
+    )
+  ];
+
+  // Fetch user data in a single query
+  const { data: usersData, error: usersError } = await supabase
+    .from('users')
+    .select('id, email, user_metadata')
+    .in('id', userIds);
+
+  if (usersError) {
+    console.error('Error fetching user data:', usersError);
+    // Continue with just the referral data if user fetch fails
+    return referralsData.map(ref => ({
+      ...ref,
+      referrer_name: ref.referrer_id ? 'User' : 'Unknown',
+      referred_name: ref.referred_email
+    }));
+  }
+
+  // Create a map of user IDs to user data
+  const usersMap = new Map(usersData?.map(user => [user.id, user]) || []);
+
+  // Combine referral data with user information
+  return referralsData.map(ref => {
+    const referrer = ref.referrer_id ? usersMap.get(ref.referrer_id) : null;
+    const referredUser = ref.referred_id ? usersMap.get(ref.referred_id) : null;
+
+    return {
+      ...ref,
+      referrer_name: referrer?.user_metadata?.full_name || referrer?.email || 'Unknown',
+      referrer_email: referrer?.email || 'Unknown',
+      referred_name: referredUser?.user_metadata?.full_name || ref.referred_email,
+      referred_email: referredUser?.email || ref.referred_email
+    };
+  });
+};
 
 export default function ReferralManagement() {
-  const [referrals, setReferrals] = useState<Referral[]>(mockReferrals);
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState<ReferralSettings>({
     bonusAmount: 50,
     expiryDays: 30,
     isActive: true
   });
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  
+  // Fetch referrals
+  const { data: referrals = [], isLoading, error } = useQuery({
+    queryKey: ['referrals'],
+    queryFn: fetchReferrals
+  });
 
-  const stats = {
-    totalReferrals: referrals.length,
-    convertedReferrals: referrals.filter(r => r.status === 'converted').length,
-    pendingReferrals: referrals.filter(r => r.status === 'pending').length,
-    totalBonusPaid: referrals
-      .filter(r => r.status === 'converted')
-      .reduce((sum, r) => sum + r.bonusAmount, 0)
-  };
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('referrals_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'referrals' 
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['referrals'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const stats = useMemo(() => {
+    const completedReferrals = referrals.filter(r => r.status === 'completed');
+    const pendingReferrals = referrals.filter(r => r.status === 'pending');
+    
+    return {
+      totalReferrals: referrals.length,
+      completedReferrals: completedReferrals.length,
+      pendingReferrals: pendingReferrals.length,
+      totalBonusPaid: completedReferrals.reduce(
+        (sum, r) => sum + (r.signup_bonus_amount + r.membership_bonus_amount), 
+        0
+      )
+    };
+  }, [referrals]);
 
   const conversionRate = stats.totalReferrals > 0 
     ? ((stats.convertedReferrals / stats.totalReferrals) * 100).toFixed(1)
@@ -88,27 +162,57 @@ export default function ReferralManagement() {
     }
   };
 
-  const handleMarkAsConverted = (referralId: string) => {
-    setReferrals(prev => prev.map(ref => 
-      ref.id === referralId 
-        ? { ...ref, status: 'converted' as const, convertedAt: new Date() }
-        : ref
-    ));
-    toast.success('Referral marked as converted');
+  const handleMarkAsCompleted = async (referralId: string) => {
+    try {
+      const { error } = await supabase
+        .from('referrals')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', referralId);
+
+      if (error) throw error;
+      
+      toast.success('Referral marked as completed');
+    } catch (error) {
+      console.error('Error updating referral status:', error);
+      toast.error('Failed to update referral status');
+    }
   };
 
-  const handleUpdateSettings = () => {
-    toast.success('Referral settings updated successfully');
+  const handleUpdateSettings = async () => {
+    try {
+      // TODO: Update referral settings in the database
+      // This would typically update a settings table or similar
+      toast.success('Referral settings updated successfully');
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.error('Failed to update settings');
+    }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'converted': return 'default';
+      case 'completed': return 'default';
       case 'pending': return 'secondary';
       case 'expired': return 'destructive';
       default: return 'default';
     }
   };
+  
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  };
+  
+  if (isLoading) {
+    return <div>Loading referrals...</div>;
+  }
+  
+  if (error) {
+    return <div>Error loading referrals. Please try again later.</div>;
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -137,7 +241,11 @@ export default function ReferralManagement() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{conversionRate}%</div>
+            <div className="text-2xl font-bold">
+              {referrals.length > 0 
+                ? ((stats.completedReferrals / referrals.length) * 100).toFixed(1) 
+                : '0'}%
+            </div>
           </CardContent>
         </Card>
         
@@ -157,7 +265,7 @@ export default function ReferralManagement() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalBonusPaid}</div>
+            <div className="text-2xl font-bold">${stats.totalBonusPaid.toFixed(2)}</div>
           </CardContent>
         </Card>
       </div>
@@ -169,79 +277,103 @@ export default function ReferralManagement() {
         </TabsList>
         
         <TabsContent value="referrals">
-          <div className="grid gap-4">
-            {referrals.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No referrals found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start promoting the referral program to see referrals here
-                </p>
-              </Card>
-            ) : (
-              referrals.map((referral) => (
-                <Card key={referral.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CardTitle className="text-lg">
-                            {referral.referrerName} → {referral.referredName}
-                          </CardTitle>
-                          <Badge variant={getStatusColor(referral.status)}>
-                            {referral.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Referrer: {referral.referrerEmail} | Referred: {referral.referredEmail}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Code:</span>
-                          <Badge variant="outline" className="font-mono">
-                            {referral.referralCode}
-                          </Badge>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleCopyCode(referral.referralCode)}
-                          >
-                            {copiedCode === referral.referralCode ? (
-                              <Check className="w-3 h-3" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </Button>
-                        </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                    Referrer
+                  </th>
+                  <th className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                    Referred
+                  </th>
+                  <th className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                    Referral Code
+                  </th>
+                  <th className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                    Bonus Paid
+                  </th>
+                  <th className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                    Created At
+                  </th>
+                  <th className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                    Completed At
+                  </th>
+                  <th className="px-6 py-3 border-b border-gray-200 bg-gray-50"></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {referrals.map((referral) => (
+                  <tr key={referral.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium">
+                        {referral.user_profiles?.full_name || 'Unknown User'}
                       </div>
-                      
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-primary">
-                          ${referral.bonusAmount}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {referral.status === 'converted' && referral.convertedAt
-                            ? `Converted: ${referral.convertedAt.toLocaleDateString()}`
-                            : `Created: ${referral.createdAt.toLocaleDateString()}`
-                          }
-                        </p>
-                        {referral.status === 'pending' && (
-                          <Button 
-                            size="sm" 
-                            className="mt-2"
-                            onClick={() => handleMarkAsConverted(referral.id)}
-                          >
-                            Mark Converted
-                          </Button>
-                        )}
+                      <div className="text-sm text-muted-foreground">
+                        {referral.user_profiles?.email || 'No email'}
                       </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))
-            )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium">
+                        {referral.referred_user?.full_name || referral.referred_email}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {referral.referred_user?.email || referral.referred_email}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <span className="font-mono bg-muted px-2 py-1 rounded text-sm">
+                          {referral.referral_code}
+                        </span>
+                        <button 
+                          onClick={() => handleCopyCode(referral.referral_code)}
+                          className="ml-2 text-muted-foreground hover:text-foreground"
+                        >
+                          {copiedCode === referral.referral_code ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge variant={getStatusColor(referral.status)}>
+                        {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        {(referral.signup_bonus_amount + referral.membership_bonus_amount).toFixed(2)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      {formatDate(referral.created_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      {formatDate(referral.completed_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {referral.status === 'pending' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleMarkAsCompleted(referral.id)}
+                        >
+                          Mark as Completed
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </TabsContent>
-        
         <TabsContent value="settings">
           <Card>
             <CardHeader>

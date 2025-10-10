@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +18,8 @@ interface Invoice {
   invoiceNumber: string;
   customerName: string;
   customerEmail?: string;
+  memberId?: string;
+  memberName?: string;
   amount: number;
   status: string;
   dueDate: string;
@@ -46,6 +50,7 @@ export function PaymentRecorderDialog({
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
+  const queryClient = useQueryClient();
 
   const paymentMethods = [
     { value: 'cash', label: 'Cash', icon: '💵' },
@@ -68,17 +73,93 @@ export function PaymentRecorderDialog({
 
     setIsProcessing(true);
     
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: 'Payment Recorded Successfully',
-      description: `Payment of ${formatCurrency(paymentData.amount)} has been recorded for invoice ${invoice.invoiceNumber}.`,
-    });
-    
-    onPaymentRecorded();
-    setIsProcessing(false);
-    onOpenChange(false);
+    try {
+      // 1. Create payment record
+      const { data: payment, error: paymentError } = await supabase
+        .from('payments')
+        .insert([{
+          invoice_id: invoice.id,
+          amount: paymentData.amount,
+          payment_method: paymentData.method,
+          reference: paymentData.reference || null,
+          notes: paymentData.notes || null,
+          payment_date: paymentData.date,
+          status: 'completed'
+        }])
+        .select()
+        .single();
+
+      if (paymentError) throw paymentError;
+
+      // 2. Update invoice status based on payment amount
+      const { data: currentInvoice, error: invoiceFetchError } = await supabase
+        .from('invoices')
+        .select('amount_paid, total')
+        .eq('id', invoice.id)
+        .single();
+
+      if (invoiceFetchError) throw invoiceFetchError;
+
+      const newAmountPaid = (currentInvoice.amount_paid || 0) + paymentData.amount;
+      const newStatus = newAmountPaid >= currentInvoice.total ? 'paid' : 'partial';
+
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({
+          amount_paid: newAmountPaid,
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', invoice.id);
+
+      if (updateError) throw updateError;
+
+      // 3. Create transaction record
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert([{
+          type: 'income',
+          amount: paymentData.amount,
+          description: `Payment for invoice ${invoice.invoiceNumber}`,
+          reference: paymentData.reference || null,
+          status: 'completed',
+          date: paymentData.date,
+          category_id: 'payment_received',
+          payment_method: paymentData.method,
+          invoice_id: invoice.id,
+          member_id: invoice.memberId,
+          member_name: invoice.memberName || invoice.customerName
+        }])
+        .select()
+        .single();
+
+      if (transactionError) throw transactionError;
+
+      // 4. Invalidate and refetch all related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+        queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoice', invoice.id] })
+      ]);
+
+      toast({
+        title: 'Payment Recorded Successfully',
+        description: `Payment of ${formatCurrency(paymentData.amount)} has been recorded for invoice ${invoice.invoiceNumber}.`,
+      });
+      
+      // Call the onPaymentRecorded callback to trigger parent component updates
+      onPaymentRecorded();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      toast({
+        title: 'Error Recording Payment',
+        description: error instanceof Error ? error.message : 'Failed to record payment',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
