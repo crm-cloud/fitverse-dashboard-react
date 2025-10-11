@@ -3905,6 +3905,7 @@ export type Database = {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["user_role"]
+          team_role: string | null
           user_id: string
         }
         Insert: {
@@ -3912,6 +3913,7 @@ export type Database = {
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["user_role"]
+          team_role?: string | null
           user_id: string
         }
         Update: {
@@ -3919,6 +3921,7 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
+          team_role?: string | null
           user_id?: string
         }
         Relationships: []
@@ -4159,6 +4162,10 @@ export type Database = {
         Returns: string
       }
       get_user_role: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
+      get_user_team_role: {
         Args: { user_uuid: string }
         Returns: string
       }

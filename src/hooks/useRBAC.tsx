@@ -355,7 +355,7 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
   const [userRoles, setUserRoles] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-  // Phase 3: Fetch roles from user_roles table instead of profiles
+  // Phase 3: Fetch roles from user_roles table with team_role
   useEffect(() => {
     const loadUserWithRoles = async () => {
       if (!authState.user) {
@@ -365,10 +365,10 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        // Fetch roles from user_roles table
+        // Fetch roles from user_roles table including team_role
         const { data: rolesData, error: rolesError } = await supabase
           .from('user_roles')
-          .select('role, branch_id')
+          .select('role, team_role, branch_id')
           .eq('user_id', authState.user.id);
 
         if (rolesError) {
@@ -387,7 +387,18 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
 
         if (profile && rolesData && rolesData.length > 0) {
           // Build roles array from user_roles data
-          const roles = rolesData.map(r => mockRoles[r.role]).filter(Boolean);
+          // For team roles, map to team-{role} in mockRoles
+          const roles = rolesData.map(r => {
+            if (r.role === 'team' && r.team_role) {
+              const teamRoleKey = `team-${r.team_role}` as keyof typeof mockRoles;
+              return mockRoles[teamRoleKey];
+            }
+            return mockRoles[r.role];
+          }).filter(Boolean);
+          
+          // Extract team_role if user has team role
+          const teamRoleData = rolesData.find(r => r.role === 'team');
+          const teamRole = teamRoleData?.team_role as 'manager' | 'trainer' | 'staff' | undefined;
           
           const userWithRoles: UserWithRoles = {
             id: profile.user_id,
@@ -399,6 +410,7 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
             joinDate: profile.created_at?.split('T')[0],
             branchId: profile.branch_id,
             branchName: authState.user.branchName,
+            teamRole: teamRole, // Add team_role from database
             roles: roles,
             isActive: profile.is_active,
             lastLogin: new Date(),
@@ -422,10 +434,16 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
   const getUserPermissions = (): Permission[] => {
     if (!currentUser) return [];
     
-    // Phase 3: Combine permissions from all roles in user_roles table
+    // Combine permissions from all roles - handles both direct roles and team roles
     const permissions = new Set<Permission>();
     userRoles.forEach(userRole => {
-      const roleDef = mockRoles[userRole.role];
+      // For team roles, map to team-{role} in mockRoles
+      let roleKey = userRole.role;
+      if (userRole.role === 'team' && userRole.team_role) {
+        roleKey = `team-${userRole.team_role}`;
+      }
+      
+      const roleDef = mockRoles[roleKey];
       if (roleDef) {
         roleDef.permissions.forEach(permission => permissions.add(permission));
       }
@@ -450,9 +468,15 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     // Super admin has all permissions
     if (currentUser.role === 'super-admin') return true;
 
-    // Phase 3: Check permissions based on roles from user_roles table
+    // Check permissions based on roles from user_roles table (handles team roles)
     return userRoles.some(userRole => {
-      const roleDef = mockRoles[userRole.role];
+      // For team roles, map to team-{role} in mockRoles
+      let roleKey = userRole.role;
+      if (userRole.role === 'team' && userRole.team_role) {
+        roleKey = `team-${userRole.team_role}`;
+      }
+      
+      const roleDef = mockRoles[roleKey];
       return roleDef?.permissions.includes(permission);
     });
   };
