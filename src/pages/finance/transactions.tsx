@@ -40,7 +40,7 @@ const fetchTransactions = async (): Promise<Transaction[]> => {
     amount: t.amount,
     type: t.type as 'income' | 'expense',
     status: t.status as 'completed' | 'pending' | 'cancelled',
-    date: t.date,
+    date: typeof t.date === 'string' ? t.date : new Date(t.date).toISOString().split('T')[0],
     description: t.description,
     reference: t.reference || '',
     category: {
@@ -83,13 +83,14 @@ export default function TransactionsPage() {
   const handleDateFilterChange = (value: string) => {
     setDateFilter(value);
     const today = new Date();
+    const yesterdayDate = subDays(today, 1);
     
     switch (value) {
       case 'today':
         setDateRange({ from: today, to: today });
         break;
       case 'yesterday':
-        setDateRange({ from: yesterday, to: yesterday });
+        setDateRange({ from: yesterdayDate, to: yesterdayDate });
         break;
       case 'thisWeek':
         setDateRange({ from: subDays(today, 7), to: today });
@@ -119,13 +120,8 @@ export default function TransactionsPage() {
     refetchOnWindowFocus: true
   });
 
-  // Filter and transform transactions for display
-  const transactions = useMemo(() => {
-    return (allTransactions || []).map(t => ({
-      ...t,
-      date: t.date ? new Date(t.date) : new Date()
-    }));
-  }, [allTransactions]);
+  // Use transactions directly from query (already properly formatted)
+  const transactions = allTransactions || [];
 
   // Filter transactions based on date range
   const filterTransactionsByDate = useCallback((transactions: Transaction[]) => {
@@ -140,7 +136,7 @@ export default function TransactionsPage() {
     });
   }, [dateRange]);
 
-  // Get filtered transactions
+  // Get filtered transactions (already have correct date format from fetch)
   const filteredTransactions = useMemo(() => {
     return filterTransactionsByDate(transactions);
   }, [transactions, filterTransactionsByDate]);
@@ -510,7 +506,7 @@ export default function TransactionsPage() {
         </div>
       ) : (
         <TransactionTable
-          transactions={transactions}
+          transactions={filteredTransactions}
           onEdit={handleEditTransaction}
           onDelete={handleDeleteTransaction}
           onExport={handleExportTransactions}

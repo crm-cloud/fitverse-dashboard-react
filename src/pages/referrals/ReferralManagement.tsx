@@ -150,7 +150,7 @@ export default function ReferralManagement() {
   }, [referrals]);
 
   const conversionRate = stats.totalReferrals > 0 
-    ? ((stats.convertedReferrals / stats.totalReferrals) * 100).toFixed(1)
+    ? ((stats.completedReferrals / stats.totalReferrals) * 100).toFixed(1)
     : '0';
 
   const handleCopyCode = async (code: string) => {
@@ -312,18 +312,18 @@ export default function ReferralManagement() {
                   <tr key={referral.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium">
-                        {referral.user_profiles?.full_name || 'Unknown User'}
+                        {referral.referrer_name || 'Unknown User'}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {referral.user_profiles?.email || 'No email'}
+                        {referral.referrer_email || 'No email'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium">
-                        {referral.referred_user?.full_name || referral.referred_email}
+                        {referral.referred_name || referral.referred_email}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {referral.referred_user?.email || referral.referred_email}
+                        {referral.referred_email}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

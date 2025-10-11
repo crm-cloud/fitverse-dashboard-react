@@ -218,15 +218,10 @@ branchId: branchId,
                     <div className="text-right">
                       <p className="font-bold text-lg">
                         {formatCurrency(membershipInvoice.finalAmount)}
-                        {membershipInvoice.paymentStatus === 'partial' && (
-                          <span className="block text-sm font-normal text-yellow-600">
-                            Paid: {formatCurrency(membershipInvoice.amountPaid)}
-                          </span>
-                        )}
                       </p>
                       {membershipInvoice.paymentStatus === 'partial' && (
                         <p className="text-sm text-yellow-600 font-medium">
-                          Due: {formatCurrency(membershipInvoice.finalAmount - membershipInvoice.amountPaid)}
+                          Partial Payment
                         </p>
                       )}
                     </div>
