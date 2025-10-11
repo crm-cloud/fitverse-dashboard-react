@@ -38,23 +38,26 @@ const fetchTransactions = async (): Promise<Transaction[]> => {
   return (data || []).map(t => ({
     id: t.id,
     amount: t.amount,
-    type: t.type,
-    status: t.status,
+    type: t.type as 'income' | 'expense',
+    status: t.status as 'completed' | 'pending' | 'cancelled',
     date: t.date,
     description: t.description,
     reference: t.reference || '',
     category: {
       id: t.category?.id || '',
       name: t.category?.name || 'Uncategorized',
-      type: t.category?.type || 'expense'
+      type: (t.category?.type as 'income' | 'expense') || 'expense',
+      color: '',
+      icon: '',
+      isActive: true
     },
     paymentMethod: {
       id: t.paymentMethod?.id || '',
-      name: t.paymentMethod?.name || 'Unknown'
+      name: t.paymentMethod?.name || 'Unknown',
+      type: 'cash' as const,
+      isActive: true
     },
     memberId: t.member_id,
-    memberName: t.member_name,
-    invoiceId: t.invoice_id,
     createdAt: t.created_at,
     updatedAt: t.updated_at
   }));

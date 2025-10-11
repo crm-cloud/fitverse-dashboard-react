@@ -62,36 +62,38 @@ const fetchReferrals = async (): Promise<Referral[]> => {
     )
   ];
 
-  // Fetch user data in a single query
-  const { data: usersData, error: usersError } = await supabase
-    .from('users')
-    .select('id, email, user_metadata')
-    .in('id', userIds);
+  // Fetch user profiles data
+  const { data: profilesData, error: profilesError } = await supabase
+    .from('profiles')
+    .select('user_id, email, full_name')
+    .in('user_id', userIds);
 
-  if (usersError) {
-    console.error('Error fetching user data:', usersError);
+  if (profilesError) {
+    console.error('Error fetching profile data:', profilesError);
     // Continue with just the referral data if user fetch fails
     return referralsData.map(ref => ({
       ...ref,
       referrer_name: ref.referrer_id ? 'User' : 'Unknown',
-      referred_name: ref.referred_email
+      referred_name: ref.referred_email,
+      status: ref.status as 'pending' | 'completed' | 'expired'
     }));
   }
 
-  // Create a map of user IDs to user data
-  const usersMap = new Map(usersData?.map(user => [user.id, user]) || []);
+  // Create a map of user IDs to profile data
+  const profilesMap = new Map(profilesData?.map(profile => [profile.user_id, profile]) || []);
 
   // Combine referral data with user information
   return referralsData.map(ref => {
-    const referrer = ref.referrer_id ? usersMap.get(ref.referrer_id) : null;
-    const referredUser = ref.referred_id ? usersMap.get(ref.referred_id) : null;
+    const referrer = ref.referrer_id ? profilesMap.get(ref.referrer_id) : null;
+    const referredUser = ref.referred_id ? profilesMap.get(ref.referred_id) : null;
 
     return {
       ...ref,
-      referrer_name: referrer?.user_metadata?.full_name || referrer?.email || 'Unknown',
+      referrer_name: referrer?.full_name || referrer?.email || 'Unknown',
       referrer_email: referrer?.email || 'Unknown',
-      referred_name: referredUser?.user_metadata?.full_name || ref.referred_email,
-      referred_email: referredUser?.email || ref.referred_email
+      referred_name: referredUser?.full_name || ref.referred_email,
+      referred_email: referredUser?.email || ref.referred_email,
+      status: ref.status as 'pending' | 'completed' | 'expired'
     };
   });
 };

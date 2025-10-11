@@ -171,10 +171,7 @@ export const MemberBillingCard = ({ memberId, branchId }: MemberBillingCardProps
                 finalAmount: invoice.total,
                 issueDate: new Date(invoice.date),
                 dueDate: new Date(invoice.dueDate),
-                amountPaid: invoice.amountPaid || 0,
-                paymentStatus: (invoice.amountPaid && invoice.amountPaid > 0) 
-                  ? (invoice.amountPaid < invoice.total ? 'partial' : 'paid')
-                  : (invoice.status === 'draft' ? 'unpaid' : (invoice.status as PaymentStatus) || 'unpaid'),
+                paymentStatus: (invoice.status === 'paid' ? 'paid' : invoice.status === 'draft' ? 'unpaid' : 'pending') as PaymentStatus,
 branchId: branchId,
                 branchName: 'Main Branch', // You might want to fetch the actual branch name
                 createdAt: new Date(invoice.createdAt)

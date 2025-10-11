@@ -145,7 +145,16 @@ export const PaymentRecorderDrawer = ({
       
       const { error: transactionError } = await supabase
         .from('transactions')
-        .insert(transactionData);
+        .insert({
+          type: 'income',
+          amount: formData.amount,
+          description: `Membership payment - ${invoice.planName}`,
+          reference: formData.referenceNumber || `REF-${Date.now()}`,
+          member_id: invoice.memberId,
+          branch_id: invoice.branchId,
+          status: 'completed',
+          date: today
+        });
 
       if (transactionError) throw transactionError;
 

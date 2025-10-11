@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, CheckCircle, Calendar } from 'lucide-react';
+import { CreditCard, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrency } from '@/hooks/useCurrency';
 
@@ -18,6 +18,7 @@ interface Invoice {
   invoiceNumber: string;
   customerName: string;
   customerEmail?: string;
+  customerId?: string;
   memberId?: string;
   memberName?: string;
   amount: number;
@@ -74,68 +75,21 @@ export function PaymentRecorderDialog({
     setIsProcessing(true);
     
     try {
-      // 1. Create payment record
-      const { data: payment, error: paymentError } = await supabase
-        .from('payments')
-        .insert([{
-          invoice_id: invoice.id,
-          amount: paymentData.amount,
-          payment_method: paymentData.method,
-          reference: paymentData.reference || null,
-          notes: paymentData.notes || null,
-          payment_date: paymentData.date,
-          status: 'completed'
-        }])
-        .select()
-        .single();
+      // Use the database function to record payment with all related updates
+      const { data, error } = await supabase.rpc('record_invoice_payment', {
+        p_invoice_id: invoice.id,
+        p_amount: paymentData.amount,
+        p_payment_method: paymentData.method,
+        p_reference: paymentData.reference || null,
+        p_notes: paymentData.notes || null,
+        p_payment_date: paymentData.date,
+        p_member_id: invoice.customerId || null,
+        p_member_name: invoice.customerName || null
+      });
 
-      if (paymentError) throw paymentError;
+      if (error) throw error;
 
-      // 2. Update invoice status based on payment amount
-      const { data: currentInvoice, error: invoiceFetchError } = await supabase
-        .from('invoices')
-        .select('amount_paid, total')
-        .eq('id', invoice.id)
-        .single();
-
-      if (invoiceFetchError) throw invoiceFetchError;
-
-      const newAmountPaid = (currentInvoice.amount_paid || 0) + paymentData.amount;
-      const newStatus = newAmountPaid >= currentInvoice.total ? 'paid' : 'partial';
-
-      const { error: updateError } = await supabase
-        .from('invoices')
-        .update({
-          amount_paid: newAmountPaid,
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', invoice.id);
-
-      if (updateError) throw updateError;
-
-      // 3. Create transaction record
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert([{
-          type: 'income',
-          amount: paymentData.amount,
-          description: `Payment for invoice ${invoice.invoiceNumber}`,
-          reference: paymentData.reference || null,
-          status: 'completed',
-          date: paymentData.date,
-          category_id: 'payment_received',
-          payment_method: paymentData.method,
-          invoice_id: invoice.id,
-          member_id: invoice.memberId,
-          member_name: invoice.memberName || invoice.customerName
-        }])
-        .select()
-        .single();
-
-      if (transactionError) throw transactionError;
-
-      // 4. Invalidate and refetch all related queries
+      // Invalidate and refetch all related queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['invoices'] }),
         queryClient.invalidateQueries({ queryKey: ['transactions'] }),
@@ -147,7 +101,6 @@ export function PaymentRecorderDialog({
         description: `Payment of ${formatCurrency(paymentData.amount)} has been recorded for invoice ${invoice.invoiceNumber}.`,
       });
       
-      // Call the onPaymentRecorded callback to trigger parent component updates
       onPaymentRecorded();
       onOpenChange(false);
     } catch (error) {
