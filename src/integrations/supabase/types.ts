@@ -4306,6 +4306,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      is_user_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       process_membership_referral_bonus: {
         Args: { p_member_id: string; p_membership_id: string }
         Returns: undefined
