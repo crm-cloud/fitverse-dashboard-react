@@ -25,7 +25,9 @@ const mockRoles: Record<string, RoleDefinition> = {
       // Platform settings only
       'settings.view', 'settings.edit',
       // Global announcements
-      'notifications.view', 'notifications.send'
+      'notifications.view', 'notifications.send',
+      // SMS provider management (moved from admin for security)
+      'sms.providers.create', 'sms.providers.edit', 'sms.providers.delete'
     ],
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
@@ -59,9 +61,9 @@ const mockRoles: Record<string, RoleDefinition> = {
       'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
       'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
       'notifications.view', 'notifications.send',
-      // Branch communication settings (not super-admin)
+      // Branch communication settings (removed sms.providers.* - moved to super-admin)
       'sms.view', 'sms.send', 'sms.templates.view', 'sms.templates.create', 'sms.templates.edit', 'sms.templates.delete',
-      'sms.settings.view', 'sms.settings.edit', 'sms.providers.view', 'sms.providers.edit',
+      'sms.settings.view', 'sms.settings.edit', 'sms.providers.view',
       'sms.logs.view', 'sms.logs.export', 'sms.analytics.view',
       // Trainer management
       'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
@@ -115,7 +117,7 @@ const mockRoles: Record<string, RoleDefinition> = {
     scope: 'branch',
     permissions: [
       'members.view', 'members.edit',
-      'classes.view', 'classes.create', 'classes.edit', 'classes.schedule',
+      'classes.view', // Removed classes.create, classes.edit, classes.schedule
       'equipment.view',
       'analytics.view',
       'products.view',

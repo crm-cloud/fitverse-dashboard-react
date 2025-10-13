@@ -666,6 +666,277 @@ export const navigationConfig: NavigationGroup[] = [
       }
     ]
   },
+  // Manager-specific navigation
+  {
+    id: 'manager-operations',
+    title: 'Management',
+    teamRole: 'manager',
+    priority: 1,
+    items: [
+      {
+        id: 'manager-dashboard',
+        title: 'Dashboard',
+        url: '/dashboard',
+        icon: LayoutDashboard,
+        group: 'manager',
+        teamRole: 'manager',
+      },
+      {
+        id: 'manager-team',
+        title: 'Team',
+        url: '/team',
+        icon: Briefcase,
+        group: 'manager',
+        teamRole: 'manager',
+        requiredPermissions: ['team.view'],
+      },
+      {
+        id: 'manager-analytics',
+        title: 'Analytics',
+        url: '/analytics',
+        icon: BarChart3,
+        group: 'manager',
+        teamRole: 'manager',
+        requiredPermissions: ['analytics.view'],
+      }
+    ]
+  },
+  {
+    id: 'branch-management-manager',
+    title: 'Branch Management',
+    teamRole: 'manager',
+    requiredPermissions: ['branches.view'],
+    priority: 2,
+    items: [
+      {
+        id: 'branches-manager',
+        title: 'Branches',
+        url: '/branches',
+        icon: Building,
+        group: 'branch-management',
+        teamRole: 'manager',
+        requiredPermissions: ['branches.view'],
+      },
+      {
+        id: 'branches-create-manager',
+        title: 'Add Branch',
+        url: '/branches/create',
+        icon: Building,
+        group: 'branch-management',
+        teamRole: 'manager',
+        requiredPermissions: ['branches.create'],
+      }
+    ]
+  },
+  {
+    id: 'members-manager',
+    title: 'Member Management',
+    teamRole: 'manager',
+    requiredPermissions: ['members.view'],
+    priority: 3,
+    items: [
+      {
+        id: 'members-list-manager',
+        title: 'Members',
+        url: '/members',
+        icon: Users,
+        group: 'members',
+        teamRole: 'manager',
+        requiredPermissions: ['members.view'],
+      },
+      {
+        id: 'members-create-manager',
+        title: 'Add Member',
+        url: '/members/create',
+        icon: UserPlus,
+        group: 'members',
+        teamRole: 'manager',
+        requiredPermissions: ['members.create'],
+      }
+    ]
+  },
+  {
+    id: 'membership-manager',
+    title: 'Membership',
+    teamRole: 'manager',
+    priority: 4,
+    items: [
+      {
+        id: 'membership-plans-manager',
+        title: 'Plans',
+        url: '/membership/plans',
+        icon: ClipboardList,
+        group: 'membership',
+        teamRole: 'manager',
+        requiredPermissions: ['members.view'],
+      },
+      {
+        id: 'membership-add-manager',
+        title: 'Add Membership',
+        url: '/membership/add',
+        icon: CreditCard,
+        group: 'membership',
+        teamRole: 'manager',
+        requiredPermissions: ['members.edit'],
+      }
+    ]
+  },
+  {
+    id: 'classes-manager',
+    title: 'Classes & Training',
+    teamRole: 'manager',
+    priority: 5,
+    items: [
+      {
+        id: 'classes-list-manager',
+        title: 'Classes',
+        url: '/classes',
+        icon: Calendar,
+        group: 'classes',
+        teamRole: 'manager',
+        requiredPermissions: ['classes.view'],
+      },
+      {
+        id: 'classes-create-manager',
+        title: 'Create Class',
+        url: '/classes/create',
+        icon: Calendar,
+        group: 'classes',
+        teamRole: 'manager',
+        requiredPermissions: ['classes.create'],
+      },
+      {
+        id: 'trainers-manager',
+        title: 'Trainers',
+        url: '/trainers',
+        icon: Dumbbell,
+        group: 'classes',
+        teamRole: 'manager',
+        requiredPermissions: ['team.view'],
+      },
+      {
+        id: 'diet-workout-manager',
+        title: 'Diet & Workout',
+        url: '/diet-workout',
+        icon: Dumbbell,
+        group: 'classes',
+        teamRole: 'manager',
+      }
+    ]
+  },
+  {
+    id: 'communication-manager',
+    title: 'Communication',
+    teamRole: 'manager',
+    requiredPermissions: ['notifications.view'],
+    priority: 6,
+    items: [
+      {
+        id: 'announcements-manager',
+        title: 'Announcements',
+        url: '/announcements',
+        icon: Megaphone,
+        group: 'communication',
+        teamRole: 'manager',
+        requiredPermissions: ['notifications.view'],
+      }
+    ]
+  },
+  {
+    id: 'marketing-manager',
+    title: 'Marketing',
+    teamRole: 'manager',
+    priority: 7,
+    items: [
+      {
+        id: 'leads-manager',
+        title: 'Leads',
+        url: '/leads',
+        icon: UserCheck,
+        group: 'marketing',
+        teamRole: 'manager',
+        requiredPermissions: ['leads.view'],
+      },
+      {
+        id: 'referrals-manager',
+        title: 'Referrals',
+        url: '/referrals',
+        icon: Share2,
+        group: 'marketing',
+        teamRole: 'manager',
+        requiredPermissions: ['referrals.view'],
+      }
+    ]
+  },
+  {
+    id: 'operations-manager',
+    title: 'Operations',
+    teamRole: 'manager',
+    priority: 8,
+    items: [
+      {
+        id: 'attendance-manager',
+        title: 'Attendance',
+        url: '/attendance',
+        icon: UserCheck,
+        group: 'operations',
+        teamRole: 'manager',
+        requiredPermissions: ['attendance.view'],
+      },
+      {
+        id: 'lockers-manager',
+        title: 'Lockers',
+        url: '/lockers',
+        icon: Package,
+        group: 'operations',
+        teamRole: 'manager',
+        requiredPermissions: ['lockers.view'],
+      },
+      {
+        id: 'equipment-manager',
+        title: 'Equipment',
+        url: '/equipment',
+        icon: Wrench,
+        group: 'operations',
+        teamRole: 'manager',
+        requiredPermissions: ['equipment.view'],
+      }
+    ]
+  },
+  {
+    id: 'store-manager',
+    title: 'Store & POS',
+    teamRole: 'manager',
+    priority: 9,
+    items: [
+      {
+        id: 'products-manager',
+        title: 'Products',
+        url: '/products',
+        icon: Package,
+        group: 'store',
+        teamRole: 'manager',
+        requiredPermissions: ['products.view'],
+      }
+    ]
+  },
+  {
+    id: 'feedback-manager',
+    title: 'Feedback',
+    teamRole: 'manager',
+    priority: 10,
+    items: [
+      {
+        id: 'feedback-manager',
+        title: 'Feedback',
+        url: '/feedback',
+        icon: MessageSquare,
+        group: 'feedback',
+        teamRole: 'manager',
+        requiredPermissions: ['feedback.view'],
+      }
+    ]
+  },
   // Trainer-specific navigation
   {
     id: 'trainer-dashboard',
@@ -715,6 +986,31 @@ export const navigationConfig: NavigationGroup[] = [
       }
     ]
   },
+  {
+    id: 'classes-trainer',
+    title: 'Classes & Training',
+    teamRole: 'trainer',
+    priority: 2,
+    items: [
+      {
+        id: 'classes-list-trainer',
+        title: 'Classes',
+        url: '/classes',
+        icon: Calendar,
+        group: 'classes',
+        teamRole: 'trainer',
+        requiredPermissions: ['classes.view'],
+      },
+      {
+        id: 'diet-workout-trainer',
+        title: 'Diet & Workout',
+        url: '/diet-workout',
+        icon: Dumbbell,
+        group: 'classes',
+        teamRole: 'trainer',
+      }
+    ]
+  },
   // Staff-specific navigation
   {
     id: 'staff-operations',
@@ -753,6 +1049,136 @@ export const navigationConfig: NavigationGroup[] = [
         icon: LifeBuoy,
         group: 'staff',
         teamRole: 'staff',
+      }
+    ]
+  },
+  {
+    id: 'members-staff',
+    title: 'Member Management',
+    teamRole: 'staff',
+    requiredPermissions: ['members.view'],
+    priority: 2,
+    items: [
+      {
+        id: 'members-list-staff',
+        title: 'Members',
+        url: '/members',
+        icon: Users,
+        group: 'members',
+        teamRole: 'staff',
+        requiredPermissions: ['members.view'],
+      },
+      {
+        id: 'members-create-staff',
+        title: 'Add Member',
+        url: '/members/create',
+        icon: UserPlus,
+        group: 'members',
+        teamRole: 'staff',
+        requiredPermissions: ['members.create'],
+      }
+    ]
+  },
+  {
+    id: 'membership-staff',
+    title: 'Membership',
+    teamRole: 'staff',
+    priority: 3,
+    items: [
+      {
+        id: 'membership-plans-staff',
+        title: 'Plans',
+        url: '/membership/plans',
+        icon: ClipboardList,
+        group: 'membership',
+        teamRole: 'staff',
+        requiredPermissions: ['members.view'],
+      },
+      {
+        id: 'membership-add-staff',
+        title: 'Add Membership',
+        url: '/membership/add',
+        icon: CreditCard,
+        group: 'membership',
+        teamRole: 'staff',
+        requiredPermissions: ['members.edit'],
+      }
+    ]
+  },
+  {
+    id: 'classes-staff',
+    title: 'Classes',
+    teamRole: 'staff',
+    priority: 4,
+    items: [
+      {
+        id: 'classes-list-staff',
+        title: 'Classes',
+        url: '/classes',
+        icon: Calendar,
+        group: 'classes',
+        teamRole: 'staff',
+        requiredPermissions: ['classes.view'],
+      }
+    ]
+  },
+  {
+    id: 'operations-staff',
+    title: 'Operations',
+    teamRole: 'staff',
+    priority: 5,
+    items: [
+      {
+        id: 'attendance-staff',
+        title: 'Attendance',
+        url: '/attendance',
+        icon: UserCheck,
+        group: 'operations',
+        teamRole: 'staff',
+        requiredPermissions: ['attendance.view'],
+      },
+      {
+        id: 'lockers-staff',
+        title: 'Lockers',
+        url: '/lockers',
+        icon: Package,
+        group: 'operations',
+        teamRole: 'staff',
+        requiredPermissions: ['lockers.view'],
+      }
+    ]
+  },
+  {
+    id: 'store-staff',
+    title: 'Store & POS',
+    teamRole: 'staff',
+    priority: 6,
+    items: [
+      {
+        id: 'products-staff',
+        title: 'Products',
+        url: '/products',
+        icon: Package,
+        group: 'store',
+        teamRole: 'staff',
+        requiredPermissions: ['products.view'],
+      }
+    ]
+  },
+  {
+    id: 'feedback-staff',
+    title: 'Feedback',
+    teamRole: 'staff',
+    priority: 7,
+    items: [
+      {
+        id: 'feedback-staff',
+        title: 'Feedback',
+        url: '/feedback',
+        icon: MessageSquare,
+        group: 'feedback',
+        teamRole: 'staff',
+        requiredPermissions: ['feedback.view'],
       }
     ]
   }
