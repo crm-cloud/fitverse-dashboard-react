@@ -90,7 +90,7 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'team-management',
     title: 'Team Management',
-    allowedRoles: ['admin'],
+    allowedRoles: ['admin', 'super-admin'],
     requiredPermissions: ['team.view'],
     priority: 2,
     items: [
@@ -362,7 +362,7 @@ export const navigationConfig: NavigationGroup[] = [
   {
     id: 'finance',
     title: 'Finance',
-    allowedRoles: ['admin'],
+    allowedRoles: ['admin', 'team'],
     requiredPermissions: ['finance.view'],
     priority: 8,
     items: [

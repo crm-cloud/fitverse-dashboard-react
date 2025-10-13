@@ -377,6 +377,12 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
           console.error('Error fetching user roles:', rolesError);
           setUserRoles([]);
         } else {
+          console.log('🔍 [RBAC Debug] User Roles Loaded:', {
+            userId: authState.user.id,
+            email: authState.user.email,
+            rolesData,
+            rolesCount: rolesData?.length || 0
+          });
           setUserRoles(rolesData || []);
         }
 
@@ -434,22 +440,50 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
   }, [authState.user]);
 
   const getUserPermissions = (): Permission[] => {
-    if (!currentUser) return [];
+    if (!currentUser) {
+      console.warn('⚠️ [RBAC] No current user, returning empty permissions');
+      return [];
+    }
     
-    // Combine permissions from all roles - handles both direct roles and team roles
-    const permissions = new Set<Permission>();
-    userRoles.forEach(userRole => {
-      // For team roles, map to team-{role} in mockRoles
-      let roleKey = userRole.role;
-      if (userRole.role === 'team' && userRole.team_role) {
-        roleKey = `team-${userRole.team_role}`;
-      }
-      
-      const roleDef = mockRoles[roleKey];
-      if (roleDef) {
-        roleDef.permissions.forEach(permission => permissions.add(permission));
-      }
+    console.log('🔍 [RBAC Debug] getUserPermissions called:', {
+      hasCurrentUser: !!currentUser,
+      currentUserRole: currentUser?.role,
+      currentUserTeamRole: currentUser?.teamRole,
+      userRolesCount: userRoles.length,
+      userRolesData: userRoles
     });
+    
+    const permissions = new Set<Permission>();
+    
+    // Check if userRoles is loaded
+    if (userRoles && userRoles.length > 0) {
+      // Primary path: Use userRoles from database
+      userRoles.forEach(userRole => {
+        let roleKey = userRole.role;
+        if (userRole.role === 'team' && userRole.team_role) {
+          roleKey = `team-${userRole.team_role}`;
+        }
+        
+        console.log('🔍 [RBAC Debug] Processing role:', {
+          userRole,
+          roleKey,
+          roleDefFound: !!mockRoles[roleKey],
+          permissionsCount: mockRoles[roleKey]?.permissions.length || 0
+        });
+        
+        const roleDef = mockRoles[roleKey];
+        if (roleDef) {
+          roleDef.permissions.forEach(permission => permissions.add(permission));
+        } else {
+          console.error('❌ [RBAC] Role definition not found for:', roleKey);
+        }
+      });
+    } else {
+      // Fallback: Use currentUser.role directly if userRoles not yet loaded
+      console.warn('⚠️ [RBAC] userRoles empty, using fallback from currentUser.role');
+      const fallbackPermissions = getRolePermissions(currentUser.role, currentUser.teamRole);
+      fallbackPermissions.forEach(p => permissions.add(p));
+    }
 
     // Add custom permissions
     if (currentUser.customPermissions) {
@@ -461,7 +495,15 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
       currentUser.deniedPermissions.forEach(permission => permissions.delete(permission));
     }
 
-    return Array.from(permissions);
+    const finalPermissions = Array.from(permissions);
+    console.log('✅ [RBAC] getUserPermissions result:', {
+      role: currentUser.role,
+      teamRole: currentUser.teamRole,
+      permissionsCount: finalPermissions.length,
+      samplePermissions: finalPermissions.slice(0, 5)
+    });
+
+    return finalPermissions;
   };
 
   const hasPermission = (permission: Permission): boolean => {
@@ -470,17 +512,23 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     // Super admin has all permissions
     if (currentUser.role === 'super-admin') return true;
 
-    // Check permissions based on roles from user_roles table (handles team roles)
-    return userRoles.some(userRole => {
-      // For team roles, map to team-{role} in mockRoles
-      let roleKey = userRole.role;
-      if (userRole.role === 'team' && userRole.team_role) {
-        roleKey = `team-${userRole.team_role}`;
-      }
-      
-      const roleDef = mockRoles[roleKey];
-      return roleDef?.permissions.includes(permission);
-    });
+    // Check if userRoles is loaded
+    if (userRoles && userRoles.length > 0) {
+      // Primary path: Check using userRoles from database
+      return userRoles.some(userRole => {
+        let roleKey = userRole.role;
+        if (userRole.role === 'team' && userRole.team_role) {
+          roleKey = `team-${userRole.team_role}`;
+        }
+        
+        const roleDef = mockRoles[roleKey];
+        return roleDef?.permissions.includes(permission);
+      });
+    } else {
+      // Fallback: Use currentUser.role directly
+      const permissions = getRolePermissions(currentUser.role, currentUser.teamRole);
+      return permissions.includes(permission);
+    }
   };
 
   const hasAnyPermission = (permissions: Permission[]): boolean => {
