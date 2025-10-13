@@ -5,7 +5,7 @@ import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/auth';
 
-// Updated role definitions with role-specific permissions
+// Role definitions - metadata only (permissions fetched from database)
 const mockRoles: Record<string, RoleDefinition> = {
   'super-admin': {
     id: 'super-admin',
@@ -14,21 +14,7 @@ const mockRoles: Record<string, RoleDefinition> = {
     color: '#dc2626',
     isSystem: true,
     scope: 'global',
-    permissions: [
-      // Platform-level system management
-      'system.view', 'system.manage', 'system.backup', 'system.restore',
-      // SaaS gym management (not branch-specific)
-      'users.view', 'users.create', 'users.edit', 'users.delete', 'users.export',
-      'roles.view', 'roles.create', 'roles.edit', 'roles.delete',
-      // Global analytics and reporting
-      'analytics.view', 'reports.view', 'reports.export',
-      // Platform settings only
-      'settings.view', 'settings.edit',
-      // Global announcements
-      'notifications.view', 'notifications.send',
-      // SMS provider management (moved from admin for security)
-      'sms.providers.create', 'sms.providers.edit', 'sms.providers.delete'
-    ],
+    permissions: [], // Permissions loaded from database
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   },
@@ -39,43 +25,7 @@ const mockRoles: Record<string, RoleDefinition> = {
     color: '#ea580c',
     isSystem: true,
     scope: 'global',
-    permissions: [
-      // Branch management
-      'branches.view', 'branches.create', 'branches.edit', 'branches.delete',
-      // User management within gym
-      'users.view', 'users.create', 'users.edit', 'users.export',
-      // Full operational permissions
-      'members.view', 'members.create', 'members.edit', 'members.delete', 'members.export',
-      'team.view', 'team.create', 'team.edit', 'team.delete',
-      'classes.view', 'classes.create', 'classes.edit', 'classes.delete', 'classes.schedule',
-      'equipment.view', 'equipment.create', 'equipment.edit', 'equipment.delete',
-      'lockers.view', 'lockers.create', 'lockers.edit', 'lockers.delete', 'lockers.assign', 'lockers.release',
-      'finance.view', 'finance.create', 'finance.edit', 'finance.process',
-      'analytics.view', 'reports.view', 'reports.export',
-      'settings.view', 'settings.edit',
-      'products.view', 'products.create', 'products.edit', 'products.delete',
-      'pos.view', 'pos.process',
-      'leads.view', 'leads.create', 'leads.edit', 'leads.delete', 'leads.assign', 'leads.export',
-      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process',
-      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.delete', 'feedback.respond',
-      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete', 'tasks.assign',
-      'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
-      'notifications.view', 'notifications.send',
-      // Branch communication settings (removed sms.providers.* - moved to super-admin)
-      'sms.view', 'sms.send', 'sms.templates.view', 'sms.templates.create', 'sms.templates.edit', 'sms.templates.delete',
-      'sms.settings.view', 'sms.settings.edit', 'sms.providers.view',
-      'sms.logs.view', 'sms.logs.export', 'sms.analytics.view',
-      // Trainer management
-      'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
-      'trainer.workouts.create', 'trainer.workouts.assign', 'trainer.progress.track', 'trainer.earnings.view',
-      // Staff operations
-      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report',
-      // Attendance and device management
-      'attendance.view', 'attendance.create', 'attendance.edit', 'attendance.delete', 'attendance.export',
-      'attendance.checkin.manual', 'attendance.checkout.manual', 'attendance.approve', 'attendance.reports.view',
-      'devices.view', 'devices.create', 'devices.edit', 'devices.delete', 'devices.sync', 'devices.settings',
-      'devices.maintenance', 'devices.restart', 'devices.logs.view'
-    ],
+    permissions: [], // Permissions loaded from database
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   },
@@ -86,25 +36,7 @@ const mockRoles: Record<string, RoleDefinition> = {
     color: '#0ea5e9',
     isSystem: true,
     scope: 'branch',
-    permissions: [
-      'members.view', 'members.create', 'members.edit', 'members.export',
-      'team.view', 'team.create', 'team.edit',
-      'classes.view', 'classes.create', 'classes.edit', 'classes.schedule',
-      'equipment.view', 'equipment.edit',
-      'finance.view', 'finance.edit',
-      'analytics.view', 'reports.view',
-      'products.view', 'products.edit',
-      'pos.view', 'pos.process',
-      'leads.view', 'leads.create', 'leads.edit', 'leads.assign', 'leads.export',
-      'referrals.view', 'referrals.create', 'referrals.edit', 'referrals.process',
-      'feedback.view', 'feedback.create', 'feedback.edit', 'feedback.respond',
-      'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.assign',
-      'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
-      'notifications.view', 'notifications.send',
-      'sms.view', 'sms.send', 'sms.templates.view', 'sms.logs.view',
-      'trainer.schedule.view', 'trainer.clients.view', 'trainer.workouts.assign',
-      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report'
-    ],
+    permissions: [], // Permissions loaded from database
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   },
@@ -115,17 +47,7 @@ const mockRoles: Record<string, RoleDefinition> = {
     color: '#16a34a',
     isSystem: true,
     scope: 'branch',
-    permissions: [
-      'members.view', 'members.edit',
-      'classes.view', // Removed classes.create, classes.edit, classes.schedule
-      'equipment.view',
-      'analytics.view',
-      'products.view',
-      'feedback.view', 'feedback.create', 'feedback.edit',
-      'diet-workout.view', 'diet-workout.create', 'diet-workout.edit', 'diet-workout.assign',
-      'trainer.schedule.view', 'trainer.schedule.manage', 'trainer.clients.view', 'trainer.clients.manage',
-      'trainer.workouts.create', 'trainer.workouts.assign', 'trainer.progress.track', 'trainer.earnings.view'
-    ],
+    permissions: [], // Permissions loaded from database
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   },
@@ -136,19 +58,7 @@ const mockRoles: Record<string, RoleDefinition> = {
     color: '#7c3aed',
     isSystem: true,
     scope: 'branch',
-    permissions: [
-      'members.view', 'members.create', 'members.edit',
-      'classes.view',
-      'equipment.view',
-      'analytics.view',
-      'products.view',
-      'pos.view', 'pos.process',
-      'leads.view', 'leads.create', 'leads.edit',
-      'referrals.view', 'referrals.create',
-      'feedback.view', 'feedback.create', 'feedback.respond',
-      'tasks.view', 'tasks.create', 'tasks.edit',
-      'staff.checkin.process', 'staff.support.handle', 'staff.orientation.conduct', 'staff.maintenance.report'
-    ],
+    permissions: [], // Permissions loaded from database
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   },
@@ -159,15 +69,7 @@ const mockRoles: Record<string, RoleDefinition> = {
     color: '#dc2626',
     isSystem: true,
     scope: 'self',
-    permissions: [
-      'classes.view',
-      'equipment.view',
-      'finance.view',
-      'products.view',
-      'referrals.view', 'referrals.create',
-      'feedback.create',
-      'diet-workout.view'
-    ],
+    permissions: [], // Permissions loaded from database
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-01')
   }
@@ -355,19 +257,21 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
   const [currentUser, setCurrentUser] = useState<UserWithRoles | null>(null);
   const [userRoles, setUserRoles] = useState<any[]>([]);
+  const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-  // Phase 3: Fetch roles from user_roles table with team_role
+  // Fetch roles and permissions from database
   useEffect(() => {
-    const loadUserWithRoles = async () => {
+    const loadUserWithRolesAndPermissions = async () => {
       if (!authState.user) {
         setCurrentUser(null);
         setUserRoles([]);
+        setUserPermissions([]);
         return;
       }
 
       try {
-        // Fetch roles from user_roles table including team_role
+        // Step 1: Fetch roles from user_roles table
         const { data: rolesData, error: rolesError } = await supabase
           .from('user_roles')
           .select('role, team_role, branch_id')
@@ -376,6 +280,7 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
         if (rolesError) {
           console.error('Error fetching user roles:', rolesError);
           setUserRoles([]);
+          setUserPermissions([]);
         } else {
           console.log('🔍 [RBAC Debug] User Roles Loaded:', {
             userId: authState.user.id,
@@ -384,9 +289,59 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
             rolesCount: rolesData?.length || 0
           });
           setUserRoles(rolesData || []);
+
+          // Step 2: Fetch permissions for these roles from database
+          if (rolesData && rolesData.length > 0) {
+            // Get role IDs from roles table based on role names
+            const roleNames = rolesData.map(r => {
+              if (r.role === 'team' && r.team_role) {
+                return `team-${r.team_role}`;
+              }
+              return r.role;
+            });
+
+            const { data: roleRecords } = await supabase
+              .from('roles')
+              .select('id, name')
+              .in('name', roleNames);
+
+            if (roleRecords && roleRecords.length > 0) {
+              const roleIds = roleRecords.map(r => r.id);
+
+              // Fetch permissions via role_permissions junction table
+              const { data: permissionsData, error: permissionsError } = await supabase
+                .from('role_permissions')
+                .select(`
+                  permissions (
+                    name
+                  )
+                `)
+                .in('role_id', roleIds);
+
+              if (permissionsError) {
+                console.error('❌ [RBAC] Failed to fetch permissions:', permissionsError);
+                setUserPermissions([]);
+              } else {
+                // Extract permission names
+                const permissions = permissionsData
+                  .map(rp => (rp.permissions as any)?.name)
+                  .filter(Boolean) as Permission[];
+
+                console.log('✅ [RBAC] Permissions loaded from database:', {
+                  permissionsCount: permissions.length,
+                  samplePermissions: permissions.slice(0, 5)
+                });
+
+                setUserPermissions(permissions);
+              }
+            } else {
+              console.warn('⚠️ [RBAC] No role records found in database');
+              setUserPermissions([]);
+            }
+          }
         }
 
-        // Fetch profile data
+        // Step 3: Fetch profile data
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -395,7 +350,6 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
 
         if (profile && rolesData && rolesData.length > 0) {
           // Build roles array from user_roles data
-          // For team roles, map to team-{role} in mockRoles
           const roles = rolesData.map(r => {
             if (r.role === 'team' && r.team_role) {
               const teamRoleKey = `team-${r.team_role}` as keyof typeof mockRoles;
@@ -412,13 +366,13 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
             id: profile.user_id,
             email: profile.email,
             name: profile.full_name,
-            role: rolesData[0].role as UserRole, // Primary role
+            role: rolesData[0].role as UserRole,
             avatar: profile.avatar_url,
             phone: profile.phone,
             joinDate: profile.created_at?.split('T')[0],
             branchId: profile.branch_id,
             branchName: authState.user.branchName,
-            teamRole: teamRole, // Add team_role from database
+            teamRole: teamRole,
             roles: roles,
             isActive: profile.is_active,
             lastLogin: new Date(),
@@ -430,62 +384,24 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
           setCurrentUser(null);
         }
       } catch (error) {
-        console.error('Error loading user roles:', error);
+        console.error('Error loading user roles and permissions:', error);
         setCurrentUser(null);
         setUserRoles([]);
+        setUserPermissions([]);
       }
     };
 
-    loadUserWithRoles();
+    loadUserWithRolesAndPermissions();
   }, [authState.user]);
 
   const getUserPermissions = (): Permission[] => {
     if (!currentUser) {
-      console.warn('⚠️ [RBAC] No current user, returning empty permissions');
       return [];
     }
-    
-    console.log('🔍 [RBAC Debug] getUserPermissions called:', {
-      hasCurrentUser: !!currentUser,
-      currentUserRole: currentUser?.role,
-      currentUserTeamRole: currentUser?.teamRole,
-      userRolesCount: userRoles.length,
-      userRolesData: userRoles
-    });
-    
-    const permissions = new Set<Permission>();
-    
-    // Check if userRoles is loaded
-    if (userRoles && userRoles.length > 0) {
-      // Primary path: Use userRoles from database
-      userRoles.forEach(userRole => {
-        let roleKey = userRole.role;
-        if (userRole.role === 'team' && userRole.team_role) {
-          roleKey = `team-${userRole.team_role}`;
-        }
-        
-        console.log('🔍 [RBAC Debug] Processing role:', {
-          userRole,
-          roleKey,
-          roleDefFound: !!mockRoles[roleKey],
-          permissionsCount: mockRoles[roleKey]?.permissions.length || 0
-        });
-        
-        const roleDef = mockRoles[roleKey];
-        if (roleDef) {
-          roleDef.permissions.forEach(permission => permissions.add(permission));
-        } else {
-          console.error('❌ [RBAC] Role definition not found for:', roleKey);
-        }
-      });
-    } else {
-      // Fallback: Use currentUser.role directly if userRoles not yet loaded
-      console.warn('⚠️ [RBAC] userRoles empty, using fallback from currentUser.role');
-      const fallbackPermissions = getRolePermissions(currentUser.role, currentUser.teamRole);
-      fallbackPermissions.forEach(p => permissions.add(p));
-    }
 
-    // Add custom permissions
+    // Add custom permissions if any
+    const permissions = new Set(userPermissions);
+    
     if (currentUser.customPermissions) {
       currentUser.customPermissions.forEach(permission => permissions.add(permission));
     }
@@ -495,15 +411,7 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
       currentUser.deniedPermissions.forEach(permission => permissions.delete(permission));
     }
 
-    const finalPermissions = Array.from(permissions);
-    console.log('✅ [RBAC] getUserPermissions result:', {
-      role: currentUser.role,
-      teamRole: currentUser.teamRole,
-      permissionsCount: finalPermissions.length,
-      samplePermissions: finalPermissions.slice(0, 5)
-    });
-
-    return finalPermissions;
+    return Array.from(permissions);
   };
 
   const hasPermission = (permission: Permission): boolean => {
@@ -512,23 +420,8 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     // Super admin has all permissions
     if (currentUser.role === 'super-admin') return true;
 
-    // Check if userRoles is loaded
-    if (userRoles && userRoles.length > 0) {
-      // Primary path: Check using userRoles from database
-      return userRoles.some(userRole => {
-        let roleKey = userRole.role;
-        if (userRole.role === 'team' && userRole.team_role) {
-          roleKey = `team-${userRole.team_role}`;
-        }
-        
-        const roleDef = mockRoles[roleKey];
-        return roleDef?.permissions.includes(permission);
-      });
-    } else {
-      // Fallback: Use currentUser.role directly
-      const permissions = getRolePermissions(currentUser.role, currentUser.teamRole);
-      return permissions.includes(permission);
-    }
+    // Check against database-loaded permissions
+    return userPermissions.includes(permission);
   };
 
   const hasAnyPermission = (permissions: Permission[]): boolean => {
