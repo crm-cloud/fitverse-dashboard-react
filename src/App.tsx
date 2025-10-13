@@ -351,13 +351,11 @@ const App = () => (
                         <Route 
                           path="/roles" 
                           element={
-                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                               <DashboardLayout>
-                                 <Suspense fallback={<PageLoadingState />}>
-                                   <lazyRoutes.RoleManagement />
-                                 </Suspense>
-                               </DashboardLayout>
-                            </ProtectedRoute>
+                            <RouteGuard allowedRoles={['super-admin']}>
+                              <Suspense fallback={<PageLoadingState />}>
+                                <lazyRoutes.RoleManagement />
+                              </Suspense>
+                            </RouteGuard>
                           } 
                         />
                         <Route 

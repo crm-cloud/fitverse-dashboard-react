@@ -20,7 +20,7 @@ export const lazyRoutes = {
   // Major pages
   UserManagement: createLazyComponent(() => import('@/pages/users/user-management').then(m => ({ default: m.default }))),
   UserEdit: createLazyComponent(() => import('@/pages/users/edit').then(m => ({ default: m.default }))),
-  RoleManagement: createLazyComponent(() => import('@/pages/RoleManagement').then(m => ({ default: m.default }))),
+  RoleManagement: lazy(() => import('@/pages/roles/RoleManagement')),
   TeamManagement: createLazyComponent(() => import('@/pages/TeamManagement').then(m => ({ default: m.default }))),
   FinanceDashboard: createLazyComponent(() => import('@/pages/finance/dashboard').then(m => ({ default: m.default }))),
   TransactionsPage: createLazyComponent(() => import('@/pages/finance/transactions').then(m => ({ default: m.default }))),
