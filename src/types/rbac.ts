@@ -96,6 +96,7 @@ export interface RBACContext {
   isTrainer: () => boolean;
   isStaff: () => boolean;
   isManager: () => boolean;
+  isLoadingPermissions: boolean;
 }
 
 export interface AuditLog {

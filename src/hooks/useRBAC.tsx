@@ -258,15 +258,19 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<UserWithRoles | null>(null);
   const [userRoles, setUserRoles] = useState<any[]>([]);
   const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
   // Fetch roles and permissions from database
   useEffect(() => {
     const loadUserWithRolesAndPermissions = async () => {
+      setIsLoadingPermissions(true);
+      
       if (!authState.user) {
         setCurrentUser(null);
         setUserRoles([]);
         setUserPermissions([]);
+        setIsLoadingPermissions(false);
         return;
       }
 
@@ -388,6 +392,8 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
         setCurrentUser(null);
         setUserRoles([]);
         setUserPermissions([]);
+      } finally {
+        setIsLoadingPermissions(false);
       }
     };
 
@@ -476,7 +482,8 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     getCurrentBranchId,
     isTrainer,
     isStaff,
-    isManager
+    isManager,
+    isLoadingPermissions
   };
 
   return (

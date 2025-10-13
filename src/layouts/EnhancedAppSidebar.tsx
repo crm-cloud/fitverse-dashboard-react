@@ -29,14 +29,26 @@ export function EnhancedAppSidebar() {
   
   const collapsed = state === 'collapsed';
 
-  if (!authState.user) return null;
+  if (!authState.user) {
+    console.warn('⚠️ [Sidebar] Rendering without user - this should not happen');
+    return null;
+  }
 
   // Get filtered navigation groups using centralized configuration
+  const userPermissions = getUserPermissions();
   const navigationGroups = getNavigationForUser(
     authState.user.role,
-    getUserPermissions(),
+    userPermissions,
     authState.user.teamRole
   );
+
+  console.log('🎯 [Sidebar] Navigation loaded:', {
+    role: authState.user.role,
+    teamRole: authState.user.teamRole,
+    permissionsCount: userPermissions.length,
+    navigationGroupsCount: navigationGroups.length,
+    totalNavItems: navigationGroups.reduce((sum, g) => sum + g.items.length, 0)
+  });
 
   const isActive = (path: string) => currentPath === path;
 
