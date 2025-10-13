@@ -12,7 +12,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useAuth } from '@/hooks/useAuth';
 import { useRBAC } from '@/hooks/useRBAC';
 import { UserRole } from '@/types/auth';
 import { Badge } from '@/components/ui/badge';
@@ -22,14 +21,13 @@ import { useState } from 'react';
 export function EnhancedAppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { authState } = useAuth();
-  const { getUserPermissions } = useRBAC();
+  const { currentUser, getUserPermissions } = useRBAC();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const currentPath = location.pathname;
   
   const collapsed = state === 'collapsed';
 
-  if (!authState.user) {
+  if (!currentUser) {
     console.warn('⚠️ [Sidebar] Rendering without user - this should not happen');
     return null;
   }
@@ -37,14 +35,14 @@ export function EnhancedAppSidebar() {
   // Get filtered navigation groups using centralized configuration
   const userPermissions = getUserPermissions();
   const navigationGroups = getNavigationForUser(
-    authState.user.role,
+    currentUser.role,
     userPermissions,
-    authState.user.teamRole
+    currentUser.teamRole
   );
 
   console.log('🎯 [Sidebar] Navigation loaded:', {
-    role: authState.user.role,
-    teamRole: authState.user.teamRole,
+    role: currentUser.role,
+    teamRole: currentUser.teamRole,
     permissionsCount: userPermissions.length,
     navigationGroupsCount: navigationGroups.length,
     totalNavItems: navigationGroups.reduce((sum, g) => sum + g.items.length, 0)
@@ -128,11 +126,11 @@ export function EnhancedAppSidebar() {
                     <h2 className="font-bold text-sidebar-foreground">GymFit Pro</h2>
                     <div className="flex items-center gap-2">
                       <p className="text-xs text-sidebar-foreground/60">
-                        {getRoleDisplayName(authState.user.role, authState.user.teamRole)}
+                        {getRoleDisplayName(currentUser.role, currentUser.teamRole)}
                       </p>
-                      {authState.user.teamRole && (
+                      {currentUser.teamRole && (
                         <Badge variant="secondary" className="text-xs px-1 py-0">
-                          {authState.user.teamRole}
+                          {currentUser.teamRole}
                         </Badge>
                       )}
                     </div>
@@ -144,7 +142,7 @@ export function EnhancedAppSidebar() {
 
           {/* Branch Selector for non-global roles */}
           <AnimatePresence>
-            {!collapsed && (authState.user.role === 'team' || authState.user.role === 'member') && (
+            {!collapsed && (currentUser.role === 'team' || currentUser.role === 'member') && (
               <motion.div
                 variants={contentVariants}
                 initial="collapsed"
@@ -155,7 +153,7 @@ export function EnhancedAppSidebar() {
               >
                 <div className="flex items-center gap-2 text-sm text-sidebar-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span className="font-medium">{authState.user.branchName || 'No Branch'}</span>
+                  <span className="font-medium">{currentUser.branchName || 'No Branch'}</span>
                 </div>
               </motion.div>
             )}
