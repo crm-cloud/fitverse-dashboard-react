@@ -623,6 +623,14 @@ export const navigationConfig: NavigationGroup[] = [
         icon: TrendingUp,
         group: 'member',
         memberOnly: true,
+      },
+      {
+        id: 'member-diet-workout',
+        title: 'Diet & Workout',
+        url: '/member/diet-workout',
+        icon: Dumbbell,
+        group: 'member',
+        memberOnly: true,
       }
     ]
   },

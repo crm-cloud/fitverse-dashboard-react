@@ -6,33 +6,80 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Plus, Star, TrendingUp } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { mockFeedback, mockFeedbackStats, mockMembers } from '@/utils/mockData';
+import { useMemberProfile } from '@/hooks/useMemberProfile';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
 
 export const MemberFeedbackPage = () => {
-  const { authState } = useAuth();
   const { toast } = useToast();
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const { data: member, isLoading: memberLoading } = useMemberProfile();
   
-  const member = mockMembers.find(m => m.email === authState.user?.email);
-  const memberFeedback = mockFeedback.filter(f => f.memberId === member?.id);
+  const { data: memberFeedback = [], isLoading: feedbackLoading } = useSupabaseQuery(
+    ['member-feedback', member?.id],
+    async () => {
+      if (!member?.id) return [];
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('member_id', member.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    { enabled: !!member?.id }
+  );
 
-  const handleSubmitFeedback = (data: any) => {
-    console.log('Submitting feedback:', data);
-    setShowFeedbackForm(false);
+  const handleSubmitFeedback = async (data: any) => {
+    if (!member?.id) return;
     
-    toast({
-      title: 'Feedback Submitted Successfully',
-      description: 'Thank you for your feedback! We\'ll review it and get back to you soon.'
-    });
+    try {
+      const { error } = await supabase.from('feedback').insert({
+        member_id: member.id,
+        user_id: member.user_id,
+        branch_id: member.branch_id,
+        type: data.type || 'suggestion',
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        rating: data.rating,
+        status: 'pending'
+      });
+      
+      if (error) throw error;
+      
+      setShowFeedbackForm(false);
+      toast({
+        title: 'Feedback Submitted Successfully',
+        description: 'Thank you for your feedback! We\'ll review it and get back to you soon.'
+      });
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to submit feedback. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
+
+  if (memberLoading || feedbackLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading feedback...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!member) {
     return (
       <div className="text-center py-20">
-        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">Member profile not found.</p>
+        <h1 className="text-2xl font-bold mb-2">Profile Setup Required</h1>
+        <p className="text-muted-foreground">Your member profile is being set up. Please contact support if this persists.</p>
       </div>
     );
   }

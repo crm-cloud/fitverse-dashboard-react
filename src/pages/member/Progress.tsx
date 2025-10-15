@@ -1,12 +1,40 @@
+import { useState } from 'react';
 import { useMemberProfile } from '@/hooks/useMemberProfile';
-import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { useSupabaseQuery, useSupabaseMutation } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Weight, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Weight, Activity, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export const MemberProgress = () => {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    weight: '',
+    bodyFat: '',
+    muscleMass: '',
+    chest: '',
+    waist: '',
+    hips: '',
+    arms: '',
+    thighs: '',
+    notes: ''
+  });
+  
   const { data: member, isLoading: memberLoading } = useMemberProfile();
   
   const { data: measurements, isLoading: measurementsLoading } = useSupabaseQuery(
@@ -67,11 +95,172 @@ export const MemberProgress = () => {
     ? (latestMeasurement.body_fat_percentage || 0) - (firstMeasurement.body_fat_percentage || 0)
     : 0;
 
+  const { mutate: recordMeasurement, isPending: isSaving } = useSupabaseMutation(
+    async (data: any) => {
+      const { error } = await supabase.from('member_measurements').insert({
+        member_id: member?.id,
+        measured_by: member?.user_id,
+        measured_date: new Date().toISOString().split('T')[0],
+        weight: data.weight ? parseFloat(data.weight) : null,
+        body_fat_percentage: data.bodyFat ? parseFloat(data.bodyFat) : null,
+        muscle_mass: data.muscleMass ? parseFloat(data.muscleMass) : null,
+        chest: data.chest ? parseFloat(data.chest) : null,
+        waist: data.waist ? parseFloat(data.waist) : null,
+        hips: data.hips ? parseFloat(data.hips) : null,
+        arms: data.arms ? parseFloat(data.arms) : null,
+        thighs: data.thighs ? parseFloat(data.thighs) : null,
+        notes: data.notes || null
+      });
+      if (error) throw error;
+    },
+    {
+      onSuccess: () => {
+        toast({ title: 'Measurement recorded successfully!' });
+        setOpen(false);
+        setFormData({
+          weight: '', bodyFat: '', muscleMass: '', chest: '', waist: '',
+          hips: '', arms: '', thighs: '', notes: ''
+        });
+      },
+      invalidateQueries: [['member-measurements', member?.id]]
+    }
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.weight) {
+      toast({ title: 'Weight is required', variant: 'destructive' });
+      return;
+    }
+    recordMeasurement(formData);
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">My Progress</h1>
-        <p className="text-muted-foreground">Track your fitness journey and measurements</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">My Progress</h1>
+          <p className="text-muted-foreground">Track your fitness journey and measurements</p>
+        </div>
+        
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Record Measurement
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Record New Measurement</DialogTitle>
+              <DialogDescription>
+                Log your current measurements to track your progress
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="weight">Weight (kg) *</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    step="0.1"
+                    value={formData.weight}
+                    onChange={(e) => setFormData({...formData, weight: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bodyFat">Body Fat %</Label>
+                  <Input
+                    id="bodyFat"
+                    type="number"
+                    step="0.1"
+                    value={formData.bodyFat}
+                    onChange={(e) => setFormData({...formData, bodyFat: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="muscleMass">Muscle Mass (kg)</Label>
+                  <Input
+                    id="muscleMass"
+                    type="number"
+                    step="0.1"
+                    value={formData.muscleMass}
+                    onChange={(e) => setFormData({...formData, muscleMass: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chest">Chest (cm)</Label>
+                  <Input
+                    id="chest"
+                    type="number"
+                    step="0.1"
+                    value={formData.chest}
+                    onChange={(e) => setFormData({...formData, chest: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="waist">Waist (cm)</Label>
+                  <Input
+                    id="waist"
+                    type="number"
+                    step="0.1"
+                    value={formData.waist}
+                    onChange={(e) => setFormData({...formData, waist: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hips">Hips (cm)</Label>
+                  <Input
+                    id="hips"
+                    type="number"
+                    step="0.1"
+                    value={formData.hips}
+                    onChange={(e) => setFormData({...formData, hips: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="arms">Arms (cm)</Label>
+                  <Input
+                    id="arms"
+                    type="number"
+                    step="0.1"
+                    value={formData.arms}
+                    onChange={(e) => setFormData({...formData, arms: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="thighs">Thighs (cm)</Label>
+                  <Input
+                    id="thighs"
+                    type="number"
+                    step="0.1"
+                    value={formData.thighs}
+                    onChange={(e) => setFormData({...formData, thighs: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  placeholder="Any notes about your progress..."
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSaving} className="flex-1">
+                  {isSaving ? 'Saving...' : 'Save Measurement'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Summary Cards */}

@@ -46,6 +46,7 @@ import { MemberFeedbackPage } from "./pages/member/feedback";
 import { TrainerManagementPage } from "./pages/trainers/management";
 import { MemberProfileSettings } from "./pages/member/ProfileSettings";
 import { TrainerChangeRequest } from "./pages/member/TrainerChangeRequest";
+import { MemberDietWorkoutPage } from "./pages/member/diet-workout";
 import LockerManagement from "./pages/lockers/management";
 // New system pages
 import SystemHealth from "./pages/system/SystemHealth";
@@ -829,7 +830,17 @@ const App = () => (
                         } 
                       />
                       <Route 
-                        path="/member/checkins" 
+                        path="/member/diet-workout" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberDietWorkoutPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/checkins"
                         element={
                           <ProtectedRoute allowedRoles={['member']}>
                             <DashboardLayout>
