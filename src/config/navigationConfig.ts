@@ -126,14 +126,21 @@ export const navigationConfig: NavigationGroup[] = [
     id: 'saas-management',
     title: 'SaaS Management',
     allowedRoles: ['super-admin'],
-    priority: 15,
+    priority: 2,
     items: [
-      // Remove direct gym management - super admins create admins who manage gyms
       {
-        id: 'user-menu',
-        title: 'User Menu',
-        url: '/users/user-management',
-        icon: Users,
+        id: 'gym-management',
+        title: 'Gym Management',
+        url: '/gyms',
+        icon: Building,
+        group: 'saas-management',
+        allowedRoles: ['super-admin'],
+      },
+      {
+        id: 'admin-management',
+        title: 'Admin Management',
+        url: '/users/admin-management',
+        icon: UserCog,
         group: 'saas-management',
         allowedRoles: ['super-admin'],
       },
@@ -550,12 +557,28 @@ export const navigationConfig: NavigationGroup[] = [
     items: [
       {
         id: 'system-settings',
-        title: 'System Settings',
+        title: 'Global Settings',
         url: '/system/settings',
         icon: Settings,
         group: 'platform-settings',
         allowedRoles: ['super-admin'],
         requiredPermissions: ['system.manage'],
+      },
+      {
+        id: 'email-settings-global',
+        title: 'Email Settings (Global)',
+        url: '/system/email',
+        icon: Mail,
+        group: 'platform-settings',
+        allowedRoles: ['super-admin'],
+      },
+      {
+        id: 'sms-settings-global',
+        title: 'SMS Settings (Global)',
+        url: '/system/sms',
+        icon: Smartphone,
+        group: 'platform-settings',
+        allowedRoles: ['super-admin'],
       },
       {
         id: 'system-health',
@@ -568,7 +591,7 @@ export const navigationConfig: NavigationGroup[] = [
       },
       {
         id: 'system-backup',
-        title: 'Backup',
+        title: 'Backup & Restore',
         url: '/system/backup',
         icon: Database,
         group: 'platform-settings',

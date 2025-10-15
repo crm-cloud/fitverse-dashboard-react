@@ -1,10 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Building2, Users, DollarSign } from 'lucide-react';
+import { Building2, Users, DollarSign, MapPin, BarChart3, FileText, CreditCard, UserPlus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCurrency } from '@/hooks/useCurrency';
+import { Link } from 'react-router-dom';
 
 export const SuperAdminDashboard = () => {
   // Fetch SaaS-level metrics
@@ -91,76 +93,82 @@ export const SuperAdminDashboard = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <button 
-            onClick={() => window.location.href = '/users/admin-management'}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Create Admin
-          </button>
-          <button 
-            onClick={() => window.location.href = '/platform-analytics'}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-          >
-            <DollarSign className="h-4 w-4 mr-2" />
-            Analytics
-          </button>
+          <Link to="/users/admin-management">
+            <Button>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Create Admin
+            </Button>
+          </Link>
+          <Link to="/platform-analytics">
+            <Button variant="outline">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Analytics
+            </Button>
+          </Link>
         </div>
       </div>
 
       {/* SaaS Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Gyms</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{gyms?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {gyms?.filter(g => g.status === 'active').length} active
-            </p>
-          </CardContent>
-        </Card>
+        <Link to="/gyms">
+          <Card className="cursor-pointer hover:bg-accent transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Gyms</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{gyms?.length || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {gyms?.filter(g => g.status === 'active').length} active
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              From {gyms?.filter(g => g.status === 'active').length} subscriptions
-            </p>
-          </CardContent>
-        </Card>
+        <Link to="/platform-analytics">
+          <Card className="cursor-pointer hover:bg-accent transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+              <p className="text-xs text-muted-foreground">
+                From {gyms?.filter(g => g.status === 'active').length} subscriptions
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Branches</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalBranches}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all gym clients
-            </p>
-          </CardContent>
-        </Card>
+        <Link to="/branches/admin">
+          <Card className="cursor-pointer hover:bg-accent transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Branches</CardTitle>
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalBranches}</div>
+              <p className="text-xs text-muted-foreground">
+                Across all gym clients
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Platform Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalTrainers + totalMembers}</div>
-            <p className="text-xs text-muted-foreground">
-              {totalTrainers} trainers, {totalMembers} members
-            </p>
-          </CardContent>
-        </Card>
+        <Link to="/users/admin-management">
+          <Card className="cursor-pointer hover:bg-accent transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Platform Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalTrainers + totalMembers}</div>
+              <p className="text-xs text-muted-foreground">
+                {totalTrainers} trainers, {totalMembers} members
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Recent Gyms and Quick Actions */}
@@ -201,37 +209,37 @@ export const SuperAdminDashboard = () => {
               Common platform management tasks
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <button 
-                onClick={() => window.location.href = '/users/admin-management'}
-                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Admin Management
-              </button>
-              <button 
-                onClick={() => window.location.href = '/platform-analytics'}
-                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-              >
-                <DollarSign className="h-4 w-4 mr-2" />
-                Platform Analytics
-              </button>
-              <button 
-                onClick={() => window.location.href = '/platform-reports'}
-                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-              >
+          <CardContent className="space-y-3">
+            <Link to="/gyms" className="block">
+              <Button className="w-full justify-start" variant="default">
                 <Building2 className="h-4 w-4 mr-2" />
+                Gym Management
+              </Button>
+            </Link>
+            <Link to="/users/admin-management" className="block">
+              <Button className="w-full justify-start" variant="outline">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Admin Management
+              </Button>
+            </Link>
+            <Link to="/platform-analytics" className="block">
+              <Button className="w-full justify-start" variant="outline">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Platform Analytics
+              </Button>
+            </Link>
+            <Link to="/platform-reports" className="block">
+              <Button className="w-full justify-start" variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
                 Platform Reports
-              </button>
-              <button 
-                onClick={() => window.location.href = '/subscription-plans'}
-                className="w-full inline-flex items-center justify-start whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-              >
-                <DollarSign className="h-4 w-4 mr-2" />
+              </Button>
+            </Link>
+            <Link to="/subscription-plans" className="block">
+              <Button className="w-full justify-start" variant="outline">
+                <CreditCard className="h-4 w-4 mr-2" />
                 Subscription Plans
-              </button>
-            </div>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>

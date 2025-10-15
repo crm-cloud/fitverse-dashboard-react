@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { Plus, MoreVertical, Settings, Users, Building2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
+import { GymForm } from '@/components/gyms/GymForm';
+import { Building2, Users, MapPin, TrendingUp, MoreVertical, Plus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { GymForm } from '@/components/gyms/GymForm';
+import { Link } from 'react-router-dom';
 
 interface Gym {
   id: string;
@@ -22,10 +25,11 @@ interface Gym {
 }
 
 export default function GymManagement() {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedGym, setSelectedGym] = useState<Gym | null>(null);
   const queryClient = useQueryClient();
 
+  // Fetch gyms
   const { data: gyms, isLoading } = useQuery({
     queryKey: ['gyms'],
     queryFn: async () => {
@@ -39,19 +43,21 @@ export default function GymManagement() {
     }
   });
 
-  const { data: usage } = useQuery({
+  // Fetch gym usage statistics
+  const { data: gymUsage } = useQuery({
     queryKey: ['gym-usage'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('gym_usage')
-        .select('gym_id, branch_count, trainer_count, member_count')
-        .eq('month_year', new Date().toISOString().slice(0, 7) + '-01');
+        .select('*')
+        .order('month_year', { ascending: false });
       
       if (error) throw error;
       return data;
     }
   });
 
+  // Delete/Deactivate gym mutation
   const deleteGym = useMutation({
     mutationFn: async (gymId: string) => {
       const { error } = await supabase
@@ -62,126 +68,110 @@ export default function GymManagement() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Gym has been deactivated successfully."
-      });
-      const handleSuccess = () => {
-        queryClient.invalidateQueries({ queryKey: ['gyms', 'gym-usage'] });
-        setIsDrawerOpen(false);
-        setSelectedGym(null);
-      };
-      handleSuccess();
+      toast({ title: 'Gym deactivated successfully' });
+      queryClient.invalidateQueries({ queryKey: ['gyms'] });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   });
 
+  // Helper to get usage data for a gym
   const getUsageForGym = (gymId: string) => {
-    return usage?.find(u => u.gym_id === gymId) || {
-      branch_count: 0,
-      trainer_count: 0,
-      member_count: 0
-    };
+    if (!gymUsage) return null;
+    const latestUsage = gymUsage.find((u) => u.gym_id === gymId);
+    return latestUsage;
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'active': return 'default';
-      case 'inactive': return 'destructive';
-      case 'suspended': return 'secondary';
+      case 'inactive': return 'secondary';
+      case 'suspended': return 'destructive';
       default: return 'outline';
     }
   };
 
   const getPlanBadgeVariant = (plan: string) => {
-    switch (plan) {
+    const planLower = plan.toLowerCase();
+    switch (planLower) {
+      case 'enterprise': return 'default';
+      case 'pro': return 'secondary';
       case 'basic': return 'outline';
-      case 'professional': return 'default';
-      case 'enterprise': return 'secondary';
       default: return 'outline';
     }
   };
 
-  const handleSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['gyms', 'gym-usage'] });
-    setIsDrawerOpen(false);
+  const handleEdit = (gym: Gym) => {
+    setSelectedGym(gym);
+    setDrawerOpen(true);
+  };
+
+  const handleAddNew = () => {
+    setSelectedGym(null);
+    setDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
     setSelectedGym(null);
   };
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-48 bg-muted animate-pulse rounded-lg" />
-          ))}
+      <div className="container mx-auto p-6 space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-64" />)}
         </div>
       </div>
     );
   }
 
-
   return (
-    <div className="p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gym Management</h1>
-          <p className="text-muted-foreground">
-            Manage all gyms in your network
-          </p>
+          <h1 className="text-3xl font-bold">Gym Management</h1>
+          <p className="text-muted-foreground mt-1">Manage all gyms on the platform</p>
         </div>
-        <Button onClick={() => {
-          setSelectedGym(null);
-          setIsDrawerOpen(true);
-        }}>
+        <Button onClick={handleAddNew}>
           <Plus className="mr-2 h-4 w-4" />
           Add Gym
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {gyms?.map((gym) => {
-          const gymUsage = getUsageForGym(gym.id);
+          const usage = getUsageForGym(gym.id);
           
           return (
             <Card key={gym.id} className="relative">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{gym.name}</CardTitle>
-                    <CardDescription className="text-sm">
-                      Created {new Date(gym.created_at).toLocaleDateString()}
-                    </CardDescription>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      {gym.name}
+                    </CardTitle>
+                    <CardDescription>{gym.billing_email}</CardDescription>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="icon">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(gym)}>
+                        Edit Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={`/branches/admin?gym_id=${gym.id}`}>
+                          Manage Admins
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem 
-                        onClick={() => {
-                          setSelectedGym(gym);
-                          setIsDrawerOpen(true);
-                        }}
-                      >
-                        <Settings className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => window.location.href = '/users/user-management'}
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Manage Admins
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
                         onClick={() => deleteGym.mutate(gym.id)}
                         className="text-destructive"
                       >
@@ -190,8 +180,9 @@ export default function GymManagement() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                
-                <div className="flex gap-2 mt-2">
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
                   <Badge variant={getStatusBadgeVariant(gym.status)}>
                     {gym.status}
                   </Badge>
@@ -199,28 +190,40 @@ export default function GymManagement() {
                     {gym.subscription_plan}
                   </Badge>
                 </div>
-              </CardHeader>
 
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>Branches: {gymUsage.branch_count} / {gym.max_branches}</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      Branches
+                    </div>
+                    <div className="text-2xl font-bold">
+                      {usage?.branch_count || 0} / {gym.max_branches}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>Trainers: {gymUsage.trainer_count} / {gym.max_trainers}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>Members: {gymUsage.member_count} / {gym.max_members}</span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      Members
+                    </div>
+                    <div className="text-2xl font-bold">
+                      {usage?.member_count || 0} / {gym.max_members}
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">
-                    Contact: {gym.billing_email || 'Not set'}
-                  </p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <TrendingUp className="h-4 w-4" />
+                    Trainers
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {usage?.trainer_count || 0} / {gym.max_trainers}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t text-xs text-muted-foreground">
+                  Created: {new Date(gym.created_at).toLocaleDateString()}
                 </div>
               </CardContent>
             </Card>
@@ -228,27 +231,19 @@ export default function GymManagement() {
         })}
       </div>
 
-      {isDrawerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
-                {selectedGym ? 'Edit Gym' : 'Add New Gym'}
-              </h2>
-              <button 
-                onClick={() => setIsDrawerOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-            </div>
-            <GymForm 
-              gym={selectedGym}
-              onSuccess={handleSuccess}
-            />
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{selectedGym ? 'Edit Gym' : 'Add New Gym'}</DrawerTitle>
+            <DrawerDescription>
+              {selectedGym ? 'Update gym details and subscription plan' : 'Create a new gym on the platform'}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-6">
+            <GymForm gym={selectedGym} onSuccess={handleCloseDrawer} />
           </div>
-        </div>
-      )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

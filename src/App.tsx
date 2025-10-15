@@ -163,7 +163,7 @@ const App = () => (
                         <Route 
                           path="/system/email" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <EmailSettings />
                               </DashboardLayout>
@@ -173,9 +173,19 @@ const App = () => (
                         <Route 
                           path="/system/sms" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <SMSSettings />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/system/ai-settings" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
+                              <DashboardLayout>
+                                <AISettings />
                               </DashboardLayout>
                             </RouteGuard>
                           } 
@@ -186,16 +196,6 @@ const App = () => (
                             <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <SystemBackup />
-                              </DashboardLayout>
-                            </RouteGuard>
-                          } 
-                        />
-                        <Route 
-                          path="/system/ai-settings" 
-                          element={
-                            <RouteGuard allowedRoles={['super-admin']}>
-                              <DashboardLayout>
-                                <AISettings />
                               </DashboardLayout>
                             </RouteGuard>
                           } 
