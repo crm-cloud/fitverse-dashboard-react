@@ -14,10 +14,12 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { mockMembershipAssignments, mockInvoices } from '@/utils/mockData';
 import { AssignMembershipDrawer } from '@/components/membership/AssignMembershipDrawer';
 import { MembershipFormData } from '@/types/membership';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MemberDashboardProps {
   memberId: string;
@@ -36,14 +38,48 @@ const getInitials = (name: string) => {
 export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDashboardProps) => {
   const [assignMembershipOpen, setAssignMembershipOpen] = useState(false);
   const { toast } = useToast();
+  const { authState } = useAuth();
 
-  const activeMembership = mockMembershipAssignments.find(
-    assignment => assignment.memberId === memberId && assignment.isActive
+  // Fetch active membership
+  const membershipQuery = useSupabaseQuery(
+    ['member-active-membership', memberId],
+    async () => {
+      const { data, error } = await supabase
+        .from('member_memberships')
+        .select('*, membership_plans(*), members(branch_id, branches(name))')
+        .eq('member_id', memberId)
+        .eq('status', 'active')
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    { enabled: !!memberId }
+  );
+  
+  const activeMembership = membershipQuery.data;
+  const membershipLoading = membershipQuery.isLoading;
+
+  // Fetch invoices
+  const invoicesQuery = useSupabaseQuery(
+    ['member-invoices', authState.user?.id],
+    async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('customer_id', authState.user?.id)
+        .order('issue_date', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    { enabled: !!authState.user?.id }
   );
 
-  const memberInvoices = mockInvoices.filter(invoice => invoice.memberId === memberId);
-  const unpaidInvoices = memberInvoices.filter(invoice => 
-    invoice.paymentStatus === 'unpaid' || invoice.paymentStatus === 'overdue'
+  const memberInvoices = invoicesQuery.data || [];
+  const invoicesLoading = invoicesQuery.isLoading;
+  const unpaidInvoices = memberInvoices.filter((invoice: any) => 
+    invoice.status === 'pending' || invoice.status === 'overdue'
   );
 
   const formatCurrency = (amount: number) => {
@@ -63,15 +99,15 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
     setAssignMembershipOpen(false);
   };
 
-  const getDaysUntilExpiry = (endDate: Date) => {
-    return differenceInDays(endDate, new Date());
+  const getDaysUntilExpiry = (endDate: string) => {
+    return differenceInDays(new Date(endDate), new Date());
   };
 
   const getMembershipStatusInfo = (membership: typeof activeMembership) => {
     if (!membership) return null;
     
-    const daysUntilExpiry = getDaysUntilExpiry(membership.endDate);
-    const isExpired = isAfter(new Date(), membership.endDate);
+    const daysUntilExpiry = getDaysUntilExpiry(membership.end_date);
+    const isExpired = isAfter(new Date(), new Date(membership.end_date));
     
     if (isExpired) {
       return {
@@ -95,7 +131,7 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
     
     return {
       type: 'active',
-      message: `Your membership is active until ${format(membership.endDate, 'MMM dd, yyyy')}`,
+      message: `Your membership is active until ${format(new Date(membership.end_date), 'MMM dd, yyyy')}`,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200'
@@ -103,6 +139,17 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
   };
 
   const membershipStatusInfo = getMembershipStatusInfo(activeMembership);
+
+  if (membershipLoading || invoicesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -166,25 +213,25 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold text-lg">{activeMembership.planName}</h3>
+                    <h3 className="font-semibold text-lg">{activeMembership.membership_plans?.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Started on {format(activeMembership.startDate, 'MMM dd, yyyy')}
+                      Started on {format(new Date(activeMembership.start_date), 'MMM dd, yyyy')}
                     </p>
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Membership ID:</span>
-                      <span className="font-mono">{activeMembership.id}</span>
+                      <span className="font-mono">{activeMembership.id.slice(0, 8)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Branch:</span>
-                      <span>{activeMembership.branchName}</span>
+                      <span>{activeMembership.members?.branches?.name}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Valid Until:</span>
                       <span className="font-medium">
-                        {format(activeMembership.endDate, 'MMM dd, yyyy')}
+                        {format(new Date(activeMembership.end_date), 'MMM dd, yyyy')}
                       </span>
                     </div>
                   </div>
@@ -193,7 +240,7 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
                 <div className="flex flex-col justify-between">
                   <div className="text-center p-4 bg-muted rounded-lg">
                     <div className="text-2xl font-bold">
-                      {getDaysUntilExpiry(activeMembership.endDate)}
+                      {getDaysUntilExpiry(activeMembership.end_date)}
                     </div>
                     <div className="text-sm text-muted-foreground">days remaining</div>
                   </div>
@@ -224,7 +271,7 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
             <CardContent>
               <div className="space-y-3">
                 {unpaidInvoices.map((invoice) => {
-                  const isOverdue = isAfter(new Date(), invoice.dueDate);
+                  const isOverdue = isAfter(new Date(), new Date(invoice.due_date));
                   return (
                     <div 
                       key={invoice.id}
@@ -234,18 +281,18 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-medium">{invoice.invoiceNumber}</h4>
-                          <p className="text-sm text-muted-foreground">{invoice.planName}</p>
+                          <h4 className="font-medium">{invoice.invoice_number}</h4>
+                          <p className="text-sm text-muted-foreground">Membership Invoice</p>
                           <p className={`text-sm font-medium ${
                             isOverdue ? 'text-red-600' : 'text-yellow-600'
                           }`}>
-                            {isOverdue ? 'Overdue' : 'Due'}: {format(invoice.dueDate, 'MMM dd, yyyy')}
+                            {isOverdue ? 'Overdue' : 'Due'}: {format(new Date(invoice.due_date), 'MMM dd, yyyy')}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold">{formatCurrency(invoice.finalAmount)}</p>
+                          <p className="font-bold">{formatCurrency(invoice.total)}</p>
                           <Badge variant={isOverdue ? 'destructive' : 'secondary'}>
-                            {invoice.paymentStatus}
+                            {invoice.status}
                           </Badge>
                         </div>
                       </div>

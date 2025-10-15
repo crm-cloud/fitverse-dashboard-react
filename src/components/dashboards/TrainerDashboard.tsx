@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,9 +18,103 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 export const TrainerDashboard = () => {
   const { authState } = useAuth();
+
+  // Fetch trainer assignments (clients)
+  const { data: assignments = [], isLoading: assignmentsLoading } = useSupabaseQuery(
+    ['trainer-assignments', authState.user?.id],
+    async () => {
+      const { data, error } = await supabase
+        .from('trainer_assignments')
+        .select(`
+          *,
+          members (id, full_name, user_id)
+        `)
+        .eq('trainer_id', authState.user?.id)
+        .in('status', ['scheduled', 'in_progress']);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    { enabled: !!authState.user?.id }
+  );
+
+  // Fetch today's classes
+  const { data: todayClasses = [], isLoading: classesLoading } = useSupabaseQuery(
+    ['trainer-today-classes', authState.user?.id],
+    async () => {
+      const today = new Date();
+      const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+      const { data, error } = await supabase
+        .from('gym_classes')
+        .select('*')
+        .eq('trainer_id', authState.user?.id)
+        .gte('start_time', startOfDay.toISOString())
+        .lte('start_time', endOfDay.toISOString())
+        .eq('status', 'scheduled')
+        .order('start_time');
+      
+      if (error) throw error;
+      return data || [];
+    },
+    { enabled: !!authState.user?.id }
+  );
+
+  // Fetch monthly earnings
+  const { data: earnings, isLoading: earningsLoading } = useSupabaseQuery(
+    ['trainer-monthly-earnings', authState.user?.id],
+    async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('type', 'income')
+        .gte('date', startOfMonth(new Date()).toISOString().split('T')[0])
+        .lte('date', endOfMonth(new Date()).toISOString().split('T')[0]);
+      
+      if (error) throw error;
+      return data?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+    },
+    { enabled: !!authState.user?.id }
+  );
+
+  // Fetch trainer profile for rating
+  const { data: trainerProfile } = useSupabaseQuery(
+    ['trainer-profile', authState.user?.id],
+    async () => {
+      const { data, error } = await supabase
+        .from('trainer_profiles')
+        .select('rating, total_clients')
+        .eq('user_id', authState.user?.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    { enabled: !!authState.user?.id }
+  );
+
+  const activeClients = assignments.filter(a => a.status === 'in_progress').length;
+  const todaySessions = todayClasses.length;
+  const avgRating = trainerProfile?.rating || 4.8;
+  const monthlyEarnings = earnings || 0;
+
+  if (assignmentsLoading || classesLoading || earningsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -54,7 +147,7 @@ export const TrainerDashboard = () => {
                 <Users className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">24</p>
+                <p className="text-2xl font-bold">{activeClients}</p>
                 <p className="text-sm text-muted-foreground">Active Clients</p>
               </div>
             </div>
@@ -68,7 +161,7 @@ export const TrainerDashboard = () => {
                 <Calendar className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">8</p>
+                <p className="text-2xl font-bold">{todaySessions}</p>
                 <p className="text-sm text-muted-foreground">Today's Sessions</p>
               </div>
             </div>
@@ -82,7 +175,7 @@ export const TrainerDashboard = () => {
                 <Star className="w-5 h-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">4.9</p>
+                <p className="text-2xl font-bold">{avgRating.toFixed(1)}</p>
                 <p className="text-sm text-muted-foreground">Average Rating</p>
               </div>
             </div>
@@ -96,7 +189,7 @@ export const TrainerDashboard = () => {
                 <DollarSign className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">$2,840</p>
+                <p className="text-2xl font-bold">₹{monthlyEarnings.toLocaleString()}</p>
                 <p className="text-sm text-muted-foreground">Monthly Earnings</p>
               </div>
             </div>
@@ -120,32 +213,33 @@ export const TrainerDashboard = () => {
                 <CardDescription>Your scheduled sessions for today</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {[
-                  { time: '09:00 AM', client: 'Sarah Johnson', type: 'Strength Training', duration: '60 min', status: 'completed' },
-                  { time: '10:30 AM', client: 'Mike Chen', type: 'HIIT Workout', duration: '45 min', status: 'completed' },
-                  { time: '02:00 PM', client: 'Lisa Rodriguez', type: 'Cardio & Core', duration: '60 min', status: 'current' },
-                  { time: '03:30 PM', client: 'David Kim', type: 'Functional Training', duration: '45 min', status: 'upcoming' },
-                  { time: '05:00 PM', client: 'Emma Davis', type: 'Yoga & Flexibility', duration: '60 min', status: 'upcoming' }
-                ].map((session, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Clock className="w-4 h-4 text-primary" />
-                      <div>
-                        <p className="font-medium">{session.client}</p>
-                        <p className="text-sm text-muted-foreground">{session.time} • {session.type}</p>
+                {todayClasses.length > 0 ? (
+                  todayClasses.map((session) => (
+                    <div key={session.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Clock className="w-4 h-4 text-primary" />
+                        <div>
+                          <p className="font-medium">{session.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(session.start_time), 'h:mm a')} - {format(new Date(session.end_time), 'h:mm a')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {session.enrolled_count}/{session.capacity}
+                        </span>
+                        <Badge variant={session.status === 'completed' ? 'default' : 'outline'}>
+                          {session.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">{session.duration}</span>
-                      <Badge variant={
-                        session.status === 'completed' ? 'default' :
-                        session.status === 'current' ? 'destructive' : 'outline'
-                      }>
-                        {session.status}
-                      </Badge>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No sessions scheduled for today
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
             
@@ -183,36 +277,45 @@ export const TrainerDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { name: 'Sarah Johnson', sessions: 24, nextSession: 'Tomorrow 9:00 AM', progress: 85 },
-                  { name: 'Mike Chen', sessions: 18, nextSession: 'Today 10:30 AM', progress: 72 },
-                  { name: 'Lisa Rodriguez', sessions: 32, nextSession: 'Today 2:00 PM', progress: 91 },
-                  { name: 'David Kim', sessions: 15, nextSession: 'Today 3:30 PM', progress: 68 },
-                  { name: 'Emma Davis', sessions: 28, nextSession: 'Today 5:00 PM', progress: 88 },
-                  { name: 'John Smith', sessions: 12, nextSession: 'Friday 11:00 AM', progress: 55 }
-                ].map((client, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">{client.name}</h4>
-                        <Badge variant="outline">{client.sessions} sessions</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Next: {client.nextSession}</p>
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>Progress</span>
-                          <span>{client.progress}%</span>
+                {assignments.length > 0 ? (
+                  assignments.map((assignment) => {
+                    const progress = assignment.total_sessions > 0 
+                      ? Math.round((assignment.completed_sessions / assignment.total_sessions) * 100)
+                      : 0;
+                    
+                    return (
+                      <Card key={assignment.id} className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium">{assignment.members?.full_name}</h4>
+                            <Badge variant="outline">
+                              {assignment.completed_sessions}/{assignment.total_sessions}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {assignment.assignment_type === 'personal_training' ? 'Personal Training' : 'General Client'}
+                          </p>
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span>Progress</span>
+                              <span>{progress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-primary h-2 rounded-full" 
+                                style={{ width: `${progress}%` }}
+                              ></div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full" 
-                            style={{ width: `${client.progress}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                      </Card>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-3 text-center py-8 text-muted-foreground">
+                    No active clients at the moment
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
