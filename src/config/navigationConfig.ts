@@ -1201,6 +1201,24 @@ export const getNavigationForUser = (
   userPermissions: Permission[],
   teamRole?: string
 ): NavigationGroup[] => {
+  // Debug logging for team roles
+  if (userRole === 'team') {
+    console.log('[Navigation Config] Team user detected:', {
+      userRole,
+      teamRole,
+      permissionCount: userPermissions.length,
+      permissions: userPermissions.slice(0, 10) // Log first 10 permissions
+    });
+    
+    // Safety check: If no permissions loaded, log warning
+    if (userPermissions.length === 0) {
+      console.warn('[Navigation Config] ⚠️ No permissions loaded for team user!', {
+        teamRole,
+        note: 'This will result in empty navigation. Check user_roles and role_permissions tables.'
+      });
+    }
+  }
+  
   return navigationConfig
     .filter(group => {
       // Check group-level access
