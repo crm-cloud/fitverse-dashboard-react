@@ -426,6 +426,13 @@ export const RBACProvider = ({ children }: { children: ReactNode }) => {
     // Super admin has all permissions
     if (currentUser.role === 'super-admin') return true;
 
+    // TEMPORARY OVERRIDE: Allow admin full access when permissions haven't loaded yet
+    // This will be removed once DB permissions are properly seeded
+    if (currentUser.role === 'admin' && userPermissions.length === 0) {
+      console.log('⚠️ [RBAC] Temporary admin override active - granting permission:', permission);
+      return true;
+    }
+
     // Check against database-loaded permissions
     return userPermissions.includes(permission);
   };

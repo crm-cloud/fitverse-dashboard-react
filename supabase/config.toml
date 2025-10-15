@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.send-admin-welcome-email]
 verify_jwt = false
+
+[functions.send-referral-notification]
+verify_jwt = false
+
+[functions.seed-demo-accounts]
+verify_jwt = false
