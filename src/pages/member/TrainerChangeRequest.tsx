@@ -138,10 +138,13 @@ export const TrainerChangeRequest = () => {
   }
 
   if (!member) {
+    console.warn('[TrainerChangeRequest] No member profile found');
     return (
       <div className="text-center py-20">
-        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">Member profile not found.</p>
+        <h1 className="text-2xl font-bold mb-2">Profile Setup Required</h1>
+        <p className="text-muted-foreground">
+          Your member profile is being set up. Please contact support if this persists.
+        </p>
       </div>
     );
   }
