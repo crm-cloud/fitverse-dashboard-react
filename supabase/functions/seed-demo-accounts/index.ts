@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
           console.log(`✅ Created user: ${user.email}`);
         }
 
-        // Insert into user_roles
+        // Insert into user_roles (only columns that exist)
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
@@ -192,7 +192,6 @@ Deno.serve(async (req) => {
             role: user.role,
             team_role: user.teamRole,
             branch_id: branchId,
-            gym_id: gymId,
           })
           .select()
           .single();
