@@ -985,6 +985,14 @@ export const navigationConfig: NavigationGroup[] = [
         teamRole: 'trainer',
       },
       {
+        id: 'trainer-attendance',
+        title: 'My Attendance',
+        url: '/trainer/attendance',
+        icon: Clock,
+        group: 'trainer',
+        teamRole: 'trainer',
+      },
+      {
         id: 'trainer-clients',
         title: 'Clients',
         url: '/trainer/clients',

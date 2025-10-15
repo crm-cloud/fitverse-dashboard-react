@@ -73,6 +73,7 @@ import TrainerClientsPage from "./pages/trainer/clients";
 import TrainerWorkoutsPage from "./pages/trainer/workouts";
 import TrainerProgressPage from "./pages/trainer/progress";
 import TrainerEarningsPage from "./pages/trainer/earnings";
+import TrainerAttendancePage from "./pages/trainer/attendance";
 // New staff pages
 import StaffCheckinPage from "./pages/staff/checkin";
 import StaffSupportPage from "./pages/staff/support";
@@ -657,6 +658,16 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['team']}>
                             <DashboardLayout>
                               <TrainerEarningsPage />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/trainer/attendance" 
+                        element={
+                          <ProtectedRoute allowedRoles={['team']}>
+                            <DashboardLayout>
+                              <TrainerAttendancePage />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 

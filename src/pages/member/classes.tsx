@@ -1,15 +1,23 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ClassCard } from '@/components/classes/ClassCard';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { mockClassEnrollments } from '@/utils/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { useMemberProfile } from '@/hooks/useMemberProfile';
 import { useGymClasses } from '@/hooks/useSupabaseQuery';
+import { useAuth } from '@/hooks/useAuth';
 
 export const MemberClassesPage = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { authState } = useAuth();
   const { data: member, isLoading: memberLoading } = useMemberProfile();
   const { data: classes, isLoading: classesLoading } = useGymClasses();
   const memberEnrollments = mockClassEnrollments.filter(e => e.memberId === member?.id);
+
+  const isTrainer = authState.user?.role === 'trainer';
 
   const upcomingClasses = useMemo(() => {
     if (!classes) return [];
@@ -63,9 +71,17 @@ export const MemberClassesPage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Available Classes</h1>
-        <p className="text-muted-foreground">Book your fitness classes</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Available Classes</h1>
+          <p className="text-muted-foreground">Book your fitness classes</p>
+        </div>
+        {isTrainer && (
+          <Button onClick={() => navigate('/classes/create')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Class
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

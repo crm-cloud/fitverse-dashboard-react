@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,53 +8,68 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Search, MessageSquare, Calendar, Activity, TrendingUp } from 'lucide-react';
 import { PermissionGate } from '@/components/PermissionGate';
+import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function TrainerClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const { authState } = useAuth();
 
-  const clients = [
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612c2be?w=150',
-      sessions: 24,
-      nextSession: 'Tomorrow 9:00 AM',
-      progress: 85,
-      goals: ['Weight Loss', 'Strength Building'],
-      joinDate: '2023-06-01',
-      status: 'active'
-    },
-    {
-      id: 2,
-      name: 'Mike Chen',
-      email: 'mike@example.com',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-      sessions: 18,
-      nextSession: 'Today 10:30 AM',
-      progress: 72,
-      goals: ['Muscle Gain', 'Endurance'],
-      joinDate: '2023-07-15',
-      status: 'active'
-    },
-    {
-      id: 3,
-      name: 'Lisa Rodriguez',
-      email: 'lisa@example.com',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-      sessions: 32,
-      nextSession: 'Today 2:00 PM',
-      progress: 91,
-      goals: ['Flexibility', 'Core Strength'],
-      joinDate: '2023-05-10',
-      status: 'active'
-    }
-  ];
+  const { data: assignments, isLoading } = useSupabaseQuery(
+    ['trainer-assignments', authState.user?.id],
+    async () => {
+      const { data, error } = await supabase
+        .from('trainer_assignments')
+        .select(`
+          *,
+          members (
+            id,
+            full_name,
+            email,
+            user_id,
+            member_goals (title),
+            member_measurements (measured_date)
+          )
+        `)
+        .eq('trainer_id', authState.user?.id)
+        .in('status', ['scheduled', 'in_progress'])
+        .order('created_at', { ascending: false });
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+      if (error) throw error;
+      return data || [];
+    },
+    { enabled: !!authState.user?.id }
   );
+
+  const ptClients = useMemo(() => {
+    return assignments?.filter(a => a.assignment_type === 'personal_training') || [];
+  }, [assignments]);
+
+  const generalClients = useMemo(() => {
+    return assignments?.filter(a => a.assignment_type === 'general') || [];
+  }, [assignments]);
+
+  const filteredPT = ptClients.filter(assignment =>
+    assignment.members?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    assignment.members?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredGeneral = generalClients.filter(assignment =>
+    assignment.members?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    assignment.members?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading clients...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -68,7 +83,10 @@ export default function TrainerClientsPage() {
         <div className="flex items-center gap-2">
           <Badge variant="outline">
             <Users className="w-3 h-3 mr-1" />
-            {clients.length} Active Clients
+            {ptClients.length} PT Clients
+          </Badge>
+          <Badge variant="secondary">
+            {generalClients.length} General Clients
           </Badge>
         </div>
       </div>
@@ -85,62 +103,41 @@ export default function TrainerClientsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue="pt-clients" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="pt-clients">Personal Training Clients</TabsTrigger>
+          <TabsTrigger value="general-clients">General Clients</TabsTrigger>
           <TabsTrigger value="progress">Progress Tracking</TabsTrigger>
-          <TabsTrigger value="communications">Communications</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="pt-clients" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredClients.map((client) => (
-              <Card key={client.id}>
+            {filteredPT.length > 0 ? filteredPT.map((assignment) => (
+              <Card key={assignment.id}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={client.avatar} alt={client.name} />
-                      <AvatarFallback>{client.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                      <AvatarFallback>
+                        {assignment.members?.full_name?.split(' ').map(n => n[0]).join('') || 'NA'}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{client.name}</CardTitle>
-                      <CardDescription>{client.email}</CardDescription>
+                      <CardTitle className="text-lg">{assignment.members?.full_name}</CardTitle>
+                      <CardDescription>{assignment.members?.email}</CardDescription>
                     </div>
-                    <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                      {client.status}
-                    </Badge>
+                    <Badge variant="default">PT</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Progress</span>
-                      <span>{client.progress}%</span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full" 
-                        style={{ width: `${client.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  
                   <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">Sessions:</span> {client.sessions}</p>
-                    <p><span className="text-muted-foreground">Next:</span> {client.nextSession}</p>
-                    <p><span className="text-muted-foreground">Member since:</span> {new Date(client.joinDate).toLocaleDateString()}</p>
+                    <p><span className="text-muted-foreground">Sessions/week:</span> {assignment.sessions_per_week}</p>
+                    <p><span className="text-muted-foreground">Duration:</span> {assignment.session_duration} min</p>
+                    <p><span className="text-muted-foreground">Rate:</span> ${assignment.rate_per_session}/session</p>
                   </div>
 
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Goals:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {client.goals.map((goal, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {goal}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                  {assignment.notes && (
+                    <p className="text-sm text-muted-foreground">{assignment.notes}</p>
+                  )}
 
                   <div className="flex gap-2 pt-2">
                     <PermissionGate permission="trainer.clients.manage">
@@ -156,53 +153,61 @@ export default function TrainerClientsPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">No PT clients assigned</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="general-clients" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredGeneral.length > 0 ? filteredGeneral.map((assignment) => (
+              <Card key={assignment.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarFallback>
+                        {assignment.members?.full_name?.split(' ').map(n => n[0]).join('') || 'NA'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{assignment.members?.full_name}</CardTitle>
+                      <CardDescription>{assignment.members?.email}</CardDescription>
+                    </div>
+                    <Badge variant="secondary">General</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-muted-foreground">Sessions/week:</span> {assignment.sessions_per_week}</p>
+                    <p><span className="text-muted-foreground">Duration:</span> {assignment.session_duration} min</p>
+                  </div>
+
+                  {assignment.notes && (
+                    <p className="text-sm text-muted-foreground">{assignment.notes}</p>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <PermissionGate permission="trainer.clients.manage">
+                      <Button size="sm" variant="outline" className="w-full">
+                        <Activity className="w-3 h-3 mr-1" />
+                        View Progress
+                      </Button>
+                    </PermissionGate>
+                  </div>
+                </CardContent>
+              </Card>
+            )) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">No general clients assigned</p>
+              </div>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="progress" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Client Progress Overview
-              </CardTitle>
-              <CardDescription>Track your clients' fitness journey and achievements</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {clients.map((client) => (
-                  <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={client.avatar} alt={client.name} />
-                        <AvatarFallback>{client.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{client.name}</p>
-                        <p className="text-sm text-muted-foreground">{client.sessions} sessions completed</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">{client.progress}%</p>
-                        <p className="text-xs text-muted-foreground">Progress</p>
-                      </div>
-                      <PermissionGate permission="trainer.progress.track">
-                        <Button size="sm" variant="outline">
-                          <Activity className="w-3 h-3 mr-1" />
-                          View Details
-                        </Button>
-                      </PermissionGate>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="communications" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Recent Communications</CardTitle>
