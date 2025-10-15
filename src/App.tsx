@@ -64,6 +64,8 @@ import Goals from "./pages/member/Goals";
 import Help from "./pages/member/Help";
 import CheckIns from "./pages/member/CheckIns";
 import { MemberBilling } from "./pages/member/Billing";
+import { MemberProgress } from "./pages/member/Progress";
+import { MemberAnnouncements } from "./pages/member/Announcements";
 // New trainer pages
 import TrainerSchedulePage from "./pages/trainer/schedule";
 import TrainerClientsPage from "./pages/trainer/clients";
@@ -802,6 +804,26 @@ const App = () => (
                           <ProtectedRoute allowedRoles={['member']}>
                             <DashboardLayout>
                               <MemberBilling />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/progress" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberProgress />
+                            </DashboardLayout>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/member/announcements" 
+                        element={
+                          <ProtectedRoute allowedRoles={['member']}>
+                            <DashboardLayout>
+                              <MemberAnnouncements />
                             </DashboardLayout>
                           </ProtectedRoute>
                         } 

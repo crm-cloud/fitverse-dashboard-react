@@ -2136,7 +2136,7 @@ export type Database = {
           membership_status:
             | Database["public"]["Enums"]["membership_status"]
             | null
-          phone: string
+          phone: string | null
           profile_photo: string | null
           trainer_id: string | null
           updated_at: string
@@ -2160,7 +2160,7 @@ export type Database = {
           membership_status?:
             | Database["public"]["Enums"]["membership_status"]
             | null
-          phone: string
+          phone?: string | null
           profile_photo?: string | null
           trainer_id?: string | null
           updated_at?: string
@@ -2184,7 +2184,7 @@ export type Database = {
           membership_status?:
             | Database["public"]["Enums"]["membership_status"]
             | null
-          phone?: string
+          phone?: string | null
           profile_photo?: string | null
           trainer_id?: string | null
           updated_at?: string
@@ -4330,6 +4330,10 @@ export type Database = {
           p_reference?: string
         }
         Returns: Json
+      }
+      upsert_member: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

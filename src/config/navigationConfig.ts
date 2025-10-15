@@ -615,6 +615,14 @@ export const navigationConfig: NavigationGroup[] = [
         icon: Dumbbell,
         group: 'member',
         memberOnly: true,
+      },
+      {
+        id: 'member-progress',
+        title: 'My Progress',
+        url: '/member/progress',
+        icon: TrendingUp,
+        group: 'member',
+        memberOnly: true,
       }
     ]
   },
@@ -624,6 +632,14 @@ export const navigationConfig: NavigationGroup[] = [
     allowedRoles: ['member'],
     priority: 2,
     items: [
+      {
+        id: 'member-store',
+        title: 'Store',
+        url: '/store',
+        icon: ShoppingCart,
+        group: 'member',
+        memberOnly: true,
+      },
       {
         id: 'member-billing',
         title: 'Billing & Payments',
@@ -645,6 +661,14 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'Referrals',
         url: '/member/referrals',
         icon: Gift,
+        group: 'member',
+        memberOnly: true,
+      },
+      {
+        id: 'member-announcements',
+        title: 'Announcements',
+        url: '/member/announcements',
+        icon: Megaphone,
         group: 'member',
         memberOnly: true,
       }

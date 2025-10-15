@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { mockMembers, mockMembershipAssignments, mockInvoices, mockPayments } from '@/utils/mockData';
+import { useMemberProfile } from '@/hooks/useMemberProfile';
+import { mockMembershipAssignments, mockInvoices, mockPayments } from '@/utils/mockData';
 import { format } from 'date-fns';
 import { PaymentStatus } from '@/types/membership';
 
@@ -33,10 +33,9 @@ const formatCurrency = (amount: number) => {
 };
 
 export const MemberBilling = () => {
-  const { authState } = useAuth();
   const { toast } = useToast();
+  const { data: member, isLoading } = useMemberProfile();
 
-  const member = mockMembers.find(m => m.email === authState.user?.email);
   const memberInvoices = mockInvoices.filter(invoice => invoice.memberId === member?.id);
   const memberPayments = mockPayments.filter(payment => 
     memberInvoices.some(invoice => invoice.id === payment.invoiceId)
@@ -66,6 +65,17 @@ export const MemberBilling = () => {
     });
     console.log('Initiating payment for invoice:', invoiceId);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading billing information...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!member) {
     return (

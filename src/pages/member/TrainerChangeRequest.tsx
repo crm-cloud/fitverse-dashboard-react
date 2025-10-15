@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { mockMembers, mockTrainers } from '@/utils/mockData';
+import { useMemberProfile } from '@/hooks/useMemberProfile';
+import { mockTrainers } from '@/utils/mockData';
 import { format } from 'date-fns';
 
 interface TrainerChangeRequest {
@@ -85,8 +85,8 @@ const changeReasons = [
 ];
 
 export const TrainerChangeRequest = () => {
-  const { authState } = useAuth();
   const { toast } = useToast();
+  const { data: member, isLoading } = useMemberProfile();
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [formData, setFormData] = useState({
     requestedTrainerId: '',
@@ -94,7 +94,6 @@ export const TrainerChangeRequest = () => {
     additionalNotes: ''
   });
 
-  const member = mockMembers.find(m => m.email === authState.user?.email);
   const memberRequests = mockChangeRequests.filter(req => req.memberId === member?.id);
   const availableTrainers = mockTrainers.filter(trainer => 
     trainer.id !== member?.trainerId && trainer.status === 'active'
@@ -126,6 +125,17 @@ export const TrainerChangeRequest = () => {
     setShowRequestForm(false);
     setFormData({ requestedTrainerId: '', reason: '', additionalNotes: '' });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading trainer information...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!member) {
     return (

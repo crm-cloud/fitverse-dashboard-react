@@ -318,19 +318,34 @@ export const MemberDashboard = ({ memberId, memberName, memberAvatar }: MemberDa
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Button className="h-20 flex flex-col gap-2">
+                <Button 
+                  className="h-20 flex flex-col gap-2"
+                  onClick={() => window.location.href = '/member/classes'}
+                >
                   <Calendar className="w-6 h-6" />
                   <span className="text-sm">Book Class</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col gap-2"
+                  onClick={() => window.location.href = '/member/goals'}
+                >
                   <Target className="w-6 h-6" />
                   <span className="text-sm">Set Goals</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col gap-2"
+                  onClick={() => window.location.href = '/member/progress'}
+                >
                   <TrendingUp className="w-6 h-6" />
                   <span className="text-sm">View Progress</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col gap-2"
+                  onClick={() => window.location.href = '/member/feedback'}
+                >
                   <MessageSquare className="w-6 h-6" />
                   <span className="text-sm">Give Feedback</span>
                 </Button>
