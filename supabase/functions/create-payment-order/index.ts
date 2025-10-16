@@ -18,6 +18,8 @@ interface PaymentOrderRequest {
   customerName: string;
   notes?: string;
   branchId?: string;
+  discountCode?: string;
+  rewardsUsed?: number;
 }
 
 serve(async (req) => {
@@ -32,7 +34,59 @@ serve(async (req) => {
     );
 
     const body: PaymentOrderRequest = await req.json();
-    const { provider, amount, currency, invoiceId, membershipId, customerId, customerEmail, customerPhone, customerName, notes, branchId } = body;
+    const { provider, amount, currency, invoiceId, membershipId, customerId, customerEmail, customerPhone, customerName, notes, branchId, discountCode, rewardsUsed } = body;
+
+    let finalAmount = amount;
+    let discountAmount = 0;
+    let discountCodeId = null;
+
+    // 1. Validate and apply discount code
+    if (discountCode) {
+      console.log('[create-payment-order] Validating discount code:', discountCode);
+      const { data: discountData } = await supabase.functions.invoke('validate-discount-code', {
+        body: { code: discountCode, userId: customerId, purchaseType: membershipId ? 'membership' : 'product', amount }
+      });
+
+      if (discountData?.valid) {
+        discountAmount = discountData.discountAmount;
+        discountCodeId = discountData.discountId;
+        finalAmount -= discountAmount;
+        console.log('[create-payment-order] Discount applied:', { discountAmount, finalAmount });
+      } else {
+        console.log('[create-payment-order] Discount validation failed:', discountData?.error);
+      }
+    }
+
+    // 2. Validate and deduct rewards
+    if (rewardsUsed && rewardsUsed > 0) {
+      console.log('[create-payment-order] Processing rewards:', rewardsUsed);
+      const { data: credits } = await supabase
+        .from('member_credits')
+        .select('balance')
+        .eq('user_id', customerId)
+        .single();
+
+      if (!credits || credits.balance < rewardsUsed) {
+        throw new Error('Insufficient rewards balance');
+      }
+
+      // Deduct rewards
+      await supabase
+        .from('member_credits')
+        .update({ balance: credits.balance - rewardsUsed })
+        .eq('user_id', customerId);
+
+      // Log transaction
+      await supabase.from('credit_transactions').insert({
+        user_id: customerId,
+        amount: -rewardsUsed,
+        transaction_type: 'redemption',
+        description: `Redeemed for payment`,
+      });
+
+      finalAmount -= rewardsUsed;
+      console.log('[create-payment-order] Rewards applied:', { rewardsUsed, finalAmount });
+    }
 
     // Fetch gateway config
     let query = supabase
@@ -61,31 +115,31 @@ serve(async (req) => {
 
     switch (provider) {
       case 'razorpay':
-        gatewayResponse = await createRazorpayOrder(config, amount, currency, orderId);
+        gatewayResponse = await createRazorpayOrder(config, finalAmount, currency, orderId);
         gatewayOrderId = gatewayResponse.id;
         break;
       case 'payu':
-        gatewayResponse = await createPayUOrder(config, amount, currency, orderId, customerEmail, customerPhone, customerName);
+        gatewayResponse = await createPayUOrder(config, finalAmount, currency, orderId, customerEmail, customerPhone, customerName);
         gatewayOrderId = gatewayResponse.txnid;
         break;
       case 'ccavenue':
-        gatewayResponse = await createCCAvenueOrder(config, amount, currency, orderId, customerEmail, customerPhone, customerName);
+        gatewayResponse = await createCCAvenueOrder(config, finalAmount, currency, orderId, customerEmail, customerPhone, customerName);
         gatewayOrderId = gatewayResponse.order_id;
         break;
       case 'phonepe':
-        gatewayResponse = await createPhonePeOrder(config, amount, currency, orderId, customerPhone);
+        gatewayResponse = await createPhonePeOrder(config, finalAmount, currency, orderId, customerPhone);
         gatewayOrderId = gatewayResponse.merchantTransactionId;
         break;
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }
 
-    // Calculate gateway fees
-    const gatewayFee = (amount * (config.payment_gateway_fee_percent || 0)) / 100;
+    // Calculate gateway fees on final amount
+    const gatewayFee = (finalAmount * (config.payment_gateway_fee_percent || 0)) / 100;
     const gstAmount = config.gst_on_gateway_fee ? (gatewayFee * 0.18) : 0;
-    const netAmount = amount - gatewayFee - gstAmount;
+    const netAmount = finalAmount - gatewayFee - gstAmount;
 
-    // Store transaction
+    // Store transaction with discount and rewards info
     const { data: transaction, error: txError } = await supabase
       .from('payment_gateway_transactions')
       .insert({
@@ -93,7 +147,7 @@ serve(async (req) => {
         provider,
         order_id: orderId,
         gateway_order_id: gatewayOrderId,
-        amount,
+        amount: finalAmount,
         currency,
         gateway_fee: gatewayFee,
         gst_amount: gstAmount,
@@ -108,6 +162,9 @@ serve(async (req) => {
         gateway_response: gatewayResponse,
         branch_id: branchId,
         gym_id: config.gym_id,
+        discount_code: discountCode,
+        discount_amount: discountAmount,
+        rewards_used: rewardsUsed || 0,
       })
       .select()
       .single();

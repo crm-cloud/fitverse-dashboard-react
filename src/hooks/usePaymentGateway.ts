@@ -10,7 +10,7 @@ export const usePaymentGateway = () => {
   const { authState } = useAuth();
   const { currentBranchId } = useBranchContext();
 
-  const createPaymentOrder = async (params: Omit<CreatePaymentOrderParams, 'customerId' | 'customerEmail' | 'customerPhone' | 'customerName' | 'branchId'>): Promise<CreatePaymentOrderResponse | null> => {
+  const createPaymentOrder = async (params: Omit<CreatePaymentOrderParams, 'customerId' | 'customerEmail' | 'customerPhone' | 'customerName'>): Promise<CreatePaymentOrderResponse | null> => {
     setIsProcessing(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-payment-order', {
@@ -18,9 +18,9 @@ export const usePaymentGateway = () => {
           ...params,
           customerId: authState.user?.id,
           customerEmail: authState.user?.email || '',
-          customerPhone: '',
-          customerName: authState.user?.email || 'Guest',
-          branchId: currentBranchId,
+          customerPhone: authState.user?.phone || '',
+          customerName: authState.user?.email?.split('@')[0] || 'Member',
+          branchId: params.branchId || currentBranchId,
         },
       });
 

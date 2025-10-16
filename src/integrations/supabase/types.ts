@@ -664,6 +664,74 @@ export type Database = {
           },
         ]
       }
+      discount_codes: {
+        Row: {
+          applicable_to: string[] | null
+          branch_id: string | null
+          code: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          max_discount_amount: number | null
+          min_purchase_amount: number | null
+          updated_at: string | null
+          usage_count: number | null
+          usage_limit: number | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          applicable_to?: string[] | null
+          branch_id?: string | null
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          min_purchase_amount?: number | null
+          updated_at?: string | null
+          usage_count?: number | null
+          usage_limit?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          applicable_to?: string[] | null
+          branch_id?: string | null
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          min_purchase_amount?: number | null
+          updated_at?: string | null
+          usage_count?: number | null
+          usage_limit?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_codes_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           body: string
@@ -1839,6 +1907,51 @@ export type Database = {
           },
         ]
       }
+      member_discount_usage: {
+        Row: {
+          discount_amount: number
+          discount_code_id: string
+          id: string
+          invoice_id: string | null
+          order_id: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          discount_amount: number
+          discount_code_id: string
+          id?: string
+          invoice_id?: string | null
+          order_id?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          discount_amount?: number
+          discount_code_id?: string
+          id?: string
+          invoice_id?: string | null
+          order_id?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_discount_usage_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_discount_usage_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_goals: {
         Row: {
           category: string | null
@@ -2542,6 +2655,8 @@ export type Database = {
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          discount_amount: number | null
+          discount_code: string | null
           error_message: string | null
           failed_at: string | null
           gateway_config_id: string | null
@@ -2559,6 +2674,7 @@ export type Database = {
           order_id: string
           payment_method: string | null
           provider: string
+          rewards_used: number | null
           status: string | null
           webhook_data: Json | null
         }
@@ -2572,6 +2688,8 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          discount_amount?: number | null
+          discount_code?: string | null
           error_message?: string | null
           failed_at?: string | null
           gateway_config_id?: string | null
@@ -2589,6 +2707,7 @@ export type Database = {
           order_id: string
           payment_method?: string | null
           provider: string
+          rewards_used?: number | null
           status?: string | null
           webhook_data?: Json | null
         }
@@ -2602,6 +2721,8 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          discount_amount?: number | null
+          discount_code?: string | null
           error_message?: string | null
           failed_at?: string | null
           gateway_config_id?: string | null
@@ -2619,6 +2740,7 @@ export type Database = {
           order_id?: string
           payment_method?: string | null
           provider?: string
+          rewards_used?: number | null
           status?: string | null
           webhook_data?: Json | null
         }
@@ -2683,6 +2805,59 @@ export type Database = {
           type?: Database["public"]["Enums"]["payment_method_type"]
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          discount_code: string | null
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          reference: string | null
+          rewards_used: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          discount_code?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method: string
+          reference?: string | null
+          rewards_used?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          discount_code?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference?: string | null
+          rewards_used?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -3848,6 +4023,63 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trainer_profiles"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_package_rates: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          description: string | null
+          duration_days: number | null
+          id: string
+          is_active: boolean | null
+          package_name: string
+          price: number
+          session_count: number
+          trainer_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          package_name: string
+          price: number
+          session_count: number
+          trainer_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          package_name?: string
+          price?: number
+          session_count?: number
+          trainer_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_package_rates_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_package_rates_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }

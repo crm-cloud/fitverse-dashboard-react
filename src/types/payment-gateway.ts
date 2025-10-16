@@ -69,6 +69,8 @@ export interface CreatePaymentOrderParams {
   customerName: string;
   notes?: string;
   branchId?: string;
+  discountCode?: string;
+  rewardsUsed?: number;
 }
 
 export interface CreatePaymentOrderResponse {
