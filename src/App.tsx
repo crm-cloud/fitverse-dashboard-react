@@ -75,6 +75,7 @@ import TrainerWorkoutsPage from "./pages/trainer/workouts";
 import TrainerProgressPage from "./pages/trainer/progress";
 import TrainerEarningsPage from "./pages/trainer/earnings";
 import TrainerAttendancePage from "./pages/trainer/attendance";
+import PaymentGatewaySettings from './pages/system/PaymentGatewaySettings';
 // New staff pages
 import StaffCheckinPage from "./pages/staff/checkin";
 import StaffSupportPage from "./pages/staff/support";
@@ -181,16 +182,26 @@ const App = () => (
                             </RouteGuard>
                           } 
                         />
-                        <Route 
-                          path="/system/whatsapp" 
-                          element={
-                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
-                              <DashboardLayout>
-                                <WhatsAppSettings />
-                              </DashboardLayout>
-                            </RouteGuard>
-                          } 
-                        />
+          <Route 
+            path="/system/whatsapp" 
+            element={
+              <RouteGuard allowedRoles={['super-admin', 'admin']}>
+                <DashboardLayout>
+                  <WhatsAppSettings />
+                </DashboardLayout>
+              </RouteGuard>
+            } 
+          />
+          <Route 
+            path="/system/payment-gateway" 
+            element={
+              <RouteGuard allowedRoles={['super-admin', 'admin']}>
+                <DashboardLayout>
+                  <PaymentGatewaySettings />
+                </DashboardLayout>
+              </RouteGuard>
+            } 
+          />
                         <Route 
                           path="/system/ai-settings" 
                           element={

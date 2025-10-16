@@ -548,6 +548,15 @@ export const navigationConfig: NavigationGroup[] = [
         requiredPermissions: ['system.manage'],
       },
       {
+        id: 'payment-gateway-settings',
+        title: 'Payment Gateway',
+        url: '/system/payment-gateway',
+        icon: CreditCard,
+        group: 'communication-settings',
+        allowedRoles: ['admin'],
+        requiredPermissions: ['system.manage'],
+      },
+      {
         id: 'ai-settings',
         title: 'AI Settings',
         url: '/system/ai-settings',

@@ -2444,6 +2444,222 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_configs: {
+        Row: {
+          access_code: string | null
+          allowed_payment_methods: Json | null
+          api_key: string | null
+          api_secret: string | null
+          auto_capture: boolean | null
+          branch_id: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          gst_on_gateway_fee: boolean | null
+          gym_id: string | null
+          id: string
+          is_active: boolean | null
+          is_test_mode: boolean | null
+          merchant_id: string | null
+          payment_gateway_fee_percent: number | null
+          provider: string
+          salt_key: string | null
+          updated_at: string | null
+          webhook_secret: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          access_code?: string | null
+          allowed_payment_methods?: Json | null
+          api_key?: string | null
+          api_secret?: string | null
+          auto_capture?: boolean | null
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          gst_on_gateway_fee?: boolean | null
+          gym_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_test_mode?: boolean | null
+          merchant_id?: string | null
+          payment_gateway_fee_percent?: number | null
+          provider: string
+          salt_key?: string | null
+          updated_at?: string | null
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          access_code?: string | null
+          allowed_payment_methods?: Json | null
+          api_key?: string | null
+          api_secret?: string | null
+          auto_capture?: boolean | null
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          gst_on_gateway_fee?: boolean | null
+          gym_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_test_mode?: boolean | null
+          merchant_id?: string | null
+          payment_gateway_fee_percent?: number | null
+          provider?: string
+          salt_key?: string | null
+          updated_at?: string | null
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateway_configs_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_gateway_configs_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_gateway_transactions: {
+        Row: {
+          amount: number
+          branch_id: string | null
+          completed_at: string | null
+          created_by: string | null
+          currency: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          error_message: string | null
+          failed_at: string | null
+          gateway_config_id: string | null
+          gateway_fee: number | null
+          gateway_order_id: string | null
+          gateway_payment_id: string | null
+          gateway_response: Json | null
+          gst_amount: number | null
+          gym_id: string | null
+          id: string
+          initiated_at: string | null
+          invoice_id: string | null
+          membership_id: string | null
+          net_amount: number | null
+          order_id: string
+          payment_method: string | null
+          provider: string
+          status: string | null
+          webhook_data: Json | null
+        }
+        Insert: {
+          amount: number
+          branch_id?: string | null
+          completed_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          gateway_config_id?: string | null
+          gateway_fee?: number | null
+          gateway_order_id?: string | null
+          gateway_payment_id?: string | null
+          gateway_response?: Json | null
+          gst_amount?: number | null
+          gym_id?: string | null
+          id?: string
+          initiated_at?: string | null
+          invoice_id?: string | null
+          membership_id?: string | null
+          net_amount?: number | null
+          order_id: string
+          payment_method?: string | null
+          provider: string
+          status?: string | null
+          webhook_data?: Json | null
+        }
+        Update: {
+          amount?: number
+          branch_id?: string | null
+          completed_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          gateway_config_id?: string | null
+          gateway_fee?: number | null
+          gateway_order_id?: string | null
+          gateway_payment_id?: string | null
+          gateway_response?: Json | null
+          gst_amount?: number | null
+          gym_id?: string | null
+          id?: string
+          initiated_at?: string | null
+          invoice_id?: string | null
+          membership_id?: string | null
+          net_amount?: number | null
+          order_id?: string
+          payment_method?: string | null
+          provider?: string
+          status?: string | null
+          webhook_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateway_transactions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_gateway_transactions_gateway_config_id_fkey"
+            columns: ["gateway_config_id"]
+            isOneToOne: false
+            referencedRelation: "payment_gateway_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_gateway_transactions_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_gateway_transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_gateway_transactions_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "member_memberships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           created_at: string
