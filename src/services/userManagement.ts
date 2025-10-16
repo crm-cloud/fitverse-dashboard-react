@@ -69,29 +69,34 @@ export const createUserWithRole = async (params: CreateUserParams): Promise<Crea
       };
     }
 
-    // Step 2: Profile is auto-created by handle_new_user() trigger
-    // Wait a moment for trigger to complete
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Step 3: Update profile with additional information
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        gym_id: gym_id || null,
-        branch_id: branch_id || null,
-        phone: phone || null,
-        date_of_birth: date_of_birth ? date_of_birth.toISOString().split('T')[0] : null,
-        address: address || null,
-        is_active: true,
-      })
-      .eq('user_id', authData.user.id);
-
-    if (profileError) {
-      console.error('Profile update error:', profileError);
-      // Don't fail completely, user is created
+    // Step 2: Wait for auth user to be fully created in database
+    // Email confirmation might delay this, so we need to wait and verify
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Verify user exists in auth.users before proceeding
+    let userVerified = false;
+    let retries = 0;
+    const maxRetries = 5;
+    
+    while (!userVerified && retries < maxRetries) {
+      const { data: userData, error: userCheckError } = await supabase.auth.getUser();
+      if (!userCheckError && userData?.user?.id === authData.user.id) {
+        userVerified = true;
+        break;
+      }
+      retries++;
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    // Step 4: Assign role in user_roles table (critical for RBAC)
+    if (!userVerified) {
+      return {
+        user: authData.user,
+        profile: null,
+        error: new Error('User creation timed out. Please check Supabase email confirmation settings.')
+      };
+    }
+
+    // Step 3: Assign role in user_roles table FIRST (critical for RBAC)
     const { error: roleError } = await supabase
       .from('user_roles')
       .insert({
@@ -107,6 +112,24 @@ export const createUserWithRole = async (params: CreateUserParams): Promise<Crea
         profile: null, 
         error: roleError 
       };
+    }
+
+    // Step 4: Update profile with additional information
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        gym_id: gym_id || null,
+        branch_id: branch_id || null,
+        phone: phone || null,
+        date_of_birth: date_of_birth ? date_of_birth.toISOString().split('T')[0] : null,
+        address: address || null,
+        is_active: true,
+      })
+      .eq('user_id', authData.user.id);
+
+    if (profileError) {
+      console.error('Profile update error:', profileError);
+      // Don't fail completely, user is created
     }
 
     // Step 5: Fetch the updated profile
