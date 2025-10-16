@@ -267,32 +267,30 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           data.branch_id = newBranch.id;
         }
         
-        // Generate temporary password
-        const { generateTempPassword } = await import('@/services/userManagement');
+        // Generate temporary password and create admin user
+        const { generateTempPassword, createUserWithRole } = await import('@/services/userManagement');
         const tempPassword = generateTempPassword();
         
-        // Use edge function to create admin user (bypasses email confirmation)
-        const { data: result, error: createError } = await supabase.functions.invoke('create-admin-user', {
-          body: {
-            email: data.email,
-            password: tempPassword,
-            full_name: data.full_name,
-            phone: data.phone,
-            role: 'admin',
-            gym_id: gym_id,
-            branch_id: data.branch_id,
-            date_of_birth: data.date_of_birth || null,
-            address: data.address || null,
-          }
+        // Create admin user directly using the same service as team members
+        const result = await createUserWithRole({
+          email: data.email,
+          password: tempPassword,
+          full_name: data.full_name,
+          phone: data.phone,
+          role: 'admin',
+          gym_id: gym_id,
+          branch_id: data.branch_id,
+          date_of_birth: data.date_of_birth ? new Date(data.date_of_birth) : undefined,
+          address: data.address || undefined,
         });
         
-        if (createError || !result?.success) {
-          throw new Error(result?.error || createError?.message || 'Failed to create admin user');
+        if (result.error) {
+          throw new Error(result.error.message || 'Failed to create admin user');
         }
         
         return {
           success: true,
-          user_id: result.user_id,
+          user_id: result.user.id,
           gym_id: gym_id,
           tempPassword: tempPassword,
           message: 'Admin account created successfully'
