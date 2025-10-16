@@ -64,18 +64,18 @@ serve(async (req) => {
 
     // Step 3: Verify user exists in auth.users with retry logic
     const maxRetries = 5;
-    let userExists = false;
+    let userVerified = false;
     
     for (let i = 0; i < maxRetries; i++) {
       const { data: userData } = await supabase.auth.admin.getUserById(userId);
       if (userData?.user) {
-        userExists = true;
+        userVerified = true;
         break;
       }
       await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms between retries
     }
 
-    if (!userExists) {
+    if (!userVerified) {
       throw new Error('User creation verification failed - user not found in auth.users');
     }
 
