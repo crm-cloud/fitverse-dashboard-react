@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { CreditCard, Receipt, Calendar, ShoppingBag, UserPlus, DollarSign, AlertCircle, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CreditCard, Receipt, ShoppingBag, UserPlus, DollarSign, AlertCircle, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemberProfile } from '@/hooks/useMemberProfile';
 import { UnifiedCheckoutModal } from '@/components/checkout/UnifiedCheckoutModal';
@@ -22,51 +21,83 @@ export const MemberBilling = () => {
   const { data: member, isLoading: memberLoading } = useMemberProfile();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutItems, setCheckoutItems] = useState<any[]>([]);
+  
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [activeMembership, setActiveMembership] = useState<any>(null);
+  const [rewardsBalance, setRewardsBalance] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch real invoices
-  const { data: invoices, isLoading: invoicesLoading } = useSupabaseQuery(
-    ['member-invoices', member?.user_id],
-    async () => {
-      if (!member?.user_id) return [];
-      const { data, error } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('customer_id', member.user_id)
-        .order('created_at', { ascending: false });
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!member?.user_id) return;
       
-      if (error) throw error;
-      return data || [];
-    },
-    { enabled: !!member?.user_id }
-  );
+      setLoading(true);
+      try {
+        // Fetch invoices
+        const invoiceQuery: any = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('customer_id', member.user_id)
+          .order('created_at', { ascending: false });
+        
+        setInvoices(invoiceQuery.data || []);
 
-  // Fetch real payments - simplified
-  const payments: any[] = [];
-  const paymentsLoading = false;
+        // Fetch payments
+        if (invoiceQuery.data && invoiceQuery.data.length > 0) {
+          const invoiceIds = invoiceQuery.data.map((inv: any) => inv.id);
+          const paymentQuery: any = await supabase
+            .from('payments')
+            .select('*')
+            .in('invoice_id', invoiceIds)
+            .order('payment_date', { ascending: false });
+          
+          setPayments(paymentQuery.data || []);
+        }
 
-  // Fetch active membership
-  const { data: activeMembership } = useSupabaseQuery(
-    ['active-membership', member?.id],
-    async () => {
-      if (!member?.id) return null;
-      const { data, error } = await supabase
-        .from('member_memberships')
-        .select('*, membership_plans(name, price)')
-        .eq('member_id', member.id)
-        .eq('status', 'active')
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
-    },
-    { enabled: !!member?.id }
-  );
+        // Fetch active membership - simplified
+        const membershipQuery: any = await supabase
+          .from('member_memberships')
+          .select('*')
+          .eq('user_id', member.user_id)
+          .eq('status', 'active')
+          .maybeSingle();
+        
+        if (membershipQuery.data) {
+          // Fetch plan details separately
+          const planQuery: any = await supabase
+            .from('membership_plans')
+            .select('name, price')
+            .eq('id', membershipQuery.data.membership_plan_id)
+            .single();
+          
+          setActiveMembership({
+            ...membershipQuery.data,
+            membership_plans: planQuery.data
+          });
+        }
 
-  // Fetch rewards balance
-  const rewardsBalance = 0; // Temporarily simplified to fix build
-  const unpaidInvoices = invoices?.filter((inv: any) => inv.status === 'unpaid' || inv.status === 'overdue') || [];
-  const totalOutstanding = unpaidInvoices.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
-  const totalPaid = payments?.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
+        // Fetch rewards balance
+        const creditsQuery: any = await supabase
+          .from('member_credits')
+          .select('balance')
+          .eq('user_id', member.user_id)
+          .maybeSingle();
+        
+        setRewardsBalance(creditsQuery.data?.balance || 0);
+      } catch (error) {
+        console.error('Error fetching billing data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [member?.user_id, member?.id]);
+
+  const unpaidInvoices = invoices.filter(inv => inv.status === 'unpaid' || inv.status === 'overdue');
+  const totalOutstanding = unpaidInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+  const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const handlePayInvoice = (invoice: any) => {
     setCheckoutItems([{
@@ -79,7 +110,7 @@ export const MemberBilling = () => {
     setCheckoutOpen(true);
   };
 
-  if (memberLoading) {
+  if (memberLoading || loading) {
     return (
       <div className="space-y-6">
         <div>
@@ -140,7 +171,7 @@ export const MemberBilling = () => {
         </Card>
       )}
 
-      {totalOutstanding === 0 && (
+      {totalOutstanding === 0 && invoices.length > 0 && (
         <Card className="border-success bg-success/5">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -177,7 +208,7 @@ export const MemberBilling = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Invoices</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{invoices?.length || 0}</div>
+            <div className="text-2xl font-bold">{invoices.length}</div>
           </CardContent>
         </Card>
 
@@ -274,11 +305,7 @@ export const MemberBilling = () => {
               <CardDescription>All your membership invoices and billing statements</CardDescription>
             </CardHeader>
             <CardContent>
-              {invoicesLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full" />)}
-                </div>
-              ) : invoices && invoices.length > 0 ? (
+              {invoices.length > 0 ? (
                 <div className="space-y-4">
                   {invoices.map((invoice) => (
                     <div key={invoice.id} className="border rounded-lg p-4">
@@ -345,14 +372,10 @@ export const MemberBilling = () => {
               <CardDescription>All your successful payments and transactions</CardDescription>
             </CardHeader>
             <CardContent>
-              {paymentsLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full" />)}
-                </div>
-              ) : payments && payments.length > 0 ? (
+              {payments.length > 0 ? (
                 <div className="space-y-4">
                   {payments.map((payment) => {
-                    const invoice = invoices?.find(inv => inv.id === payment.invoice_id);
+                    const invoice = invoices.find(inv => inv.id === payment.invoice_id);
                     return (
                       <div key={payment.id} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
@@ -401,6 +424,14 @@ export const MemberBilling = () => {
                             </Badge>
                           </div>
                         )}
+                        
+                        {payment.rewards_used && payment.rewards_used > 0 && (
+                          <div className="mt-2">
+                            <Badge variant="secondary">
+                              Rewards Used: {formatCurrency(payment.rewards_used)}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -423,6 +454,8 @@ export const MemberBilling = () => {
         items={checkoutItems}
         onSuccess={() => {
           setCheckoutOpen(false);
+          // Refetch data
+          window.location.reload();
         }}
       />
     </div>

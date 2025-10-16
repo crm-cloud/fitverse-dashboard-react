@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.seed-demo-accounts]
 verify_jwt = false
+
+[functions.create-payment-order]
+verify_jwt = true
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.validate-discount-code]
+verify_jwt = true
