@@ -49,71 +49,87 @@ export const createUserWithRole = async (params: CreateUserParams): Promise<Crea
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name,
-          phone,
-          // Don't pass role in metadata for security
-        }
+        data: { full_name, phone }
       }
     });
 
+    // If user already exists, link and assign role instead of failing
     if (authError) {
+      const msg = String(authError.message || '');
+      if (authError.code === 'user_already_exists' || msg.toLowerCase().includes('already')) {
+        // Try to find existing profile by email
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (!existingProfile?.user_id) {
+          return { user: null, profile: null, error: new Error('User already exists but profile not found. Ask user to login once, then retry.') };
+        }
+
+        // Assign role if missing (idempotent)
+        const assignRole = async () => {
+          const { data: hasRole } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', existingProfile.user_id)
+            .eq('role', role)
+            .maybeSingle();
+          if (!hasRole) {
+            await supabase
+              .from('user_roles')
+              .upsert({ user_id: existingProfile.user_id, role, branch_id: branch_id || null }, { onConflict: 'user_id,role', ignoreDuplicates: true });
+          }
+        };
+        await assignRole();
+
+        // Update profile with gym/branch
+        await supabase
+          .from('profiles')
+          .update({
+            gym_id: gym_id || null,
+            branch_id: branch_id || null,
+            phone: phone || null,
+            date_of_birth: date_of_birth ? date_of_birth.toISOString().split('T')[0] : null,
+            address: address || null,
+            is_active: true,
+          })
+          .eq('user_id', existingProfile.user_id);
+
+        return { user: { id: existingProfile.user_id, email }, profile: existingProfile, error: null };
+      }
       return { user: null, profile: null, error: authError };
     }
 
-    if (!authData.user) {
-      return { 
-        user: null, 
-        profile: null, 
-        error: new Error('User creation failed - no user returned') 
-      };
+    // For new users, wait for profile to be created via trigger
+    const newUserId = authData.user.id;
+    let attempts = 0;
+    let profileRow: any = null;
+    while (attempts < 10 && !profileRow) {
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', newUserId)
+        .maybeSingle();
+      if (p) { profileRow = p; break; }
+      attempts++;
+      await new Promise(r => setTimeout(r, 500));
     }
 
-    // Step 2: Wait for auth user to be fully created in database
-    // Email confirmation might delay this, so we need to wait and verify
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Verify user exists in auth.users before proceeding
-    let userVerified = false;
-    let retries = 0;
-    const maxRetries = 5;
-    
-    while (!userVerified && retries < maxRetries) {
-      const { data: userData, error: userCheckError } = await supabase.auth.getUser();
-      if (!userCheckError && userData?.user?.id === authData.user.id) {
-        userVerified = true;
-        break;
-      }
-      retries++;
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    // Try to assign role with retries to avoid FK timing issues
+    let roleAssigned = false;
+    for (let i = 0; i < 10 && !roleAssigned; i++) {
+      const { error: roleErr } = await supabase
+        .from('user_roles')
+        .upsert({ user_id: newUserId, role, branch_id: branch_id || null }, { onConflict: 'user_id,role', ignoreDuplicates: true });
+      if (!roleErr) { roleAssigned = true; break; }
+      await new Promise(r => setTimeout(r, 500));
     }
 
-    if (!userVerified) {
-      return {
-        user: authData.user,
-        profile: null,
-        error: new Error('User creation timed out. Please check Supabase email confirmation settings.')
-      };
+    if (!roleAssigned) {
+      return { user: authData.user, profile: profileRow, error: new Error('Could not assign role. Please retry shortly.') };
     }
-
-    // Step 3: Assign role in user_roles table FIRST (critical for RBAC)
-    const { error: roleError } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: authData.user.id,
-        role: role,
-        branch_id: branch_id || null,
-      });
-
-    if (roleError) {
-      console.error('Role assignment error:', roleError);
-      return { 
-        user: authData.user, 
-        profile: null, 
-        error: roleError 
-      };
-    }
-
     // Step 4: Update profile with additional information
     const { error: profileError } = await supabase
       .from('profiles')

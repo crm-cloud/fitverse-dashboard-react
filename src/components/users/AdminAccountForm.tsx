@@ -211,16 +211,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   const createAdminAccount = useMutation({
     mutationFn: async (data: AdminFormData) => {
       try {
-        // Check if user already exists
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('user_id')
-          .eq('email', data.email)
-          .maybeSingle();
-
-        if (existingUser) {
-          throw new Error('A user with this email already exists');
-        }
+        // Proceed regardless of existing profile; service will handle existing-email path idempotently
 
         let gym_id = data.existing_gym_id;
         
@@ -321,9 +312,9 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       
       // Handle specific error cases
       if (error?.message?.includes('email_exists') || error?.message?.includes('already registered')) {
-        errorMessage = 'A user with this email address already exists. Please use a different email.';
+        errorMessage = 'User already exists. If their profile wasn\'t found, ask them to login once, then retry.';
       } else if (error?.message?.includes('foreign key constraint')) {
-        errorMessage = 'There was a database error. Please try again in a few moments.';
+        errorMessage = 'There was a database timing issue. Please try again in a few seconds.';
       } else if (error?.message?.includes('subscription plan')) {
         errorMessage = 'Invalid subscription plan selected. Please choose a valid plan.';
       }
