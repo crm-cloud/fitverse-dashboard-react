@@ -222,9 +222,6 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           throw new Error('A user with this email already exists');
         }
 
-        // Phase 2: Use unified service instead of Edge Function
-        const { createUserWithRole, generateTempPassword } = await import('@/services/userManagement');
-        
         let gym_id = data.existing_gym_id;
         
         // Create new gym if requested
@@ -271,28 +268,31 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
         }
         
         // Generate temporary password
+        const { generateTempPassword } = await import('@/services/userManagement');
         const tempPassword = generateTempPassword();
         
-        // Create admin user with unified service
-        const result = await createUserWithRole({
-          email: data.email,
-          password: tempPassword,
-          full_name: data.full_name,
-          phone: data.phone,
-          role: 'admin',
-          gym_id: gym_id,
-          branch_id: data.branch_id,
-          date_of_birth: data.date_of_birth ? new Date(data.date_of_birth) : undefined,
-          address: data.address,
+        // Use edge function to create admin user (bypasses email confirmation)
+        const { data: result, error: createError } = await supabase.functions.invoke('create-admin-user', {
+          body: {
+            email: data.email,
+            password: tempPassword,
+            full_name: data.full_name,
+            phone: data.phone,
+            role: 'admin',
+            gym_id: gym_id,
+            branch_id: data.branch_id,
+            date_of_birth: data.date_of_birth || null,
+            address: data.address || null,
+          }
         });
         
-        if (result.error) {
-          throw result.error;
+        if (createError || !result?.success) {
+          throw new Error(result?.error || createError?.message || 'Failed to create admin user');
         }
         
         return {
           success: true,
-          user_id: result.user.id,
+          user_id: result.user_id,
           gym_id: gym_id,
           tempPassword: tempPassword,
           message: 'Admin account created successfully'
