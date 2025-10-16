@@ -57,10 +57,27 @@ serve(async (req) => {
 
     const userId = authData.user.id;
 
-    // Step 3: Wait for profile creation trigger
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Step 3: Verify user exists in auth.users with retry logic
+    const maxRetries = 5;
+    let userExists = false;
+    
+    for (let i = 0; i < maxRetries; i++) {
+      const { data: userData } = await supabase.auth.admin.getUserById(userId);
+      if (userData?.user) {
+        userExists = true;
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms between retries
+    }
 
-    // Step 4: Update profile with additional info
+    if (!userExists) {
+      throw new Error('User creation verification failed - user not found in auth.users');
+    }
+
+    // Step 4: Wait for profile creation trigger
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Step 5: Update profile with additional info
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
@@ -79,7 +96,7 @@ serve(async (req) => {
       // Don't fail completely, continue with role assignment
     }
 
-    // Step 5: Assign role in user_roles table
+    // Step 6: Assign role in user_roles table
     const { error: roleError } = await supabase
       .from('user_roles')
       .insert({
