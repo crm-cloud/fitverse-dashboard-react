@@ -181,25 +181,25 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
-    id: 'gym-management',
-    title: 'Gym Management',
+    id: 'gym-overview',
+    title: 'Gym Overview',
     allowedRoles: ['admin'],
     priority: 4,
     items: [
       {
         id: 'gym-dashboard',
         title: 'Gym Dashboard',
-        url: '/gym-dashboard',
+        url: '/gyms/dashboard',
         icon: Building,
-        group: 'gym-management',
+        group: 'gym-overview',
         allowedRoles: ['admin'],
       },
       {
         id: 'admin-branches',
         title: 'All Branches',
-        url: '/branches/admin',
+        url: '/branches',
         icon: MapPin,
-        group: 'gym-management',
+        group: 'gym-overview',
         allowedRoles: ['admin'],
         requiredPermissions: ['branches.view'],
       }
@@ -327,7 +327,7 @@ export const navigationConfig: NavigationGroup[] = [
   },
   {
     id: 'communication',
-    title: 'Communication - Announcements',
+    title: 'Communication',
     allowedRoles: ['admin', 'team'],
     requiredPermissions: ['notifications.view'],
     priority: 6,
@@ -344,7 +344,7 @@ export const navigationConfig: NavigationGroup[] = [
   },
   {
     id: 'marketing',
-    title: 'Marketing (Leads, Referrals)',
+    title: 'Marketing',
     allowedRoles: ['admin', 'team'],
     priority: 7,
     items: [
@@ -473,8 +473,8 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
-    id: 'feedback',
-    title: 'Feedback & Support',
+    id: 'support',
+    title: 'Support',
     priority: 11,
     items: [
       {
@@ -482,7 +482,7 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'Feedback',
         url: '/feedback',
         icon: MessageSquare,
-        group: 'feedback',
+        group: 'support',
         requiredPermissions: ['feedback.view'],
       }
     ]
@@ -515,26 +515,17 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
-    id: 'gym-settings',
-    title: 'Gym Management (Gym Settings)',
+    id: 'communication-settings',
+    title: 'Communication Settings',
     allowedRoles: ['admin'],
     priority: 13,
     items: [
-      {
-        id: 'ai-settings',
-        title: 'AI Settings',
-        url: '/system/ai-settings',
-        icon: BrainCircuit,
-        group: 'gym-settings',
-        allowedRoles: ['admin'],
-        requiredPermissions: ['system.manage'],
-      },
       {
         id: 'email-settings',
         title: 'Email Settings',
         url: '/system/email',
         icon: Mail,
-        group: 'gym-settings',
+        group: 'communication-settings',
         allowedRoles: ['admin'],
         requiredPermissions: ['system.manage'],
       },
@@ -543,7 +534,25 @@ export const navigationConfig: NavigationGroup[] = [
         title: 'SMS Settings',
         url: '/system/sms',
         icon: Smartphone,
-        group: 'gym-settings',
+        group: 'communication-settings',
+        allowedRoles: ['admin'],
+        requiredPermissions: ['system.manage'],
+      },
+      {
+        id: 'whatsapp-settings',
+        title: 'WhatsApp Settings',
+        url: '/system/whatsapp',
+        icon: MessageSquare,
+        group: 'communication-settings',
+        allowedRoles: ['admin'],
+        requiredPermissions: ['system.manage'],
+      },
+      {
+        id: 'ai-settings',
+        title: 'AI Settings',
+        url: '/system/ai-settings',
+        icon: BrainCircuit,
+        group: 'communication-settings',
         allowedRoles: ['admin'],
         requiredPermissions: ['system.manage'],
       }

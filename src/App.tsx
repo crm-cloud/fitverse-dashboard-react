@@ -57,6 +57,7 @@ import ReferralManagement from "./pages/referrals/ReferralManagement";
 import MemberReferralsPage from "./pages/member/referrals";
 import EmailSettings from "./pages/system/EmailSettings";
 import SMSSettings from "./pages/system/SMSSettings";
+import WhatsAppSettings from "./pages/system/WhatsAppSettings";
 import SystemBackup from "./pages/system/SystemBackup";
 import AISettings from "./pages/system/AISettings";
 import BranchManagement from "./pages/branches/BranchManagement";
@@ -176,6 +177,16 @@ const App = () => (
                             <RouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <SMSSettings />
+                              </DashboardLayout>
+                            </RouteGuard>
+                          } 
+                        />
+                        <Route 
+                          path="/system/whatsapp" 
+                          element={
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
+                              <DashboardLayout>
+                                <WhatsAppSettings />
                               </DashboardLayout>
                             </RouteGuard>
                           } 

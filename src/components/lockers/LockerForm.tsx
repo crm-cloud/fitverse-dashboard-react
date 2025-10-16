@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Locker, LockerStatus } from '@/types/locker';
-import { mockLockerSizes } from '@/utils/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LockerFormProps {
   open: boolean;
@@ -23,6 +24,19 @@ export function LockerForm({
   onSubmit, 
   branches 
 }: LockerFormProps) {
+  // Fetch locker sizes from database
+  const { data: lockerSizes = [] } = useQuery({
+    queryKey: ['locker_sizes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locker_sizes')
+        .select('*')
+        .order('monthly_fee', { ascending: true});
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
   const [formData, setFormData] = useState({
     name: locker?.name || '',
     number: locker?.number || '',
@@ -35,7 +49,7 @@ export function LockerForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedSize = mockLockerSizes.find(s => s.id === formData.sizeId);
+    const selectedSize = lockerSizes.find(s => s.id === formData.sizeId);
     if (!selectedSize) return;
 
     onSubmit({
@@ -111,13 +125,13 @@ export function LockerForm({
                 <SelectTrigger>
                   <SelectValue placeholder="Select size" />
                 </SelectTrigger>
-                <SelectContent>
-                  {mockLockerSizes.map((size) => (
-                    <SelectItem key={size.id} value={size.id}>
-                      {size.name} - ${size.monthlyFee}/month
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                  <SelectContent>
+                    {lockerSizes.map((size) => (
+                      <SelectItem key={size.id} value={size.id}>
+                        {size.name} - ${size.monthly_fee}/month
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
               </Select>
             </div>
 
