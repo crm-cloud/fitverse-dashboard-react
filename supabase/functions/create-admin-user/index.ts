@@ -67,9 +67,20 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, full_name, phone, gym_name, subscription_plan, date_of_birth, address } = await req.json()
+    const { 
+      email, 
+      password, 
+      full_name, 
+      phone, 
+      gym_name, 
+      subscription_plan, 
+      date_of_birth, 
+      address,
+      existing_gym_id,
+      existing_branch_id
+    } = await req.json()
 
-    console.log('Creating admin atomically for email:', email)
+    console.log('Creating admin atomically for email:', email, existing_gym_id ? '(existing gym)' : '(new gym)')
 
     // Call the atomic database function
     const { data: result, error: dbError } = await supabaseAdmin.rpc('create_gym_admin_atomic', {
@@ -81,6 +92,8 @@ serve(async (req) => {
       p_subscription_plan: subscription_plan || 'basic',
       p_address: address || null,
       p_date_of_birth: date_of_birth || null,
+      p_existing_gym_id: existing_gym_id || null,
+      p_existing_branch_id: existing_branch_id || null,
     })
 
     if (dbError) {

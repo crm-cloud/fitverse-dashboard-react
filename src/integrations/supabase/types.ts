@@ -4711,6 +4711,8 @@ export type Database = {
           p_address: Json
           p_date_of_birth?: string
           p_email: string
+          p_existing_branch_id?: string
+          p_existing_gym_id?: string
           p_full_name: string
           p_gym_name: string
           p_password: string
