@@ -20,14 +20,19 @@ export interface CreateUserResult {
 }
 
 /**
- * Unified user creation service - Phase 2
- * Replaces Edge Function and auth.admin calls for security
+ * @deprecated SECURITY WARNING: This function has critical security flaws.
  * 
- * Flow:
- * 1. Create auth user via signUp (standard auth)
- * 2. Profile auto-created by database trigger
- * 3. Assign role in user_roles table
- * 4. Update profile with gym/branch info
+ * Issues:
+ * - Client-side role assignment (vulnerable to privilege escalation)
+ * - Race conditions with auth.users and profile creation
+ * - Unreliable setTimeout polling
+ * 
+ * Use secure edge functions instead:
+ * - create-admin-user (for admins)
+ * - create-trainer-account (for trainers)
+ * 
+ * DO NOT USE for admin/privileged role creation.
+ * Only use for non-privileged roles like 'member' or 'staff' if absolutely necessary.
  */
 export const createUserWithRole = async (params: CreateUserParams): Promise<CreateUserResult> => {
   const { 

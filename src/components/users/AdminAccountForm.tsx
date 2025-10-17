@@ -211,11 +211,9 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   const createAdminAccount = useMutation({
     mutationFn: async (data: AdminFormData) => {
       try {
-        // Proceed regardless of existing profile; service will handle existing-email path idempotently
-
         let gym_id = data.existing_gym_id;
         
-        // Create new gym if requested
+        // Create new gym if requested (keep this client-side)
         if (data.create_new_gym && data.gym_name) {
           const { data: newGym, error: gymError } = await supabase
             .from('gyms')
@@ -258,35 +256,40 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           data.branch_id = newBranch.id;
         }
         
-        // Generate temporary password and create admin user
-        const { generateTempPassword, createUserWithRole } = await import('@/services/userManagement');
+        // Generate temporary password
+        const { generateTempPassword } = await import('@/services/userManagement');
         const tempPassword = generateTempPassword();
         
-        // Create admin user directly using the same service as team members
-        const result = await createUserWithRole({
-          email: data.email,
-          password: tempPassword,
-          full_name: data.full_name,
-          phone: data.phone,
-          role: 'admin',
-          gym_id: gym_id,
-          branch_id: data.branch_id,
-          date_of_birth: data.date_of_birth ? new Date(data.date_of_birth) : undefined,
-          address: data.address || undefined,
+        // Call secure edge function (server-side role assignment)
+        const { data: result, error: createError } = await supabase.functions.invoke('create-admin-user', {
+          body: {
+            email: data.email,
+            password: tempPassword,
+            full_name: data.full_name,
+            phone: data.phone,
+            gym_id: gym_id,
+            branch_id: data.branch_id,
+            date_of_birth: data.date_of_birth || null,
+            address: data.address || null,
+          }
         });
         
-        if (result.error) {
-          throw new Error(result.error.message || 'Failed to create admin user');
+        if (createError) {
+          throw new Error(createError.message || 'Failed to create admin user');
+        }
+        
+        if (!result?.success) {
+          throw new Error(result?.error || 'Failed to create admin user');
         }
         
         return {
           success: true,
-          user_id: result.user.id,
+          user_id: result.user_id,
           gym_id: gym_id,
           tempPassword: tempPassword,
           message: 'Admin account created successfully'
         };
-
+        
       } catch (error: any) {
         console.error('Admin creation error:', error);
         throw error;
