@@ -224,44 +224,57 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
         const { generateTempPassword } = await import('@/services/userManagement');
         const tempPassword = generateTempPassword();
         
-        // Call edge function with ALL data (gym creation now server-side & atomic)
+        // Build request body, only including defined values
+        const requestBody: any = {
+          email: data.email,
+          password: tempPassword,
+          full_name: data.full_name,
+          phone: data.phone || null,
+          subscription_plan: data.subscription_plan || 'basic',
+          date_of_birth: data.date_of_birth || null,
+          address: data.address || null,
+        };
+
+        // Add gym-specific fields based on mode
+        if (data.create_new_gym) {
+          requestBody.gym_name = data.gym_name || `${data.full_name}'s Gym`;
+        } else {
+          requestBody.existing_gym_id = data.existing_gym_id;
+          requestBody.existing_branch_id = data.existing_branch_id;
+        }
+        
+        // Call edge function with properly formatted body
         const { data: result, error: createError } = await supabase.functions.invoke('create-admin-user', {
-          body: {
-            email: data.email,
-            password: tempPassword,
-            full_name: data.full_name,
-            phone: data.phone,
-            gym_name: data.create_new_gym ? (data.gym_name || `${data.full_name}'s Gym`) : undefined,
-            subscription_plan: data.subscription_plan,
-            date_of_birth: data.date_of_birth || null,
-            address: data.address || null,
-            existing_gym_id: !data.create_new_gym ? data.existing_gym_id : undefined,
-            existing_branch_id: !data.create_new_gym ? data.existing_branch_id : undefined,
-          }
+          body: requestBody
         });
         
         if (createError) {
+          console.error('Edge function error:', createError);
           throw new Error(createError.message || 'Failed to create admin user');
         }
         
         if (!result?.success) {
+          console.error('Admin creation failed:', result?.error);
           throw new Error(result?.error || 'Failed to create admin user');
         }
         
-        // Optionally send welcome email (non-blocking)
+        // Send welcome email (non-blocking)
+        const gymNameForEmail = data.create_new_gym 
+          ? (data.gym_name || `${data.full_name}'s Gym`)
+          : 'your assigned gym';
+          
         try {
           await supabase.functions.invoke('send-admin-welcome-email', {
             body: {
               adminId: result.user_id,
               adminEmail: data.email,
               adminName: data.full_name,
-              gymName: data.gym_name,
+              gymName: gymNameForEmail,
               temporaryPassword: tempPassword,
             }
           });
         } catch (emailError) {
-          console.warn('Welcome email failed:', emailError);
-          // Don't fail the entire operation
+          console.warn('Welcome email failed (non-critical):', emailError);
         }
         
         return {
