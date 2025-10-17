@@ -4706,6 +4706,19 @@ export type Database = {
           total_referrals: number
         }[]
       }
+      create_gym_admin_atomic: {
+        Args: {
+          p_address: Json
+          p_date_of_birth?: string
+          p_email: string
+          p_full_name: string
+          p_gym_name: string
+          p_password: string
+          p_phone: string
+          p_subscription_plan: string
+        }
+        Returns: Json
+      }
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string

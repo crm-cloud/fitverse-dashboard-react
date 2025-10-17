@@ -67,72 +67,47 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, full_name, phone, gym_id, branch_id, date_of_birth, address } = await req.json()
+    const { email, password, full_name, phone, gym_name, subscription_plan, date_of_birth, address } = await req.json()
 
-    console.log('Creating admin user:', email)
+    console.log('Creating admin atomically for email:', email)
 
-    // Create user using Admin API (bypasses email confirmation)
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: { full_name, phone }
+    // Call the atomic database function
+    const { data: result, error: dbError } = await supabaseAdmin.rpc('create_gym_admin_atomic', {
+      p_email: email,
+      p_password: password,
+      p_full_name: full_name,
+      p_phone: phone || null,
+      p_gym_name: gym_name || `${full_name}'s Gym`,
+      p_subscription_plan: subscription_plan || 'basic',
+      p_address: address || null,
+      p_date_of_birth: date_of_birth || null,
     })
 
-    if (createError) {
-      console.error('User creation error:', createError)
-      return new Response(JSON.stringify({ error: createError.message }), {
+    if (dbError) {
+      console.error('Database function error:', dbError)
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: dbError.message 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    if (!result || !result.success) {
+      console.error('Admin creation failed:', result?.error)
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: result?.error || 'Unknown error' 
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    console.log('User created:', newUser.user.id)
+    console.log('Admin created successfully:', result.user_id)
 
-    // Wait briefly for trigger to create profile
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    // Insert into user_roles (service role bypasses RLS)
-    const { error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({ 
-        user_id: newUser.user.id, 
-        role: 'admin', 
-        branch_id: branch_id || null 
-      })
-
-    if (roleError) {
-      console.error('Role assignment error:', roleError)
-      // Don't fail completely, role can be assigned later
-    } else {
-      console.log('Role assigned successfully')
-    }
-
-    // Update profile with additional metadata
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        gym_id: gym_id || null,
-        branch_id: branch_id || null,
-        phone: phone || null,
-        date_of_birth: date_of_birth || null,
-        address: address || null,
-        is_active: true,
-      })
-      .eq('user_id', newUser.user.id)
-
-    if (profileError) {
-      console.error('Profile update error:', profileError)
-    } else {
-      console.log('Profile updated successfully')
-    }
-
-    return new Response(JSON.stringify({
-      success: true,
-      user_id: newUser.user.id,
-      email: newUser.user.email,
-      message: 'Admin created successfully'
-    }), {
+    return new Response(JSON.stringify(result), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })

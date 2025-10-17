@@ -30,18 +30,7 @@ const adminFormSchema = z.object({
     country: z.string().optional(),
   }).optional(),
   subscription_plan: z.string().min(1, 'Please select a subscription plan'),
-  gym_name: z.string().optional(),
-  create_new_gym: z.boolean().default(true),
-  existing_gym_id: z.string().optional(),
-  branch_id: z.string().optional(),
-}).refine((data) => {
-  if (!data.create_new_gym && !data.existing_gym_id) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Please select an existing gym when not creating a new one",
-  path: ["existing_gym_id"],
+  gym_name: z.string().min(2, 'Gym name must be at least 2 characters'),
 });
 
 type AdminFormData = z.infer<typeof adminFormSchema>;
@@ -85,9 +74,6 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       },
       subscription_plan: '',
       gym_name: '',
-      create_new_gym: true,
-      existing_gym_id: '',
-      branch_id: '',
     }
   });
 
@@ -177,98 +163,23 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
     return value;
   };
 
-  // Gyms (for assigning existing gym when not creating a new one)
-  const { data: gyms } = useQuery({
-    queryKey: ['gyms-active'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('gyms')
-        .select('id, name, status')
-        .order('name', { ascending: true });
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  // Branches for selected gym
-  const selectedGymId = form.watch('existing_gym_id');
-  const { data: branches } = useQuery({
-    queryKey: ['branches-by-gym', selectedGymId],
-    queryFn: async () => {
-      if (!selectedGymId) return [] as any[];
-      const { data, error } = await supabase
-        .from('branches')
-        .select('id, name, status')
-        .eq('gym_id', selectedGymId)
-        .eq('status', 'active')
-        .order('name', { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedGymId && !form.watch('create_new_gym')
-  });
 
   const createAdminAccount = useMutation({
     mutationFn: async (data: AdminFormData) => {
       try {
-        let gym_id = data.existing_gym_id;
-        
-        // Create new gym if requested (keep this client-side)
-        if (data.create_new_gym && data.gym_name) {
-          const { data: newGym, error: gymError } = await supabase
-            .from('gyms')
-            .insert({
-              name: data.gym_name,
-              subscription_plan: data.subscription_plan || 'basic',
-              status: 'active',
-              billing_email: data.email,
-            })
-            .select()
-            .single();
-          
-          if (gymError) throw new Error(`Failed to create gym: ${gymError.message}`);
-          gym_id = newGym.id;
-          
-          // Create default branch for new gym
-          const { data: newBranch, error: branchError } = await supabase
-            .from('branches')
-            .insert({
-              gym_id: gym_id,
-              name: 'Main Branch',
-              capacity: 100,
-              status: 'active',
-              address: { street: '', city: '', state: '', pincode: '' },
-              contact: { phone: data.phone || '', email: data.email },
-              hours: {
-                monday: { open: '06:00', close: '22:00' },
-                tuesday: { open: '06:00', close: '22:00' },
-                wednesday: { open: '06:00', close: '22:00' },
-                thursday: { open: '06:00', close: '22:00' },
-                friday: { open: '06:00', close: '22:00' },
-                saturday: { open: '08:00', close: '20:00' },
-                sunday: { open: '08:00', close: '20:00' },
-              }
-            })
-            .select()
-            .single();
-          
-          if (branchError) throw new Error(`Failed to create branch: ${branchError.message}`);
-          data.branch_id = newBranch.id;
-        }
-        
         // Generate temporary password
         const { generateTempPassword } = await import('@/services/userManagement');
         const tempPassword = generateTempPassword();
         
-        // Call secure edge function (server-side role assignment)
+        // Call edge function with ALL data (gym creation now server-side & atomic)
         const { data: result, error: createError } = await supabase.functions.invoke('create-admin-user', {
           body: {
             email: data.email,
             password: tempPassword,
             full_name: data.full_name,
             phone: data.phone,
-            gym_id: gym_id,
-            branch_id: data.branch_id,
+            gym_name: data.gym_name,
+            subscription_plan: data.subscription_plan,
             date_of_birth: data.date_of_birth || null,
             address: data.address || null,
           }
@@ -282,10 +193,26 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           throw new Error(result?.error || 'Failed to create admin user');
         }
         
+        // Optionally send welcome email (non-blocking)
+        try {
+          await supabase.functions.invoke('send-admin-welcome-email', {
+            body: {
+              adminId: result.user_id,
+              adminEmail: data.email,
+              adminName: data.full_name,
+              gymName: data.gym_name,
+              temporaryPassword: tempPassword,
+            }
+          });
+        } catch (emailError) {
+          console.warn('Welcome email failed:', emailError);
+          // Don't fail the entire operation
+        }
+        
         return {
           success: true,
           user_id: result.user_id,
-          gym_id: gym_id,
+          gym_id: result.gym_id,
           tempPassword: tempPassword,
           message: 'Admin account created successfully'
         };
@@ -333,8 +260,6 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   const onSubmit = (data: AdminFormData) => {
     createAdminAccount.mutate(data);
   };
-
-  const createNewGym = form.watch('create_new_gym');
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -592,123 +517,37 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
                 </CardContent>
               </Card>
 
-              {/* Gym Assignment Section */}
+              {/* Gym Name Section */}
               <Card>
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-2">
                     <Building2 className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-lg">Gym Assignment</CardTitle>
+                    <CardTitle className="text-lg">Gym Details</CardTitle>
                   </div>
                   <CardDescription>
-                    Create a new gym or assign to an existing one
+                    A new gym will be created for this admin
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent>
                   <FormField
                     control={form.control}
-                    name="create_new_gym"
+                    name="gym_name"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Create New Gym</FormLabel>
-                          <CardDescription>
-                            Create a brand new gym for this admin to manage
-                          </CardDescription>
-                        </div>
+                      <FormItem>
+                        <FormLabel>Gym Name *</FormLabel>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
+                          <Input 
+                            placeholder="Enter gym name" 
+                            {...field} 
                           />
                         </FormControl>
+                        <CardDescription>
+                          This will be the name of the new gym managed by this admin
+                        </CardDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {createNewGym ? (
-                    <FormField
-                      control={form.control}
-                      name="gym_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gym Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Leave empty to auto-generate from admin's name" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <CardDescription>
-                            If left empty, will be generated as "{form.watch('full_name')}'s Gym"
-                          </CardDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : (
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="existing_gym_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Select Existing Gym *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Choose an existing gym" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {gyms?.map((gym: any) => (
-                                  <SelectItem key={gym.id} value={gym.id}>
-                                    {gym.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="branch_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Assign Specific Branch</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value} 
-                              disabled={!branches?.length}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={
-                                    branches?.length 
-                                      ? "Choose a specific branch (optional)" 
-                                      : "Select a gym first"
-                                  } />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {branches?.map((branch: any) => (
-                                  <SelectItem key={branch.id} value={branch.id}>
-                                    {branch.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <CardDescription>
-                              Optional: Assign admin to a specific branch within the gym
-                            </CardDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
