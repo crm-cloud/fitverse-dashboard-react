@@ -11,11 +11,12 @@ import { CartProvider } from "@/hooks/useCart";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PermissionGate } from "@/components/PermissionGate";
-import { RouteGuard } from "@/components/RouteGuard";
+import { EnhancedRouteGuard } from "@/components/EnhancedRouteGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoadingState } from "@/components/LoadingState";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { lazyRoutes } from "@/utils/lazyLoad";
+import withPagePreservation from "@/hocs/withPagePreservation";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -100,8 +101,12 @@ const queryClient = new QueryClient({
         return failureCount < 2;
       },
       refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
+      gcTime: 30 * 60 * 1000, // 30 minutes (increased from 10)
+      keepPreviousData: true,
+      retryOnMount: false,
     },
     mutations: {
       retry: 1,
@@ -109,9 +114,91 @@ const queryClient = new QueryClient({
   },
 });
 
+// Add this to prevent React from recreating the query client on re-renders
+let browserQueryClient: QueryClient | undefined = undefined;
+
+export function getQueryClient() {
+  if (typeof window === 'undefined') {
+    return new QueryClient();
+  }
+  if (!browserQueryClient) {
+    browserQueryClient = queryClient;
+  }
+  return browserQueryClient;
+}
+
+// Create preserved versions of page components
+const PreservedDashboard = withPagePreservation(Dashboard);
+const PreservedProfileSettings = withPagePreservation(ProfileSettings);
+const PreservedUnauthorized = withPagePreservation(Unauthorized);
+const PreservedLogin = withPagePreservation(Login);
+const PreservedForgotPassword = withPagePreservation(ForgotPassword);
+const PreservedResetPassword = withPagePreservation(ResetPassword);
+const PreservedPublicHome = withPagePreservation(PublicHome);
+const PreservedMemberListPage = withPagePreservation(MemberListPage);
+const PreservedMemberCreatePage = withPagePreservation(MemberCreatePage);
+const PreservedMemberProfilePage = withPagePreservation(MemberProfilePage);
+const PreservedMembershipPlansPage = withPagePreservation(MembershipPlansPage);
+const PreservedMemberDashboardPage = withPagePreservation(MemberDashboardPage);
+const PreservedAddMembershipWorkflowPage = withPagePreservation(AddMembershipWorkflowPage);
+const PreservedMembershipPlanCreatePage = withPagePreservation(MembershipPlanCreatePage);
+const PreservedClassListPage = withPagePreservation(ClassListPage);
+const PreservedClassCreatePage = withPagePreservation(ClassCreatePage);
+const PreservedMemberClassesPage = withPagePreservation(MemberClassesPage);
+const PreservedTeamManagement = withPagePreservation(TeamManagement);
+const PreservedMemberStore = withPagePreservation(MemberStore);
+const PreservedPOSInterface = withPagePreservation(POSInterface);
+const PreservedProductManagement = withPagePreservation(ProductManagement);
+const PreservedLeadListPage = withPagePreservation(LeadListPage);
+const PreservedDietWorkoutPlannerPage = withPagePreservation(DietWorkoutPlannerPage);
+const PreservedFeedbackManagementPage = withPagePreservation(FeedbackManagementPage);
+const PreservedTaskManagementPage = withPagePreservation(TaskManagementPage);
+const PreservedMemberFeedbackPage = withPagePreservation(MemberFeedbackPage);
+const PreservedTrainerManagementPage = withPagePreservation(TrainerManagementPage);
+const PreservedMemberProfileSettings = withPagePreservation(MemberProfileSettings);
+const PreservedTrainerChangeRequest = withPagePreservation(TrainerChangeRequest);
+const PreservedMemberDietWorkoutPage = withPagePreservation(MemberDietWorkoutPage);
+const PreservedLockerManagement = withPagePreservation(LockerManagement);
+const PreservedSystemHealth = withPagePreservation(SystemHealth);
+const PreservedSystemSettings = withPagePreservation(SystemSettings);
+const PreservedAnnouncementManagement = withPagePreservation(AnnouncementManagement);
+const PreservedReferralManagement = withPagePreservation(ReferralManagement);
+const PreservedMemberReferralsPage = withPagePreservation(MemberReferralsPage);
+const PreservedEmailSettings = withPagePreservation(EmailSettings);
+const PreservedSMSSettings = withPagePreservation(SMSSettings);
+const PreservedWhatsAppSettings = withPagePreservation(WhatsAppSettings);
+const PreservedSystemBackup = withPagePreservation(SystemBackup);
+const PreservedAISettings = withPagePreservation(AISettings);
+const PreservedBranchManagement = withPagePreservation(BranchManagement);
+const PreservedGoals = withPagePreservation(Goals);
+const PreservedHelp = withPagePreservation(Help);
+const PreservedCheckIns = withPagePreservation(CheckIns);
+const PreservedMemberBilling = withPagePreservation(MemberBilling);
+const PreservedMemberProgress = withPagePreservation(MemberProgress);
+const PreservedMemberAnnouncements = withPagePreservation(MemberAnnouncements);
+const PreservedTrainerSchedulePage = withPagePreservation(TrainerSchedulePage);
+const PreservedTrainerClientsPage = withPagePreservation(TrainerClientsPage);
+const PreservedTrainerWorkoutsPage = withPagePreservation(TrainerWorkoutsPage);
+const PreservedTrainerProgressPage = withPagePreservation(TrainerProgressPage);
+const PreservedTrainerEarningsPage = withPagePreservation(TrainerEarningsPage);
+const PreservedTrainerAttendancePage = withPagePreservation(TrainerAttendancePage);
+const PreservedPaymentGatewaySettings = withPagePreservation(PaymentGatewaySettings);
+const PreservedStaffCheckinPage = withPagePreservation(StaffCheckinPage);
+const PreservedStaffSupportPage = withPagePreservation(StaffSupportPage);
+const PreservedStaffTasksPage = withPagePreservation(StaffTasksPage);
+const PreservedStaffMaintenancePage = withPagePreservation(StaffMaintenancePage);
+const PreservedEquipmentListPage = withPagePreservation(EquipmentListPage);
+const PreservedAnalyticsPage = withPagePreservation(AnalyticsPage);
+const PreservedReportsPage = withPagePreservation(ReportsPage);
+const PreservedBranchCreatePage = withPagePreservation(BranchCreatePage);
+const PreservedUserCreatePage = withPagePreservation(UserCreatePage);
+const PreservedRoleCreatePage = withPagePreservation(RoleCreatePage);
+const PreservedAttendanceDashboard = withPagePreservation(AttendanceDashboard);
+const PreservedAttendanceDevicesPage = withPagePreservation(AttendanceDevicesPage);
+
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={getQueryClient()}>
       <ThemeProvider>
         <AuthProvider>
           <RBACProvider>
@@ -119,107 +206,153 @@ const App = () => (
               <CartProvider>
                 <TooltipProvider>
                   <Toaster />
-                  <Sonner />
+                  <Sonner position="top-right" />
                   <BrowserRouter>
-                      <Routes>
-                        <Route path="/" element={<PublicHome />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/unauthorized" element={<Unauthorized />} />
-                        <Route 
-                          path="/dashboard" 
-                          element={
-                            <RouteGuard>
-                              <DashboardLayout>
-                                <Dashboard />
-                              </DashboardLayout>
-                            </RouteGuard>
-                          } 
-                        />
-                        
-                        {/* System Management Routes - Super Admin only */}
-                        {/* System Management Routes - Super Admin only */}
-                        <Route 
-                          path="/system/health" 
-                          element={
-                            <RouteGuard allowedRoles={['super-admin']}>
-                              <DashboardLayout>
-                                <SystemHealth />
-                              </DashboardLayout>
-                            </RouteGuard>
-                          } 
-                        />
-                        
-                        {/* System Settings Routes - Super Admin only */}
-                        <Route 
-                          path="/system/settings" 
-                          element={
-                            <RouteGuard allowedRoles={['super-admin']}>
-                              <DashboardLayout>
-                                <SystemSettings />
-                              </DashboardLayout>
-                            </RouteGuard>
-                          } 
-                        />
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<PreservedPublicHome />} />
+                      <Route path="/login" element={<PreservedLogin />} />
+                      <Route path="/forgot-password" element={<PreservedForgotPassword />} />
+                      <Route path="/reset-password" element={<PreservedResetPassword />} />
+                      <Route path="/unauthorized" element={<PreservedUnauthorized />} />
+
+                      {/* Protected Routes */}
+                      <Route element={
+                        <EnhancedRouteGuard>
+                          <DashboardLayout />
+                        </EnhancedRouteGuard>
+                      }>
+                        <Route path="/dashboard" element={<PreservedDashboard />} />
+                        <Route path="/profile" element={<PreservedProfileSettings />} />
+                        <Route path="/members" element={<PreservedMemberListPage />} />
+                        <Route path="/members/create" element={<PreservedMemberCreatePage />} />
+                        <Route path="/members/:id/profile" element={<PreservedMemberProfilePage />} />
+                        <Route path="/membership/plans" element={<PreservedMembershipPlansPage />} />
+                        <Route path="/membership/dashboard" element={<PreservedMemberDashboardPage />} />
+                        <Route path="/membership/add-membership" element={<PreservedAddMembershipWorkflowPage />} />
+                        <Route path="/membership/plans/create" element={<PreservedMembershipPlanCreatePage />} />
+                        <Route path="/classes" element={<PreservedClassListPage />} />
+                        <Route path="/classes/create" element={<PreservedClassCreatePage />} />
+                        <Route path="/member/classes" element={<PreservedMemberClassesPage />} />
+                        <Route path="/team-management" element={<PreservedTeamManagement />} />
+                        <Route path="/store/member-store" element={<PreservedMemberStore />} />
+                        <Route path="/pos/interface" element={<PreservedPOSInterface />} />
+                        <Route path="/products/product-management" element={<PreservedProductManagement />} />
+                        <Route path="/leads/list" element={<PreservedLeadListPage />} />
+                        <Route path="/diet-workout/planner" element={<PreservedDietWorkoutPlannerPage />} />
+                        <Route path="/feedback/management" element={<PreservedFeedbackManagementPage />} />
+                        <Route path="/tasks/management" element={<PreservedTaskManagementPage />} />
+                        <Route path="/member/feedback" element={<PreservedMemberFeedbackPage />} />
+                        <Route path="/trainers/management" element={<PreservedTrainerManagementPage />} />
+                        <Route path="/member/profile-settings" element={<PreservedMemberProfileSettings />} />
+                        <Route path="/member/trainer-change-request" element={<PreservedTrainerChangeRequest />} />
+                        <Route path="/member/diet-workout" element={<PreservedMemberDietWorkoutPage />} />
+                        <Route path="/lockers/management" element={<PreservedLockerManagement />} />
+                        <Route path="/system/health" element={<PreservedSystemHealth />} />
+                        <Route path="/system/settings" element={<PreservedSystemSettings />} />
+                        <Route path="/announcements/announcement-management" element={<PreservedAnnouncementManagement />} />
+                        <Route path="/referrals/referral-management" element={<PreservedReferralManagement />} />
+                        <Route path="/member/referrals" element={<PreservedMemberReferralsPage />} />
+                        <Route path="/system/email" element={<PreservedEmailSettings />} />
+                        <Route path="/system/sms" element={<PreservedSMSSettings />} />
+                        <Route path="/system/whatsapp" element={<PreservedWhatsAppSettings />} />
+                        <Route path="/system/backup" element={<PreservedSystemBackup />} />
+                        <Route path="/system/ai-settings" element={<PreservedAISettings />} />
+                        <Route path="/branches/management" element={<PreservedBranchManagement />} />
+                        <Route path="/member/goals" element={<PreservedGoals />} />
+                        <Route path="/member/help" element={<PreservedHelp />} />
+                        <Route path="/member/check-ins" element={<PreservedCheckIns />} />
+                        <Route path="/member/billing" element={<PreservedMemberBilling />} />
+                        <Route path="/member/progress" element={<PreservedMemberProgress />} />
+                        <Route path="/member/announcements" element={<PreservedMemberAnnouncements />} />
+                        <Route path="/trainer/schedule" element={<PreservedTrainerSchedulePage />} />
+                        <Route path="/trainer/clients" element={<PreservedTrainerClientsPage />} />
+                        <Route path="/trainer/workouts" element={<PreservedTrainerWorkoutsPage />} />
+                        <Route path="/trainer/progress" element={<PreservedTrainerProgressPage />} />
+                        <Route path="/trainer/earnings" element={<PreservedTrainerEarningsPage />} />
+                        <Route path="/trainer/attendance" element={<PreservedTrainerAttendancePage />} />
+                        <Route path="/system/payment-gateway" element={<PreservedPaymentGatewaySettings />} />
+                        <Route path="/staff/checkin" element={<PreservedStaffCheckinPage />} />
+                        <Route path="/staff/support" element={<PreservedStaffSupportPage />} />
+                        <Route path="/staff/tasks" element={<PreservedStaffTasksPage />} />
+                        <Route path="/staff/maintenance" element={<PreservedStaffMaintenancePage />} />
+                        <Route path="/equipment/list" element={<PreservedEquipmentListPage />} />
+                        <Route path="/analytics/index" element={<PreservedAnalyticsPage />} />
+                        <Route path="/reports/index" element={<PreservedReportsPage />} />
+                        <Route path="/branches/create" element={<PreservedBranchCreatePage />} />
+                        <Route path="/users/create" element={<PreservedUserCreatePage />} />
+                        <Route path="/roles/create" element={<PreservedRoleCreatePage />} />
+                        <Route path="/attendance/dashboard" element={<PreservedAttendanceDashboard />} />
+                        <Route path="/attendance/devices" element={<PreservedAttendanceDevicesPage />} />
+                      </Route>
+                      <Route
+                        path="/system/settings"
+                        element={
+                          <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                            <DashboardLayout>
+                              <SystemSettings />
+                            </DashboardLayout>
+                          </EnhancedRouteGuard>
+                        }
+                      />
                         <Route 
                           path="/system/email" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <EmailSettings />
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
                           path="/system/sms" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <SMSSettings />
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
           <Route 
             path="/system/whatsapp" 
             element={
-              <RouteGuard allowedRoles={['super-admin', 'admin']}>
+              <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
                 <DashboardLayout>
                   <WhatsAppSettings />
                 </DashboardLayout>
-              </RouteGuard>
+              </EnhancedRouteGuard>
             } 
           />
           <Route 
             path="/system/payment-gateway" 
             element={
-              <RouteGuard allowedRoles={['super-admin', 'admin']}>
+              <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
                 <DashboardLayout>
                   <PaymentGatewaySettings />
                 </DashboardLayout>
-              </RouteGuard>
+              </EnhancedRouteGuard>
             } 
           />
                         <Route 
                           path="/system/ai-settings" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <AISettings />
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
                           path="/system/backup" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <SystemBackup />
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         
@@ -227,61 +360,61 @@ const App = () => (
                        <Route 
                          path="/gyms" 
                          element={
-                           <RouteGuard allowedRoles={['super-admin']}>
-                             <DashboardLayout>
-                               <Suspense fallback={<PageLoadingState />}>
-                                 <lazyRoutes.GymManagement />
-                               </Suspense>
-                             </DashboardLayout>
-                           </RouteGuard>
+                           <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                            <DashboardLayout>
+                              <Suspense fallback={<PageLoadingState />}>
+                                <lazyRoutes.GymManagement />
+                              </Suspense>
+                            </DashboardLayout>
+                          </EnhancedRouteGuard>
                          } 
                        />
                         <Route 
                           path="/subscription-plans" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.SubscriptionPlans />
                                 </Suspense>
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
                           path="/platform-analytics" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.PlatformAnalytics />
                                 </Suspense>
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
                           path="/platform-reports" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.PlatformReports />
                                 </Suspense>
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
                           path="/gym-dashboard" 
                           element={
-                            <RouteGuard allowedRoles={['admin']}>
+                            <EnhancedRouteGuard allowedRoles={['admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.AdminGymDashboard />
                                 </Suspense>
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
 
@@ -365,43 +498,33 @@ const App = () => (
                          <Route 
                            path="/users/admin-management" 
                            element={
-                             <RouteGuard allowedRoles={['super-admin']}>
+                             <EnhancedRouteGuard allowedRoles={['super-admin']}>
                                <DashboardLayout>
                                  <Suspense fallback={<PageLoadingState />}>
                                    <lazyRoutes.AdminManagement />
                                  </Suspense>
                                </DashboardLayout>
-                             </RouteGuard>
+                             </EnhancedRouteGuard>
                            } 
                          />
                         <Route 
                           path="/roles" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
                               <Suspense fallback={<PageLoadingState />}>
                                 <lazyRoutes.RoleManagement />
                               </Suspense>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
-                          path="/roles/create" 
+                          path="/permissions" 
                           element={
-                            <ProtectedRoute allowedRoles={['super-admin', 'admin']}>
-                              <DashboardLayout>
-                                <RoleCreatePage />
-                              </DashboardLayout>
-                            </ProtectedRoute>
-                          } 
-                        />
-                        <Route 
-                          path="/membership" 
-                          element={
-                            <ProtectedRoute allowedRoles={['super-admin', 'admin', 'team']}>
-                              <DashboardLayout>
-                                <Navigate to="/membership/plans" replace />
-                              </DashboardLayout>
-                            </ProtectedRoute>
+                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
+                              <Suspense fallback={<PageLoadingState />}>
+                                <lazyRoutes.RoleManagement />
+                              </Suspense>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
@@ -985,25 +1108,25 @@ const App = () => (
                         <Route 
                           path="/platform-analytics" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.PlatformAnalytics />
                                 </Suspense>
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
                           path="/platform-reports" 
                           element={
-                            <RouteGuard allowedRoles={['super-admin']}>
+                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.PlatformReports />
                                 </Suspense>
                               </DashboardLayout>
-                            </RouteGuard>
+                            </EnhancedRouteGuard>
                           } 
                         />
                         <Route 
