@@ -79,29 +79,55 @@ export const useTeamMembers = () => {
         throw new Error('Gym ID not found');
       }
 
-      // Phase 2: Use unified service instead of auth.admin (security risk)
-      const { createUserWithRole, generateTempPassword } = await import('@/services/userManagement');
-      
+      // Generate temporary password
+      const { generateTempPassword } = await import('@/services/userManagement');
       const tempPassword = generateTempPassword();
       
-      // Create user with role using unified service
-      const result = await createUserWithRole({
+      // Create user via Supabase auth signup
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: memberData.email,
         password: tempPassword,
-        full_name: memberData.full_name,
-        phone: memberData.phone,
-        role: memberData.role as any, // staff, manager, or trainer
-        gym_id: authState.user.gym_id,
-        branch_id: memberData.branch_id,
+        options: {
+          data: {
+            full_name: memberData.full_name,
+            phone: memberData.phone,
+          }
+        }
       });
-      
-      if (result.error) {
-        throw result.error;
-      }
-      
-      return result.user;
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('User creation failed');
+
+      // Wait for profile trigger
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Assign role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: memberData.role as any,
+          branch_id: memberData.branch_id,
+        });
+
+      if (roleError) throw roleError;
+
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          gym_id: authState.user.gym_id,
+          branch_id: memberData.branch_id,
+          phone: memberData.phone,
+          is_active: true,
+        })
+        .eq('user_id', authData.user.id);
+
+      if (profileError) throw profileError;
+
+      return { user: authData.user, tempPassword };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success",
         description: "Team member created successfully"

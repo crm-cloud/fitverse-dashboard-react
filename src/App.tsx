@@ -16,7 +16,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoadingState } from "@/components/LoadingState";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { lazyRoutes } from "@/utils/lazyLoad";
-import withPagePreservation from "@/hocs/withPagePreservation";
+// withPagePreservation removed - not implemented
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -105,7 +105,6 @@ const queryClient = new QueryClient({
       refetchOnReconnect: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 30 * 60 * 1000, // 30 minutes (increased from 10)
-      keepPreviousData: true,
       retryOnMount: false,
     },
     mutations: {
@@ -127,74 +126,7 @@ export function getQueryClient() {
   return browserQueryClient;
 }
 
-// Create preserved versions of page components
-const PreservedDashboard = withPagePreservation(Dashboard);
-const PreservedProfileSettings = withPagePreservation(ProfileSettings);
-const PreservedUnauthorized = withPagePreservation(Unauthorized);
-const PreservedLogin = withPagePreservation(Login);
-const PreservedForgotPassword = withPagePreservation(ForgotPassword);
-const PreservedResetPassword = withPagePreservation(ResetPassword);
-const PreservedPublicHome = withPagePreservation(PublicHome);
-const PreservedMemberListPage = withPagePreservation(MemberListPage);
-const PreservedMemberCreatePage = withPagePreservation(MemberCreatePage);
-const PreservedMemberProfilePage = withPagePreservation(MemberProfilePage);
-const PreservedMembershipPlansPage = withPagePreservation(MembershipPlansPage);
-const PreservedMemberDashboardPage = withPagePreservation(MemberDashboardPage);
-const PreservedAddMembershipWorkflowPage = withPagePreservation(AddMembershipWorkflowPage);
-const PreservedMembershipPlanCreatePage = withPagePreservation(MembershipPlanCreatePage);
-const PreservedClassListPage = withPagePreservation(ClassListPage);
-const PreservedClassCreatePage = withPagePreservation(ClassCreatePage);
-const PreservedMemberClassesPage = withPagePreservation(MemberClassesPage);
-const PreservedTeamManagement = withPagePreservation(TeamManagement);
-const PreservedMemberStore = withPagePreservation(MemberStore);
-const PreservedPOSInterface = withPagePreservation(POSInterface);
-const PreservedProductManagement = withPagePreservation(ProductManagement);
-const PreservedLeadListPage = withPagePreservation(LeadListPage);
-const PreservedDietWorkoutPlannerPage = withPagePreservation(DietWorkoutPlannerPage);
-const PreservedFeedbackManagementPage = withPagePreservation(FeedbackManagementPage);
-const PreservedTaskManagementPage = withPagePreservation(TaskManagementPage);
-const PreservedMemberFeedbackPage = withPagePreservation(MemberFeedbackPage);
-const PreservedTrainerManagementPage = withPagePreservation(TrainerManagementPage);
-const PreservedMemberProfileSettings = withPagePreservation(MemberProfileSettings);
-const PreservedTrainerChangeRequest = withPagePreservation(TrainerChangeRequest);
-const PreservedMemberDietWorkoutPage = withPagePreservation(MemberDietWorkoutPage);
-const PreservedLockerManagement = withPagePreservation(LockerManagement);
-const PreservedSystemHealth = withPagePreservation(SystemHealth);
-const PreservedSystemSettings = withPagePreservation(SystemSettings);
-const PreservedAnnouncementManagement = withPagePreservation(AnnouncementManagement);
-const PreservedReferralManagement = withPagePreservation(ReferralManagement);
-const PreservedMemberReferralsPage = withPagePreservation(MemberReferralsPage);
-const PreservedEmailSettings = withPagePreservation(EmailSettings);
-const PreservedSMSSettings = withPagePreservation(SMSSettings);
-const PreservedWhatsAppSettings = withPagePreservation(WhatsAppSettings);
-const PreservedSystemBackup = withPagePreservation(SystemBackup);
-const PreservedAISettings = withPagePreservation(AISettings);
-const PreservedBranchManagement = withPagePreservation(BranchManagement);
-const PreservedGoals = withPagePreservation(Goals);
-const PreservedHelp = withPagePreservation(Help);
-const PreservedCheckIns = withPagePreservation(CheckIns);
-const PreservedMemberBilling = withPagePreservation(MemberBilling);
-const PreservedMemberProgress = withPagePreservation(MemberProgress);
-const PreservedMemberAnnouncements = withPagePreservation(MemberAnnouncements);
-const PreservedTrainerSchedulePage = withPagePreservation(TrainerSchedulePage);
-const PreservedTrainerClientsPage = withPagePreservation(TrainerClientsPage);
-const PreservedTrainerWorkoutsPage = withPagePreservation(TrainerWorkoutsPage);
-const PreservedTrainerProgressPage = withPagePreservation(TrainerProgressPage);
-const PreservedTrainerEarningsPage = withPagePreservation(TrainerEarningsPage);
-const PreservedTrainerAttendancePage = withPagePreservation(TrainerAttendancePage);
-const PreservedPaymentGatewaySettings = withPagePreservation(PaymentGatewaySettings);
-const PreservedStaffCheckinPage = withPagePreservation(StaffCheckinPage);
-const PreservedStaffSupportPage = withPagePreservation(StaffSupportPage);
-const PreservedStaffTasksPage = withPagePreservation(StaffTasksPage);
-const PreservedStaffMaintenancePage = withPagePreservation(StaffMaintenancePage);
-const PreservedEquipmentListPage = withPagePreservation(EquipmentListPage);
-const PreservedAnalyticsPage = withPagePreservation(AnalyticsPage);
-const PreservedReportsPage = withPagePreservation(ReportsPage);
-const PreservedBranchCreatePage = withPagePreservation(BranchCreatePage);
-const PreservedUserCreatePage = withPagePreservation(UserCreatePage);
-const PreservedRoleCreatePage = withPagePreservation(RoleCreatePage);
-const PreservedAttendanceDashboard = withPagePreservation(AttendanceDashboard);
-const PreservedAttendanceDevicesPage = withPagePreservation(AttendanceDevicesPage);
+// Page preservation removed - using direct components
 
 const App = () => (
   <ErrorBoundary>
@@ -210,80 +142,82 @@ const App = () => (
                   <BrowserRouter>
                     <Routes>
                       {/* Public Routes */}
-                      <Route path="/" element={<PreservedPublicHome />} />
-                      <Route path="/login" element={<PreservedLogin />} />
-                      <Route path="/forgot-password" element={<PreservedForgotPassword />} />
-                      <Route path="/reset-password" element={<PreservedResetPassword />} />
-                      <Route path="/unauthorized" element={<PreservedUnauthorized />} />
+                      <Route path="/" element={<PublicHome />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/unauthorized" element={<Unauthorized />} />
 
                       {/* Protected Routes */}
                       <Route element={
                         <EnhancedRouteGuard>
-                          <DashboardLayout />
+                          <DashboardLayout>
+                            <div />
+                          </DashboardLayout>
                         </EnhancedRouteGuard>
                       }>
-                        <Route path="/dashboard" element={<PreservedDashboard />} />
-                        <Route path="/profile" element={<PreservedProfileSettings />} />
-                        <Route path="/members" element={<PreservedMemberListPage />} />
-                        <Route path="/members/create" element={<PreservedMemberCreatePage />} />
-                        <Route path="/members/:id/profile" element={<PreservedMemberProfilePage />} />
-                        <Route path="/membership/plans" element={<PreservedMembershipPlansPage />} />
-                        <Route path="/membership/dashboard" element={<PreservedMemberDashboardPage />} />
-                        <Route path="/membership/add-membership" element={<PreservedAddMembershipWorkflowPage />} />
-                        <Route path="/membership/plans/create" element={<PreservedMembershipPlanCreatePage />} />
-                        <Route path="/classes" element={<PreservedClassListPage />} />
-                        <Route path="/classes/create" element={<PreservedClassCreatePage />} />
-                        <Route path="/member/classes" element={<PreservedMemberClassesPage />} />
-                        <Route path="/team-management" element={<PreservedTeamManagement />} />
-                        <Route path="/store/member-store" element={<PreservedMemberStore />} />
-                        <Route path="/pos/interface" element={<PreservedPOSInterface />} />
-                        <Route path="/products/product-management" element={<PreservedProductManagement />} />
-                        <Route path="/leads/list" element={<PreservedLeadListPage />} />
-                        <Route path="/diet-workout/planner" element={<PreservedDietWorkoutPlannerPage />} />
-                        <Route path="/feedback/management" element={<PreservedFeedbackManagementPage />} />
-                        <Route path="/tasks/management" element={<PreservedTaskManagementPage />} />
-                        <Route path="/member/feedback" element={<PreservedMemberFeedbackPage />} />
-                        <Route path="/trainers/management" element={<PreservedTrainerManagementPage />} />
-                        <Route path="/member/profile-settings" element={<PreservedMemberProfileSettings />} />
-                        <Route path="/member/trainer-change-request" element={<PreservedTrainerChangeRequest />} />
-                        <Route path="/member/diet-workout" element={<PreservedMemberDietWorkoutPage />} />
-                        <Route path="/lockers/management" element={<PreservedLockerManagement />} />
-                        <Route path="/system/health" element={<PreservedSystemHealth />} />
-                        <Route path="/system/settings" element={<PreservedSystemSettings />} />
-                        <Route path="/announcements/announcement-management" element={<PreservedAnnouncementManagement />} />
-                        <Route path="/referrals/referral-management" element={<PreservedReferralManagement />} />
-                        <Route path="/member/referrals" element={<PreservedMemberReferralsPage />} />
-                        <Route path="/system/email" element={<PreservedEmailSettings />} />
-                        <Route path="/system/sms" element={<PreservedSMSSettings />} />
-                        <Route path="/system/whatsapp" element={<PreservedWhatsAppSettings />} />
-                        <Route path="/system/backup" element={<PreservedSystemBackup />} />
-                        <Route path="/system/ai-settings" element={<PreservedAISettings />} />
-                        <Route path="/branches/management" element={<PreservedBranchManagement />} />
-                        <Route path="/member/goals" element={<PreservedGoals />} />
-                        <Route path="/member/help" element={<PreservedHelp />} />
-                        <Route path="/member/check-ins" element={<PreservedCheckIns />} />
-                        <Route path="/member/billing" element={<PreservedMemberBilling />} />
-                        <Route path="/member/progress" element={<PreservedMemberProgress />} />
-                        <Route path="/member/announcements" element={<PreservedMemberAnnouncements />} />
-                        <Route path="/trainer/schedule" element={<PreservedTrainerSchedulePage />} />
-                        <Route path="/trainer/clients" element={<PreservedTrainerClientsPage />} />
-                        <Route path="/trainer/workouts" element={<PreservedTrainerWorkoutsPage />} />
-                        <Route path="/trainer/progress" element={<PreservedTrainerProgressPage />} />
-                        <Route path="/trainer/earnings" element={<PreservedTrainerEarningsPage />} />
-                        <Route path="/trainer/attendance" element={<PreservedTrainerAttendancePage />} />
-                        <Route path="/system/payment-gateway" element={<PreservedPaymentGatewaySettings />} />
-                        <Route path="/staff/checkin" element={<PreservedStaffCheckinPage />} />
-                        <Route path="/staff/support" element={<PreservedStaffSupportPage />} />
-                        <Route path="/staff/tasks" element={<PreservedStaffTasksPage />} />
-                        <Route path="/staff/maintenance" element={<PreservedStaffMaintenancePage />} />
-                        <Route path="/equipment/list" element={<PreservedEquipmentListPage />} />
-                        <Route path="/analytics/index" element={<PreservedAnalyticsPage />} />
-                        <Route path="/reports/index" element={<PreservedReportsPage />} />
-                        <Route path="/branches/create" element={<PreservedBranchCreatePage />} />
-                        <Route path="/users/create" element={<PreservedUserCreatePage />} />
-                        <Route path="/roles/create" element={<PreservedRoleCreatePage />} />
-                        <Route path="/attendance/dashboard" element={<PreservedAttendanceDashboard />} />
-                        <Route path="/attendance/devices" element={<PreservedAttendanceDevicesPage />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/profile" element={<ProfileSettings />} />
+                        <Route path="/members" element={<MemberListPage />} />
+                        <Route path="/members/create" element={<MemberCreatePage />} />
+                        <Route path="/members/:id/profile" element={<MemberProfilePage />} />
+                        <Route path="/membership/plans" element={<MembershipPlansPage />} />
+                        <Route path="/membership/dashboard" element={<MemberDashboardPage />} />
+                        <Route path="/membership/add-membership" element={<AddMembershipWorkflowPage />} />
+                        <Route path="/membership/plans/create" element={<MembershipPlanCreatePage />} />
+                        <Route path="/classes" element={<ClassListPage />} />
+                        <Route path="/classes/create" element={<ClassCreatePage />} />
+                        <Route path="/member/classes" element={<MemberClassesPage />} />
+                        <Route path="/team-management" element={<TeamManagement />} />
+                        <Route path="/store/member-store" element={<MemberStore />} />
+                        <Route path="/pos/interface" element={<POSInterface />} />
+                        <Route path="/products/product-management" element={<ProductManagement />} />
+                        <Route path="/leads/list" element={<LeadListPage />} />
+                        <Route path="/diet-workout/planner" element={<DietWorkoutPlannerPage />} />
+                        <Route path="/feedback/management" element={<FeedbackManagementPage />} />
+                        <Route path="/tasks/management" element={<TaskManagementPage />} />
+                        <Route path="/member/feedback" element={<MemberFeedbackPage />} />
+                        <Route path="/trainers/management" element={<TrainerManagementPage />} />
+                        <Route path="/member/profile-settings" element={<MemberProfileSettings />} />
+                        <Route path="/member/trainer-change-request" element={<TrainerChangeRequest />} />
+                        <Route path="/member/diet-workout" element={<MemberDietWorkoutPage />} />
+                        <Route path="/lockers/management" element={<LockerManagement />} />
+                        <Route path="/system/health" element={<SystemHealth />} />
+                        <Route path="/system/settings" element={<SystemSettings />} />
+                        <Route path="/announcements/announcement-management" element={<AnnouncementManagement />} />
+                        <Route path="/referrals/referral-management" element={<ReferralManagement />} />
+                        <Route path="/member/referrals" element={<MemberReferralsPage />} />
+                        <Route path="/system/email" element={<EmailSettings />} />
+                        <Route path="/system/sms" element={<SMSSettings />} />
+                        <Route path="/system/whatsapp" element={<WhatsAppSettings />} />
+                        <Route path="/system/backup" element={<SystemBackup />} />
+                        <Route path="/system/ai-settings" element={<AISettings />} />
+                        <Route path="/branches/management" element={<BranchManagement />} />
+                        <Route path="/member/goals" element={<Goals />} />
+                        <Route path="/member/help" element={<Help />} />
+                        <Route path="/member/check-ins" element={<CheckIns />} />
+                        <Route path="/member/billing" element={<MemberBilling />} />
+                        <Route path="/member/progress" element={<MemberProgress />} />
+                        <Route path="/member/announcements" element={<MemberAnnouncements />} />
+                        <Route path="/trainer/schedule" element={<TrainerSchedulePage />} />
+                        <Route path="/trainer/clients" element={<TrainerClientsPage />} />
+                        <Route path="/trainer/workouts" element={<TrainerWorkoutsPage />} />
+                        <Route path="/trainer/progress" element={<TrainerProgressPage />} />
+                        <Route path="/trainer/earnings" element={<TrainerEarningsPage />} />
+                        <Route path="/trainer/attendance" element={<TrainerAttendancePage />} />
+                        <Route path="/system/payment-gateway" element={<PaymentGatewaySettings />} />
+                        <Route path="/staff/checkin" element={<StaffCheckinPage />} />
+                        <Route path="/staff/support" element={<StaffSupportPage />} />
+                        <Route path="/staff/tasks" element={<StaffTasksPage />} />
+                        <Route path="/staff/maintenance" element={<StaffMaintenancePage />} />
+                        <Route path="/equipment/list" element={<EquipmentListPage />} />
+                        <Route path="/analytics/index" element={<AnalyticsPage />} />
+                        <Route path="/reports/index" element={<ReportsPage />} />
+                        <Route path="/branches/create" element={<BranchCreatePage />} />
+                        <Route path="/users/create" element={<UserCreatePage />} />
+                        <Route path="/roles/create" element={<RoleCreatePage />} />
+                        <Route path="/attendance/dashboard" element={<AttendanceDashboard />} />
+                        <Route path="/attendance/devices" element={<AttendanceDevicesPage />} />
                       </Route>
                       <Route
                         path="/system/settings"

@@ -224,63 +224,34 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
         const { generateTempPassword } = await import('@/services/userManagement');
         const tempPassword = generateTempPassword();
         
-        // Build request body, only including defined values
-        const requestBody: any = {
-          email: data.email,
-          password: tempPassword,
-          full_name: data.full_name,
-          phone: data.phone || null,
-          subscription_plan: data.subscription_plan || 'basic',
-          date_of_birth: data.date_of_birth || null,
-          address: data.address || null,
-        };
-
-        // Add gym-specific fields based on mode
-        if (data.create_new_gym) {
-          requestBody.gym_name = data.gym_name || `${data.full_name}'s Gym`;
-        } else {
-          requestBody.existing_gym_id = data.existing_gym_id;
-          requestBody.existing_branch_id = data.existing_branch_id;
+        // Call the new atomic RPC function directly
+        const { data: result, error } = await supabase.rpc('create_gym_admin_atomic' as any, {
+          p_email: data.email,
+          p_password: tempPassword,
+          p_full_name: data.full_name,
+          p_phone: data.phone || null,
+          p_date_of_birth: data.date_of_birth || null,
+          p_address: data.address || null,
+          p_subscription_plan_id: data.subscription_plan || null,
+          p_max_branches: null, // Use plan defaults
+          p_max_members: null,  // Use plan defaults
+        }) as { data: any; error: any };
+        
+        if (error) {
+          console.error('RPC error:', error);
+          throw new Error(error.message || 'Failed to create admin');
         }
         
-        // Call edge function with properly formatted body
-        const { data: result, error: createError } = await supabase.functions.invoke('create-admin-user', {
-          body: requestBody
-        });
+        const adminResult = result as { success: boolean; user_id?: string; error?: string };
         
-        if (createError) {
-          console.error('Edge function error:', createError);
-          throw new Error(createError.message || 'Failed to create admin user');
-        }
-        
-        if (!result?.success) {
-          console.error('Admin creation failed:', result?.error);
-          throw new Error(result?.error || 'Failed to create admin user');
-        }
-        
-        // Send welcome email (non-blocking)
-        const gymNameForEmail = data.create_new_gym 
-          ? (data.gym_name || `${data.full_name}'s Gym`)
-          : 'your assigned gym';
-          
-        try {
-          await supabase.functions.invoke('send-admin-welcome-email', {
-            body: {
-              adminId: result.user_id,
-              adminEmail: data.email,
-              adminName: data.full_name,
-              gymName: gymNameForEmail,
-              temporaryPassword: tempPassword,
-            }
-          });
-        } catch (emailError) {
-          console.warn('Welcome email failed (non-critical):', emailError);
+        if (!adminResult?.success) {
+          console.error('Admin creation failed:', adminResult?.error);
+          throw new Error(adminResult?.error || 'Failed to create admin');
         }
         
         return {
           success: true,
-          user_id: result.user_id,
-          gym_id: result.gym_id,
+          user_id: adminResult.user_id,
           tempPassword: tempPassword,
           message: 'Admin account created successfully'
         };
