@@ -4953,9 +4953,27 @@ export type Database = {
         }
         Returns: Json
       }
+      create_admin_with_gym: {
+        Args: {
+          p_address?: Json
+          p_create_new_gym: boolean
+          p_email: string
+          p_existing_branch_id?: string
+          p_existing_gym_id?: string
+          p_full_name: string
+          p_gym_name?: string
+          p_phone: string
+          p_subscription_plan: string
+          p_user_id: string
+        }
+        Returns: {
+          gym_id: string
+          user_id: string
+        }[]
+      }
       create_gym_admin_atomic: {
         Args: {
-          p_address: Json
+          p_address?: Json
           p_date_of_birth?: string
           p_email: string
           p_existing_branch_id?: string
