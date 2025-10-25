@@ -8,11 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { User, Building2, CreditCard, Settings, MapPin, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { User, CreditCard, Settings, MapPin, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 
 const adminFormSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -29,23 +28,10 @@ const adminFormSchema = z.object({
     postal_code: z.string().optional(),
     country: z.string().optional(),
   }).optional(),
-  subscription_plan: z.string().min(1, 'Please select a subscription plan'),
-  create_new_gym: z.boolean().default(true),
-  gym_name: z.string().optional(),
-  existing_gym_id: z.string().optional(),
-  existing_branch_id: z.string().optional(),
-}).refine(
-  (data) => {
-    if (data.create_new_gym) {
-      return !!data.gym_name && data.gym_name.length >= 2;
-    }
-    return !!data.existing_gym_id;
-  },
-  {
-    message: 'Either provide a gym name for new gym or select an existing gym',
-    path: ['gym_name'],
-  }
-);
+  subscription_plan_id: z.string().min(1, 'Please select a subscription plan'),
+  max_branches: z.number().optional(),
+  max_members: z.number().optional(),
+});
 
 type AdminFormData = z.infer<typeof adminFormSchema>;
 
@@ -56,7 +42,6 @@ interface AdminAccountFormProps {
 export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   const queryClient = useQueryClient();
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const [createNewGym, setCreateNewGym] = useState(true);
 
   const form = useForm<AdminFormData>({
     resolver: zodResolver(adminFormSchema),
@@ -72,11 +57,9 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
         postal_code: '',
         country: 'India',
       },
-      subscription_plan: '',
-      create_new_gym: true,
-      gym_name: '',
-      existing_gym_id: '',
-      existing_branch_id: '',
+      subscription_plan_id: '',
+      max_branches: undefined,
+      max_members: undefined,
     }
   });
 
@@ -95,40 +78,9 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
     }
   });
 
-  // Fetch existing gyms for selection
-  const { data: existingGyms } = useQuery({
-    queryKey: ['gyms'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('gyms')
-        .select('id, name, status')
-        .eq('status', 'active')
-        .order('name');
-      
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch branches for selected gym
-  const selectedGymId = form.watch('existing_gym_id');
-  const { data: gymBranches } = useQuery({
-    queryKey: ['gym-branches', selectedGymId],
-    queryFn: async () => {
-      if (!selectedGymId) return [];
-      
-      const { data, error } = await supabase
-        .from('branches')
-        .select('id, name, status')
-        .eq('gym_id', selectedGymId)
-        .eq('status', 'active')
-        .order('name');
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedGymId && !createNewGym,
-  });
+  // Watch selected plan to show its limits
+  const selectedPlanId = form.watch('subscription_plan_id');
+  const selectedPlan = subscriptionPlans?.find(p => p.id === selectedPlanId);
 
   // Auto-fetch location
   const fetchLocation = async () => {
@@ -195,28 +147,6 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
     }
   };
 
-  // Format Indian phone number
-  const formatPhoneNumber = (value: string) => {
-    // If empty, return empty
-    if (!value) return '';
-    
-    // Remove all non-digits
-    const cleaned = value.replace(/\D/g, '');
-    
-    // For India (91), format as +91 XXXX XXXXX
-    if (cleaned.startsWith('91') && cleaned.length > 2) {
-      const number = cleaned.slice(2);
-      if (number.length <= 5) return `+91 ${number}`;
-      return `+91 ${number.slice(0, 5)} ${number.slice(5, 10)}`;
-    }
-    
-    // For other countries, just add + if it's a number
-    if (cleaned) return `+${cleaned}`;
-    
-    return value;
-  };
-
-
   const createAdminAccount = useMutation({
     mutationFn: async (data: AdminFormData) => {
       try {
@@ -232,9 +162,9 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           p_phone: data.phone || null,
           p_date_of_birth: data.date_of_birth || null,
           p_address: data.address || null,
-          p_subscription_plan_id: data.subscription_plan || null,
-          p_max_branches: null, // Use plan defaults
-          p_max_members: null,  // Use plan defaults
+          p_subscription_plan_id: data.subscription_plan_id,
+          p_max_branches: data.max_branches || null,
+          p_max_members: data.max_members || null,
         }) as { data: any; error: any };
         
         if (error) {
@@ -483,7 +413,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
                         <FormItem>
                           <FormLabel>Postal Code</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter PIN code" {...field} />
+                            <Input placeholder="Enter postal code" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -497,7 +427,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
                         <FormItem>
                           <FormLabel>Country</FormLabel>
                           <FormControl>
-                            <Input placeholder="Country" {...field} />
+                            <Input placeholder="Enter country" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -508,7 +438,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
               </Card>
             </div>
 
-            {/* Right Column - Subscription & Gym */}
+            {/* Right Column - Subscription & Limits */}
             <div className="space-y-6">
               {/* Subscription Plan Section */}
               <Card>
@@ -518,37 +448,38 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
                     <CardTitle className="text-lg">Subscription Plan</CardTitle>
                   </div>
                   <CardDescription>
-                    Choose the subscription plan for this admin's gym
+                    Choose the subscription tier and resource limits
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="subscription_plan"
+                    name="subscription_plan_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Plan *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>Subscription Plan *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a subscription plan" />
+                              <SelectValue placeholder="Select subscription plan" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {subscriptionPlans?.map((plan) => (
-                              <SelectItem key={plan.id} value={plan.name}>
-                                <div className="flex flex-col items-start">
-                                  <div className="font-medium">
-                                    {plan.name} - ₹{plan.price}/{plan.billing_cycle}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {plan.max_branches} branches • {plan.max_trainers} trainers • {plan.max_members} members
-                                  </div>
+                              <SelectItem key={plan.id} value={plan.id}>
+                                <div className="flex items-center justify-between w-full">
+                                  <span>{plan.name}</span>
+                                  <span className="ml-2 text-muted-foreground">
+                                    ₹{plan.price?.toLocaleString('en-IN')}/{plan.billing_cycle}
+                                  </span>
                                 </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                        <CardDescription>
+                          Select the subscription plan that defines the admin's resource limits
+                        </CardDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -556,123 +487,103 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
                 </CardContent>
               </Card>
 
-              {/* Gym Selection Section */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-lg">Gym Assignment</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Choose to create a new gym or assign to an existing one
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-4">
-                    <Button
-                      type="button"
-                      variant={createNewGym ? "default" : "outline"}
-                      onClick={() => {
-                        setCreateNewGym(true);
-                        form.setValue('create_new_gym', true);
-                        form.setValue('existing_gym_id', '');
-                        form.setValue('existing_branch_id', '');
-                      }}
-                      className="flex-1"
-                    >
-                      Create New Gym
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={!createNewGym ? "default" : "outline"}
-                      onClick={() => {
-                        setCreateNewGym(false);
-                        form.setValue('create_new_gym', false);
-                        form.setValue('gym_name', '');
-                      }}
-                      className="flex-1"
-                    >
-                      Assign to Existing Gym
-                    </Button>
-                  </div>
+              {/* Subscription Plan Limits */}
+              {selectedPlan && (
+                <Card>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-primary" />
+                      <CardTitle className="text-lg">Plan Limits</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Resource limits for {selectedPlan.name} plan
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <div className="text-sm text-muted-foreground mb-1">Max Branches</div>
+                        <div className="text-2xl font-bold">{selectedPlan.max_branches}</div>
+                      </div>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <div className="text-sm text-muted-foreground mb-1">Max Members</div>
+                        <div className="text-2xl font-bold">{selectedPlan.max_members.toLocaleString()}</div>
+                      </div>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <div className="text-sm text-muted-foreground mb-1">Max Trainers</div>
+                        <div className="text-2xl font-bold">{selectedPlan.max_trainers}</div>
+                      </div>
+                    </div>
 
-                  {createNewGym ? (
-                    <FormField
-                      control={form.control}
-                      name="gym_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gym Name *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter gym name" {...field} />
-                          </FormControl>
-                          <CardDescription>
-                            This will be the name of the new gym managed by this admin
-                          </CardDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : (
-                    <>
+                    <Separator />
+
+                    <div className="space-y-3">
                       <FormField
                         control={form.control}
-                        name="existing_gym_id"
+                        name="max_branches"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Select Gym *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a gym" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {existingGyms?.map((gym) => (
-                                  <SelectItem key={gym.id} value={gym.id}>
-                                    {gym.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>Custom Branch Limit (Optional)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                placeholder={`Default: ${selectedPlan.max_branches}`}
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              />
+                            </FormControl>
+                            <CardDescription>
+                              Override the default branch limit for this admin
+                            </CardDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      {selectedGymId && gymBranches && gymBranches.length > 0 && (
-                        <FormField
-                          control={form.control}
-                          name="existing_branch_id"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Select Branch (Optional)</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a branch or leave empty for default" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {gymBranches.map((branch) => (
-                                    <SelectItem key={branch.id} value={branch.id}>
-                                      {branch.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <CardDescription>
-                                If not selected, admin will be assigned to the first active branch
-                              </CardDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                      <FormField
+                        control={form.control}
+                        name="max_members"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Custom Member Limit (Optional)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                placeholder={`Default: ${selectedPlan.max_members}`}
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              />
+                            </FormControl>
+                            <CardDescription>
+                              Override the default member limit for this admin
+                            </CardDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {selectedPlan.features && Array.isArray(selectedPlan.features) && (
+                      <>
+                        <Separator />
+                        <div>
+                          <div className="text-sm font-medium mb-2">Plan Features</div>
+                          <ul className="space-y-1">
+                            {selectedPlan.features.map((feature: string, index: number) => (
+                              <li key={index} className="text-sm text-muted-foreground flex items-center gap-2">
+                                <span className="w-1 h-1 rounded-full bg-primary" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
 
