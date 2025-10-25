@@ -210,8 +210,11 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       }
       
       // Handle specific error cases
-      if (error?.message?.includes('email_exists') || error?.message?.includes('already registered')) {
-        errorMessage = 'User already exists. If their profile wasn\'t found, ask them to login once, then retry.';
+      if (error?.message?.includes('duplicate key') || 
+          error?.message?.includes('email_exists') || 
+          error?.message?.includes('already registered') ||
+          error?.message?.includes('users_email')) {
+        errorMessage = 'This email is already registered. Please use a different email address.';
       } else if (error?.message?.includes('foreign key constraint')) {
         errorMessage = 'There was a database timing issue. Please try again in a few seconds.';
       } else if (error?.message?.includes('subscription plan')) {
