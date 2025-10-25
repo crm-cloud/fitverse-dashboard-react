@@ -53,6 +53,44 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_plan_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_branches: number | null
+          max_members: number | null
+          subscription_plan_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_branches?: number | null
+          max_members?: number | null
+          subscription_plan_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_branches?: number | null
+          max_members?: number | null
+          subscription_plan_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_plan_assignments_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_insights: {
         Row: {
           applied_at: string | null
@@ -114,6 +152,13 @@ export type Database = {
             foreignKeyName: "ai_insights_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ai_insights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -157,6 +202,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "branches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "analytics_events_user_id_fkey"
@@ -307,7 +359,7 @@ export type Database = {
           branch_id: string | null
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           is_active: boolean | null
           last_sync: string | null
           location: string | null
@@ -322,7 +374,7 @@ export type Database = {
           branch_id?: string | null
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           last_sync?: string | null
           location?: string | null
@@ -337,7 +389,7 @@ export type Database = {
           branch_id?: string | null
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           last_sync?: string | null
           location?: string | null
@@ -659,6 +711,13 @@ export type Database = {
             foreignKeyName: "diet_plans_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "diet_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -779,6 +838,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "branches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "email_templates_created_by_fkey"
@@ -1702,6 +1768,13 @@ export type Database = {
             foreignKeyName: "maintenance_records_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "maintenance_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -1711,6 +1784,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "equipment"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_records_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "maintenance_records_technician_id_fkey"
@@ -1753,6 +1833,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "achievements"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "member_achievements_user_id_fkey"
@@ -1813,6 +1900,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "member_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "member_analytics_user_id_fkey"
             columns: ["user_id"]
@@ -1888,6 +1982,13 @@ export type Database = {
             foreignKeyName: "member_diet_plans_assigned_by_fkey"
             columns: ["assigned_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_diet_plans_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -1897,6 +1998,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "diet_plans"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_diet_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "member_diet_plans_user_id_fkey"
@@ -2069,6 +2177,13 @@ export type Database = {
             foreignKeyName: "member_measurements_measured_by_fkey"
             columns: ["measured_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_measurements_measured_by_fkey"
+            columns: ["measured_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -2154,6 +2269,13 @@ export type Database = {
             foreignKeyName: "member_memberships_assigned_by_fkey"
             columns: ["assigned_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_memberships_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -2211,7 +2333,21 @@ export type Database = {
             foreignKeyName: "member_workout_plans_assigned_by_fkey"
             columns: ["assigned_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_workout_plans_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "member_workout_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
             referencedColumns: ["user_id"]
           },
           {
@@ -2461,6 +2597,13 @@ export type Database = {
           workout_reminders?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "notification_preferences_user_id_fkey"
             columns: ["user_id"]
@@ -3096,6 +3239,13 @@ export type Database = {
             foreignKeyName: "progress_photos_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "progress_photos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -3447,6 +3597,13 @@ export type Database = {
             foreignKeyName: "sms_templates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "sms_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -3711,7 +3868,21 @@ export type Database = {
             foreignKeyName: "team_members_manager_id_fkey"
             columns: ["manager_id"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "team_members_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
             referencedColumns: ["user_id"]
           },
           {
@@ -3848,7 +4019,21 @@ export type Database = {
             foreignKeyName: "trainer_assignments_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "trainer_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "trainer_assignments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
             referencedColumns: ["user_id"]
           },
           {
@@ -4000,6 +4185,13 @@ export type Database = {
             foreignKeyName: "trainer_change_requests_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "trainer_change_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -4078,6 +4270,13 @@ export type Database = {
             foreignKeyName: "trainer_package_rates_trainer_id_fkey"
             columns: ["trainer_id"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "trainer_package_rates_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -4130,6 +4329,13 @@ export type Database = {
           used_sessions?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "trainer_packages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "trainer_packages_member_id_fkey"
             columns: ["member_id"]
@@ -4682,6 +4888,13 @@ export type Database = {
             foreignKeyName: "workout_plans_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "admin_gym_branch_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "workout_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -4689,13 +4902,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_gym_branch_overview: {
+        Row: {
+          branch_count: number | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          gym_count: number | null
+          max_branches: number | null
+          max_members: number | null
+          member_count: number | null
+          subscription_plan_id: string | null
+          subscription_plan_name: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_plan_assignments_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      backfill_team_members: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      backfill_team_members: { Args: never; Returns: undefined }
       calculate_referral_analytics: {
         Args: { p_end_date: string; p_start_date: string; p_user_id: string }
         Returns: {
@@ -4705,6 +4938,20 @@ export type Database = {
           total_bonus: number
           total_referrals: number
         }[]
+      }
+      create_admin_account_atomic: {
+        Args: {
+          p_address?: Json
+          p_date_of_birth?: string
+          p_email: string
+          p_full_name: string
+          p_max_branches?: number
+          p_max_members?: number
+          p_password: string
+          p_phone?: string
+          p_subscription_plan_id?: string
+        }
+        Returns: Json
       }
       create_gym_admin_atomic: {
         Args: {
@@ -4721,14 +4968,8 @@ export type Database = {
         }
         Returns: Json
       }
-      generate_order_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_referral_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_order_number: { Args: never; Returns: string }
+      generate_referral_code: { Args: never; Returns: string }
       get_monthly_financial_summary: {
         Args: { branch_filter?: string }
         Returns: {
@@ -4738,18 +4979,9 @@ export type Database = {
           profit: number
         }[]
       }
-      get_user_gym_id: {
-        Args: { user_uuid: string }
-        Returns: string
-      }
-      get_user_role: {
-        Args: { user_uuid: string }
-        Returns: string
-      }
-      get_user_team_role: {
-        Args: { user_uuid: string }
-        Returns: string
-      }
+      get_user_gym_id: { Args: { user_uuid: string }; Returns: string }
+      get_user_role: { Args: { user_uuid: string }; Returns: string }
+      get_user_team_role: { Args: { user_uuid: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
@@ -4757,26 +4989,13 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin_user: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
-      is_gym_admin: {
-        Args: Record<PropertyKey, never> | { user_id: string }
-        Returns: boolean
-      }
-      is_staff_or_above: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
-      is_super_admin: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
-      is_user_admin: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      is_admin_user: { Args: { user_uuid: string }; Returns: boolean }
+      is_gym_admin:
+        | { Args: { user_id: string }; Returns: boolean }
+        | { Args: never; Returns: boolean }
+      is_staff_or_above: { Args: { user_uuid: string }; Returns: boolean }
+      is_super_admin: { Args: { user_uuid: string }; Returns: boolean }
+      is_user_admin: { Args: { _user_id: string }; Returns: boolean }
       process_membership_referral_bonus: {
         Args: { p_member_id: string; p_membership_id: string }
         Returns: undefined
@@ -4794,10 +5013,7 @@ export type Database = {
         }
         Returns: Json
       }
-      upsert_member: {
-        Args: { p_user_id: string }
-        Returns: undefined
-      }
+      upsert_member: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       assignment_status:

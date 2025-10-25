@@ -225,17 +225,16 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
         const tempPassword = generateTempPassword();
         
         // Call the new atomic RPC function directly
-        const { data: result, error } = await supabase.rpc('create_gym_admin_atomic' as any, {
+        const { data: result, error } = await supabase.rpc('create_admin_account_atomic', {
           p_email: data.email,
           p_password: tempPassword,
           p_full_name: data.full_name,
           p_phone: data.phone || null,
-          p_gym_name: data.gym_name || `${data.full_name}'s Gym`,
-          p_subscription_plan: data.subscription_plan,
-          p_address: data.address || null,
           p_date_of_birth: data.date_of_birth || null,
-          p_existing_gym_id: data.create_new_gym ? null : (data.existing_gym_id || null),
-          p_existing_branch_id: data.create_new_gym ? null : (data.existing_branch_id || null),
+          p_address: data.address || null,
+          p_subscription_plan_id: data.subscription_plan || null,
+          p_max_branches: null, // Use plan defaults
+          p_max_members: null,  // Use plan defaults
         }) as { data: any; error: any };
         
         if (error) {
