@@ -11,7 +11,7 @@ import { CartProvider } from "@/hooks/useCart";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PermissionGate } from "@/components/PermissionGate";
-import { EnhancedRouteGuard } from "@/components/EnhancedRouteGuard";
+import { RouteGuard } from "@/components/RouteGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoadingState } from "@/components/LoadingState";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
@@ -150,11 +150,11 @@ const App = () => (
 
                       {/* Protected Routes */}
                       <Route element={
-                        <EnhancedRouteGuard>
+                        <RouteGuard>
                           <DashboardLayout>
                             <div />
                           </DashboardLayout>
-                        </EnhancedRouteGuard>
+                        </RouteGuard>
                       }>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/profile" element={<ProfileSettings />} />
@@ -222,71 +222,71 @@ const App = () => (
                       <Route
                         path="/system/settings"
                         element={
-                          <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                          <RouteGuard allowedRoles={['super-admin']}>
                             <DashboardLayout>
                               <SystemSettings />
                             </DashboardLayout>
-                          </EnhancedRouteGuard>
+                          </RouteGuard>
                         }
                       />
                         <Route 
                           path="/system/email" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <EmailSettings />
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
                           path="/system/sms" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <SMSSettings />
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
           <Route 
             path="/system/whatsapp" 
             element={
-              <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
+              <RouteGuard allowedRoles={['super-admin', 'admin']}>
                 <DashboardLayout>
                   <WhatsAppSettings />
                 </DashboardLayout>
-              </EnhancedRouteGuard>
+              </RouteGuard>
             } 
           />
           <Route 
             path="/system/payment-gateway" 
             element={
-              <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
+              <RouteGuard allowedRoles={['super-admin', 'admin']}>
                 <DashboardLayout>
                   <PaymentGatewaySettings />
                 </DashboardLayout>
-              </EnhancedRouteGuard>
+              </RouteGuard>
             } 
           />
                         <Route 
                           path="/system/ai-settings" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
                               <DashboardLayout>
                                 <AISettings />
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
                           path="/system/backup" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                            <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <SystemBackup />
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         
@@ -294,49 +294,49 @@ const App = () => (
                          <Route
                           path="/subscription-plans" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                            <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.SubscriptionPlans />
                                 </Suspense>
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
                           path="/platform-analytics" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                            <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.PlatformAnalytics />
                                 </Suspense>
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
                           path="/platform-reports" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                            <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.PlatformReports />
                                 </Suspense>
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
                           path="/gym-dashboard" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['admin']}>
+                            <RouteGuard allowedRoles={['admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.AdminGymDashboard />
                                 </Suspense>
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
 
@@ -420,33 +420,33 @@ const App = () => (
                          <Route 
                            path="/users/admin-management" 
                            element={
-                             <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                             <RouteGuard allowedRoles={['super-admin']}>
                                <DashboardLayout>
                                  <Suspense fallback={<PageLoadingState />}>
                                    <lazyRoutes.AdminManagement />
                                  </Suspense>
                                </DashboardLayout>
-                             </EnhancedRouteGuard>
+                             </RouteGuard>
                            } 
                          />
                         <Route 
                           path="/roles" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
                               <Suspense fallback={<PageLoadingState />}>
                                 <lazyRoutes.RoleManagement />
                               </Suspense>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
                           path="/permissions" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin', 'admin']}>
+                            <RouteGuard allowedRoles={['super-admin', 'admin']}>
                               <Suspense fallback={<PageLoadingState />}>
                                 <lazyRoutes.RoleManagement />
                               </Suspense>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
@@ -1030,25 +1030,25 @@ const App = () => (
                         <Route 
                           path="/platform-analytics" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                            <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.PlatformAnalytics />
                                 </Suspense>
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
                           path="/platform-reports" 
                           element={
-                            <EnhancedRouteGuard allowedRoles={['super-admin']}>
+                            <RouteGuard allowedRoles={['super-admin']}>
                               <DashboardLayout>
                                 <Suspense fallback={<PageLoadingState />}>
                                   <lazyRoutes.PlatformReports />
                                 </Suspense>
                               </DashboardLayout>
-                            </EnhancedRouteGuard>
+                            </RouteGuard>
                           } 
                         />
                         <Route 
