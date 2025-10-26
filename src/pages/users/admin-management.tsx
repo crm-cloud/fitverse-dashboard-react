@@ -34,19 +34,58 @@ export default function AdminManagement() {
   const { data: adminProfiles = [], isLoading } = useQuery({
     queryKey: ['admin-profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get the basic admin profiles
+      const { data: profiles, error } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          organizations:organization_id (
-            name,
-            subscription_plan_id
-          ),
-          subscription_plans:admin_plan_assignments!inner(subscription_plan_id(name))
-        `)
+        .select('*')
         .eq('role', 'admin')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      if (!profiles) return [];
+      
+      // Then, fetch organization and plan data separately to avoid complex joins
+      const adminProfiles = await Promise.all(profiles.map(async (profile) => {
+        let organization = null;
+        let subscriptionPlan = null;
+        
+        if (profile.organization_id) {
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('name, subscription_plan_id')
+            .eq('id', profile.organization_id)
+            .single();
+            
+          if (orgData) {
+            organization = orgData;
+            
+            // Get subscription plan name if available
+            if (orgData.subscription_plan_id) {
+              const { data: planData } = await supabase
+                .from('subscription_plans')
+                .select('name')
+                .eq('id', orgData.subscription_plan_id)
+                .single();
+                
+              subscriptionPlan = planData;
+            }
+          }
+        }
+        
+        return {
+          ...profile,
+          organizations: organization ? { 
+            name: organization.name,
+            subscription_plan_id: organization.subscription_plan_id 
+          } : null,
+          subscription_plans: subscriptionPlan ? { 
+            subscription_plan_id: { name: subscriptionPlan.name } 
+          } : null
+        };
+      }));
+      
+      return adminProfiles;
       
       if (error) throw error;
       return data as any as AdminProfile[];

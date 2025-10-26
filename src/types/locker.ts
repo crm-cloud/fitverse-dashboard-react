@@ -1,4 +1,4 @@
-export interface Locker {
+  .h.hn  export interface Locker {
   id: string;
   name: string;
   number: string;

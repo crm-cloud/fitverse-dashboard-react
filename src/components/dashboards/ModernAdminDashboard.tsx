@@ -23,9 +23,17 @@ import {
 import { useBranchContext } from '@/hooks/useBranchContext';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 export const ModernAdminDashboard = () => {
-  const { currentBranchId } = useBranchContext();
+  const { currentBranchId, branches, setSelectedBranch } = useBranchContext();
+  
+  // If no branch is selected but branches exist, select the first one
+  useEffect(() => {
+    if (branches?.length > 0 && !currentBranchId) {
+      setSelectedBranch(branches[0]);
+    }
+  }, [branches, currentBranchId, setSelectedBranch]);
 
   // Fetch real dashboard data
   const { data: analyticsData } = useSupabaseQuery(

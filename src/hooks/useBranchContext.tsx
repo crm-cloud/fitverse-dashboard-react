@@ -4,9 +4,18 @@ import { useAuth } from './useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface Branch {
+  id: string;
+  name: string;
+  status: string;
+  [key: string]: unknown; // For any additional properties
+}
+
 interface BranchContextType {
   currentBranchId: string | null;
+  branches: Branch[];
   setCurrentBranchId: (branchId: string | null) => void;
+  setSelectedBranch: (branch: Branch | null) => void;
   canAccessBranch: (branchId: string) => boolean;
   getAccessibleBranches: () => string[];
 }
@@ -24,7 +33,6 @@ export const useBranchContext = () => {
 export const BranchContextProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
   const [currentBranchId, setCurrentBranchId] = useState<string | null>(() => {
-    // Initialize from sessionStorage
     if (typeof window !== 'undefined') {
       return sessionStorage.getItem('selectedBranchId');
     }
@@ -32,7 +40,7 @@ export const BranchContextProvider = ({ children }: { children: ReactNode }) => 
   });
 
   // Get user's accessible branches based on their gym
-  const { data: branches = [] } = useQuery({
+  const { data: branches = [] } = useQuery<Branch[]>({
     queryKey: ['user-branches', authState.user?.gym_id],
     queryFn: async () => {
       if (!authState.user?.gym_id) return [];
@@ -44,40 +52,31 @@ export const BranchContextProvider = ({ children }: { children: ReactNode }) => 
         .eq('status', 'active');
       
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!authState.user?.gym_id,
   });
 
-  // Enhanced setCurrentBranchId with session persistence
-  const handleSetCurrentBranchId = (branchId: string | null) => {
-    setCurrentBranchId(branchId);
-    if (typeof window !== 'undefined') {
-      if (branchId) {
-        sessionStorage.setItem('selectedBranchId', branchId);
-      } else {
+  // Set the first branch as the current branch if none is selected
+  useEffect(() => {
+    if (branches.length > 0 && !currentBranchId) {
+      setCurrentBranchId(branches[0].id);
+    }
+  }, [branches, currentBranchId]);
+
+  const setSelectedBranch = (branch: Branch | null) => {
+    if (branch) {
+      setCurrentBranchId(branch.id);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('selectedBranchId', branch.id);
+      }
+    } else {
+      setCurrentBranchId(null);
+      if (typeof window !== 'undefined') {
         sessionStorage.removeItem('selectedBranchId');
       }
     }
   };
-
-  useEffect(() => {
-    if (authState.user && branches.length > 0) {
-      // Check if stored branch is still valid
-      const storedBranchId = typeof window !== 'undefined' ? sessionStorage.getItem('selectedBranchId') : null;
-      const isValidBranch = storedBranchId && branches.some(b => b.id === storedBranchId);
-      
-      if (isValidBranch) {
-        setCurrentBranchId(storedBranchId);
-      } else {
-        // Set current branch based on user's primary branch or first available branch
-        const branchId = authState.user.branchId || branches[0]?.id || null;
-        handleSetCurrentBranchId(branchId);
-      }
-    } else {
-      handleSetCurrentBranchId(null);
-    }
-  }, [authState.user, branches]);
 
   const canAccessBranch = (branchId: string): boolean => {
     if (!authState.user) return false;
@@ -108,13 +107,46 @@ export const BranchContextProvider = ({ children }: { children: ReactNode }) => 
     return branches.map(branch => branch.id);
   };
 
+  const handleSetCurrentBranchId = (branchId: string | null) => {
+    setCurrentBranchId(branchId);
+    if (typeof window !== 'undefined') {
+      if (branchId) {
+        sessionStorage.setItem('selectedBranchId', branchId);
+      } else {
+        sessionStorage.removeItem('selectedBranchId');
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (authState.user && branches.length > 0) {
+      // Check if stored branch is still valid
+      const storedBranchId = typeof window !== 'undefined' ? sessionStorage.getItem('selectedBranchId') : null;
+      const isValidBranch = storedBranchId && branches.some(b => b.id === storedBranchId);
+      
+      if (isValidBranch) {
+        setCurrentBranchId(storedBranchId);
+      } else {
+        // Set current branch based on user's primary branch or first available branch
+        const branchId = authState.user.branchId || branches[0]?.id || null;
+        handleSetCurrentBranchId(branchId);
+      }
+    } else {
+      handleSetCurrentBranchId(null);
+    }
+  }, [authState.user, branches]);
+
+  const value = {
+    currentBranchId,
+    branches,
+    setCurrentBranchId: handleSetCurrentBranchId,
+    setSelectedBranch,
+    canAccessBranch,
+    getAccessibleBranches,
+  };
+
   return (
-    <BranchContext.Provider value={{
-      currentBranchId,
-      setCurrentBranchId: handleSetCurrentBranchId,
-      canAccessBranch,
-      getAccessibleBranches
-    }}>
+    <BranchContext.Provider value={value}>
       {children}
     </BranchContext.Provider>
   );
