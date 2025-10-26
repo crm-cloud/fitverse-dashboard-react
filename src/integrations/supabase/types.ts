@@ -4986,6 +4986,16 @@ export type Database = {
         }
         Returns: Json
       }
+      create_gym_with_branch: {
+        Args: {
+          p_admin_id: string
+          p_branch_details?: Json
+          p_branch_name?: string
+          p_gym_details?: Json
+          p_gym_name: string
+        }
+        Returns: Json
+      }
       generate_order_number: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       get_monthly_financial_summary: {
@@ -4997,6 +5007,7 @@ export type Database = {
           profit: number
         }[]
       }
+      get_onboarding_status: { Args: { p_user_id: string }; Returns: Json }
       get_user_gym_id: { Args: { user_uuid: string }; Returns: string }
       get_user_role: { Args: { user_uuid: string }; Returns: string }
       get_user_team_role: { Args: { user_uuid: string }; Returns: string }

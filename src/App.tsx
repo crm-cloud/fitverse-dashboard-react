@@ -291,19 +291,7 @@ const App = () => (
                         />
                         
                          {/* SaaS Management Routes - Super Admin only */}
-                       <Route 
-                         path="/gyms" 
-                         element={
-                           <EnhancedRouteGuard allowedRoles={['super-admin']}>
-                            <DashboardLayout>
-                              <Suspense fallback={<PageLoadingState />}>
-                                <lazyRoutes.GymManagement />
-                              </Suspense>
-                            </DashboardLayout>
-                          </EnhancedRouteGuard>
-                         } 
-                       />
-                        <Route 
+                         <Route
                           path="/subscription-plans" 
                           element={
                             <EnhancedRouteGuard allowedRoles={['super-admin']}>

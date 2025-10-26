@@ -186,7 +186,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         branchName = branch?.name;
       }
 
-      // Get gym info if gym_id exists
+      // Get organization info if organization_id exists
+      let organizationName = undefined;
+      if ((profile as any).organization_id) {
+        const { data: org, error: orgError } = await supabase
+          .from('organizations' as any)
+          .select('name')
+          .eq('id', (profile as any).organization_id)
+          .maybeSingle();
+        if (!orgError && org) {
+          organizationName = (org as any).name;
+        }
+      }
+
+      // Get gym info if gym_id exists (backwards compatibility)
       let gymName = undefined;
       if (profile.gym_id) {
         const { data: gym } = await supabase
@@ -206,6 +219,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         avatar: profile.avatar_url,
         phone: profile.phone,
         joinDate: profile.created_at?.split('T')[0],
+        organization_id: (profile as any).organization_id,
+        organizationName: organizationName,
         branchId: profile.branch_id,
         branchName: branchName,
         gym_id: profile.gym_id,

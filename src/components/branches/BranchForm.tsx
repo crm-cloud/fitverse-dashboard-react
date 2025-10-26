@@ -62,47 +62,47 @@ export function BranchForm({ branch, onSuccess }: BranchFormProps) {
   const { authState } = useAuth();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Get available managers (staff members in the gym)
+  // Get available managers (staff members in the organization)
   const { data: managers = [] } = useQuery({
-    queryKey: ['managers', authState.user?.gym_id],
+    queryKey: ['managers', authState.user?.organization_id],
     queryFn: async () => {
-      if (!authState.user?.gym_id) return [];
+      if (!authState.user?.organization_id) return [];
       
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, full_name')
-        .eq('gym_id', authState.user.gym_id)
+        .filter('organization_id', 'eq', authState.user.organization_id as string)
         .in('role', ['admin', 'manager', 'staff'])
         .eq('is_active', true);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!authState.user?.gym_id,
+    enabled: !!authState.user?.organization_id,
   });
 
   const createBranch = useMutation({
     mutationFn: async (data: BranchFormData) => {
       // Check subscription limits before creating new branch
-      if (!branch && authState.user?.gym_id) {
-        const { data: gym, error: gymError } = await supabase
-          .from('gyms')
+      if (!branch && authState.user?.organization_id) {
+        const { data: planAssignment, error: planError } = await supabase
+          .from('admin_plan_assignments')
           .select('max_branches')
-          .eq('id', authState.user.gym_id)
+          .eq('user_id', authState.user.id)
           .single();
 
-        if (gymError) throw gymError;
+        if (planError) throw planError;
 
         const { data: existingBranches, error: branchError } = await supabase
           .from('branches')
           .select('id')
-          .eq('gym_id', authState.user.gym_id)
+          .filter('organization_id', 'eq', authState.user.organization_id as string)
           .eq('status', 'active');
 
         if (branchError) throw branchError;
 
-        if (existingBranches.length >= gym.max_branches) {
-          throw new Error(`Cannot create more branches. Your subscription allows a maximum of ${gym.max_branches} branches. Please upgrade your subscription to add more branches.`);
+        if (existingBranches.length >= planAssignment.max_branches) {
+          throw new Error(`Cannot create more branches. Your subscription allows a maximum of ${planAssignment.max_branches} branches. Please upgrade your subscription to add more branches.`);
         }
       }
 
@@ -120,7 +120,8 @@ export function BranchForm({ branch, onSuccess }: BranchFormProps) {
         },
         capacity: data.capacity,
         manager_id: data.managerId || null,
-        gym_id: authState.user?.gym_id,
+        organization_id: authState.user?.organization_id,
+        gym_id: authState.user?.gym_id || authState.user?.organization_id, // Backwards compatibility
         hours: {},
         status: 'active'
       };

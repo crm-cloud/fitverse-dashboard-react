@@ -27,7 +27,6 @@ export const lazyRoutes = {
   FinanceReports: createLazyComponent(() => import('@/pages/finance/reports').then(m => ({ default: m.default }))),
   InvoicesPage: createLazyComponent(() => import('@/pages/finance/invoices').then(m => ({ default: m.default }))),
   // SaaS Management
-  GymManagement: createLazyComponent(() => import('@/pages/gyms/GymManagement').then(m => ({ default: m.default }))),
   SubscriptionPlans: createLazyComponent(() => import('@/pages/subscription-plans/SubscriptionPlans').then(m => ({ default: m.default }))),
   AdminManagement: createLazyComponent(() => import('@/pages/users/admin-management').then(m => ({ default: m.default }))),
   PlatformAnalytics: createLazyComponent(() => import('@/pages/platform-analytics/index').then(m => ({ default: m.default }))),

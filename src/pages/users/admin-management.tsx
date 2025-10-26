@@ -16,12 +16,15 @@ interface AdminProfile {
   full_name: string;
   phone?: string;
   role: string;
-  gym_id: string;
+  organization_id?: string;
   is_active: boolean;
   created_at: string;
-  gyms?: {
+  organizations?: {
     name: string;
-    subscription_plan: string;
+    subscription_plan_id: string;
+  };
+  subscription_plans?: {
+    name: string;
   };
 }
 
@@ -35,37 +38,38 @@ export default function AdminManagement() {
         .from('profiles')
         .select(`
           *,
-          gyms!profiles_gym_id_fkey (
+          organizations:organization_id (
             name,
-            subscription_plan
-          )
+            subscription_plan_id
+          ),
+          subscription_plans:admin_plan_assignments!inner(subscription_plan_id(name))
         `)
         .eq('role', 'admin')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as AdminProfile[];
+      return data as any as AdminProfile[];
     }
   });
 
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data: gyms, error: gymsError } = await supabase
-        .from('gyms')
+      const { data: organizations, error: orgsError } = await supabase
+        .from('organizations' as any)
         .select('id')
         .eq('status', 'active');
 
       const { data: branches, error: branchesError } = await supabase
         .from('branches')
-        .select('id, gym_id')
+        .select('id, organization_id')
         .eq('status', 'active');
 
-      if (gymsError || branchesError) throw gymsError || branchesError;
+      if (orgsError || branchesError) throw orgsError || branchesError;
 
       return {
-        totalGyms: gyms?.length || 0,
+        totalOrganizations: organizations?.length || 0,
         totalBranches: branches?.length || 0,
         totalAdmins: adminProfiles.length,
       };
@@ -135,14 +139,14 @@ export default function AdminManagement() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Gyms</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Organizations</CardTitle>
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-primary" />
-              <span className="text-2xl font-bold text-foreground">{stats?.totalGyms || 0}</span>
+              <span className="text-2xl font-bold text-foreground">{stats?.totalOrganizations || 0}</span>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Active gym accounts</p>
+            <p className="text-xs text-muted-foreground">Active organization accounts</p>
           </CardContent>
         </Card>
 
@@ -155,7 +159,7 @@ export default function AdminManagement() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Across all gyms</p>
+            <p className="text-xs text-muted-foreground">Across all organizations</p>
           </CardContent>
         </Card>
 
@@ -164,12 +168,12 @@ export default function AdminManagement() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Coverage</CardTitle>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-foreground">
-                {stats?.totalGyms ? Math.round((adminProfiles.length / stats.totalGyms) * 100) : 0}%
+                {stats?.totalOrganizations ? Math.round((adminProfiles.length / stats.totalOrganizations) * 100) : 0}%
               </span>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Gyms with admins</p>
+            <p className="text-xs text-muted-foreground">Organizations with admins</p>
           </CardContent>
         </Card>
       </div>
@@ -212,16 +216,16 @@ export default function AdminManagement() {
                 )}
                 <div className="flex items-center gap-2 text-sm">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span>{admin.gyms?.name || 'No gym assigned'}</span>
+                  <span>{(admin.organizations as any)?.name || 'No organization assigned'}</span>
                 </div>
               </div>
 
-              {admin.gyms && (
+              {(admin.organizations as any) && (
                 <div className="pt-2 border-t">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-muted-foreground">Subscription</span>
                     <Badge variant="outline" className="text-xs">
-                      {admin.gyms.subscription_plan}
+                      {(admin.subscription_plans as any)?.[0]?.subscription_plan_id?.name || 'N/A'}
                     </Badge>
                   </div>
                 </div>
