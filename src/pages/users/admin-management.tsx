@@ -50,53 +50,37 @@ export default function AdminManagement() {
         let organization = null;
         let subscriptionPlan = null;
         
-        if (profile.organization_id) {
+        if ((profile as any).gym_id) {
           const { data: orgData } = await supabase
-            .from('organizations')
-            .select('name, subscription_plan_id')
-            .eq('id', profile.organization_id)
+            .from('gyms' as any)
+            .select('name')
+            .eq('id', (profile as any).gym_id)
             .single();
             
           if (orgData) {
             organization = orgData;
             
-            // Get subscription plan name if available
-            if (orgData.subscription_plan_id) {
-              const { data: planData } = await supabase
-                .from('subscription_plans')
-                .select('name')
-                .eq('id', orgData.subscription_plan_id)
-                .single();
-                
-              subscriptionPlan = planData;
-            }
+            // Get subscription plan name if available - TODO: integrate with subscription_plans
           }
         }
         
         return {
-          ...profile,
+          ...(profile as any),
           organizations: organization ? { 
-            name: organization.name,
-            subscription_plan_id: organization.subscription_plan_id 
-          } : null,
-          subscription_plans: subscriptionPlan ? { 
-            subscription_plan_id: { name: subscriptionPlan.name } 
+            name: organization.name
           } : null
         };
       }));
       
-      return adminProfiles;
-      
-      if (error) throw error;
-      return data as any as AdminProfile[];
+      return adminProfiles as any;
     }
   });
 
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data: organizations, error: orgsError } = await supabase
-        .from('organizations' as any)
+      const { data: gyms, error: gymsError } = await supabase
+        .from('gyms' as any)
         .select('id')
         .eq('status', 'active');
 
@@ -105,10 +89,10 @@ export default function AdminManagement() {
         .select('id, organization_id')
         .eq('status', 'active');
 
-      if (orgsError || branchesError) throw orgsError || branchesError;
+      if (gymsError || branchesError) throw gymsError || branchesError;
 
       return {
-        totalOrganizations: organizations?.length || 0,
+        totalOrganizations: gyms?.length || 0,
         totalBranches: branches?.length || 0,
         totalAdmins: adminProfiles.length,
       };

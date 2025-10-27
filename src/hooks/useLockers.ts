@@ -66,7 +66,7 @@ export const useLockers = (filters: LockerFilters = {}) => {
     error,
     refetch
   } = useSupabaseQuery(
-    ['lockers', authState.user?.gym_id, targetBranchId, filters],
+    ['lockers', authState.user?.gym_id, targetBranchId, JSON.stringify(filters)],
     async () => {
       if (!isEnabled) return [];
       
@@ -400,14 +400,24 @@ export const useLockers = (filters: LockerFilters = {}) => {
     assignLocker: assignLocker.mutateAsync,
     releaseLocker: releaseLocker.mutateAsync,
     bulkCreateLockers: bulkCreateLockers.mutateAsync,
-    isCreating: createLocker.isLoading,
-    isUpdating: updateLocker.isLoading,
-    isDeleting: deleteLocker.isLoading,
-    isAssigning: assignLocker.isLoading,
-    isReleasing: releaseLocker.isLoading,
-    isBulkCreating: bulkCreateLockers.isLoading
+    isCreating: createLocker.isPending,
+    isUpdating: updateLocker.isPending,
+    isDeleting: deleteLocker.isPending,
+    isAssigning: assignLocker.isPending,
+    isReleasing: releaseLocker.isPending,
+    isBulkCreating: bulkCreateLockers.isPending
   };
 };
+
+export interface LockerSummary {
+  totalLockers: number;
+  availableLockers: number;
+  occupiedLockers: number;
+  maintenanceLockers: number;
+  reservedLockers: number;
+  occupancyRate: number;
+  monthlyRevenue: number;
+}
 
 export const useLockerSummary = (branchId?: string) => {
   const { authState } = useAuth();

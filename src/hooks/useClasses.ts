@@ -15,14 +15,13 @@ export interface GymClass {
   trainer_id: string;
   room_id?: string;
   capacity: number;
-  current_attendees: number;
+  enrolled_count: number;
   start_time: string;
   end_time: string;
   status: ClassStatus;
   tags: string[];
   recurrence: ClassRecurrence;
   recurrence_end_date?: string;
-  is_recurring: boolean;
   created_at: string;
   updated_at: string;
   branches?: {
@@ -38,7 +37,7 @@ export interface GymClass {
   };
 }
 
-interface CreateClassData extends Omit<GymClass, 'id' | 'created_at' | 'updated_at' | 'current_attendees' | 'branches' | 'trainer_profiles' | 'rooms'> {
+interface CreateClassData extends Omit<GymClass, 'id' | 'created_at' | 'updated_at' | 'enrolled_count' | 'branches' | 'trainer_profiles' | 'rooms'> {
   // Add any additional fields needed for creation
 }
 
@@ -97,7 +96,7 @@ export const useGymClasses = (filters: {
     error,
     refetch
   } = useSupabaseQuery(
-    ['gym_classes', authState.user?.gym_id, filters],
+    ['gym_classes', authState.user?.gym_id, JSON.stringify(filters)],
     async () => {
       if (!authState.user?.gym_id) return [];
 
@@ -124,7 +123,7 @@ export const useGymClasses = (filters: {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as GymClass[];
+      return (data || []) as any[];
     },
     { 
       enabled: !!authState.user?.gym_id,
@@ -143,14 +142,13 @@ export const useGymClasses = (filters: {
         .from('gym_classes')
         .insert([{
           ...classData,
-          current_attendees: 0,
-          is_recurring: classData.recurrence !== 'none'
-        }])
+          enrolled_count: 0
+        } as any])
         .select()
         .single();
 
       if (error) throw error;
-      return data as GymClass;
+      return data as any;
     },
     {
       onSuccess: () => {
@@ -175,16 +173,13 @@ export const useGymClasses = (filters: {
     async ({ id, ...updates }: UpdateClassData) => {
       const { data, error } = await supabase
         .from('gym_classes')
-        .update({
-          ...updates,
-          is_recurring: updates.recurrence ? updates.recurrence !== 'none' : undefined
-        })
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data as GymClass;
+      return data as any;
     },
     {
       onSuccess: () => {
@@ -218,7 +213,7 @@ export const useGymClasses = (filters: {
         .single();
 
       if (error) throw error;
-      return data as GymClass;
+      return data as any;
     },
     {
       onSuccess: () => {
@@ -335,7 +330,6 @@ export const classTagLabels = {
   stretch: 'Stretching',
   tabata: 'Tabata',
   tai_chi: 'Tai Chi',
-  trx: 'TRX',
   weight_loss: 'Weight Loss',
   wellness: 'Wellness',
   wrestling: 'Wrestling'

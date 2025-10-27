@@ -257,7 +257,7 @@ export const useTrainerById = (trainerId: string) => {
 
 export const useCreateTrainer = () => {
   return useSupabaseMutation(
-    async (data: CreateTrainerData) => {
+    async (data: CreateTrainerData & { is_active?: boolean }) => {
       // Call the secure edge function to create trainer account
       const { data: result, error } = await supabase.functions.invoke('create-trainer-account', {
         body: {

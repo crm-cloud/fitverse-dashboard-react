@@ -39,7 +39,7 @@ export const TrainerManagementPage = () => {
   const navigate = useNavigate();
   const branchId = 'branch_001';
 
-  const { data: trainers = [], isLoading } = useTrainers();
+  const { trainers = [], isLoading } = useTrainers();
 
   const filteredTrainers = trainers.filter(trainer =>
     trainer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
