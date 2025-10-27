@@ -50,9 +50,9 @@ export const useTrainers = () => {
     error,
     refetch
   } = useSupabaseQuery(
-    ['trainers', authState.user?.gym_id],
+    ['trainers', authState.user?.organization_id],
     async () => {
-      if (!authState.user?.gym_id) return [];
+      if (!authState.user?.organization_id) return [];
 
       const { data, error } = await supabase
         .from('profiles')
@@ -62,14 +62,14 @@ export const useTrainers = () => {
             name
           )
         `)
-        .eq('gym_id', authState.user.gym_id)
+        .filter('organization_id', 'eq', authState.user.organization_id)
         .eq('role', 'trainer')
         .order('full_name');
 
       if (error) throw error;
       return data as Trainer[];
     },
-    { enabled: !!authState.user?.gym_id }
+    { enabled: !!authState.user?.organization_id }
   );
 
   // Get a single trainer by ID
@@ -80,7 +80,7 @@ export const useTrainers = () => {
   // Create a new trainer
   const createTrainer = useSupabaseMutation(
     async (trainerData: CreateTrainerData) => {
-      if (!authState.user?.gym_id) {
+      if (!authState.user?.organization_id) {
         throw new Error('No organization selected');
       }
 
@@ -109,7 +109,7 @@ export const useTrainers = () => {
           phone: trainerData.phone,
           role: 'trainer',
           branch_id: trainerData.branch_id,
-          gym_id: authState.user.gym_id,
+          organization_id: authState.user.organization_id,
           specialties: trainerData.specialties || [],
           bio: trainerData.bio,
           profile_photo: trainerData.profile_photo,
@@ -122,7 +122,7 @@ export const useTrainers = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.gym_id] });
+        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.organization_id] });
         toast({
           title: 'Trainer created',
           description: 'The trainer has been added successfully.',
@@ -151,7 +151,7 @@ export const useTrainers = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.gym_id] });
+        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.organization_id] });
         toast({
           title: 'Trainer updated',
           description: 'The trainer has been updated successfully.',
@@ -180,7 +180,7 @@ onError: (error: Error) => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.gym_id] });
+        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.organization_id] });
         toast({
           title: 'Trainer deactivated',
           description: 'The trainer has been deactivated successfully.',
@@ -209,7 +209,7 @@ onError: (error: Error) => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.gym_id] });
+        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.organization_id] });
         toast({
           title: 'Trainer reactivated',
           description: 'The trainer has been reactivated successfully.',
@@ -235,10 +235,10 @@ onError: (error: Error) => {
     updateTrainer: updateTrainer.mutateAsync,
     deleteTrainer: deleteTrainer.mutateAsync,
     reactivateTrainer: reactivateTrainer.mutateAsync,
-    isCreating: createTrainer.isLoading,
-    isUpdating: updateTrainer.isLoading,
-    isDeleting: deleteTrainer.isLoading,
-    isReactivating: reactivateTrainer.isLoading,
+    isCreating: createTrainer.isPending,
+    isUpdating: updateTrainer.isPending,
+    isDeleting: deleteTrainer.isPending,
+    isReactivating: reactivateTrainer.isPending,
   };
 };
 

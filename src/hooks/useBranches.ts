@@ -16,7 +16,7 @@ type Branch = {
   phone: string;
   email: string;
   status: 'active' | 'inactive' | 'maintenance';
-  gym_id: string;
+  organization_id: string;
   created_at: string;
   updated_at: string;
   timezone?: string;
@@ -34,7 +34,7 @@ export const useBranches = () => {
   useEffect(() => {
     const savedBranchId = localStorage.getItem(SELECTED_BRANCH_KEY);
     if (savedBranchId) {
-      const cachedBranches = queryClient.getQueryData<Branch[]>(['branches', authState.user?.gym_id]);
+      const cachedBranches = queryClient.getQueryData<Branch[]>(['branches', authState.user?.organization_id]);
       if (cachedBranches?.length) {
         const branch = cachedBranches.find(b => b.id === savedBranchId);
         if (branch) {
@@ -44,7 +44,7 @@ export const useBranches = () => {
         }
       }
     }
-  }, [authState.user?.gym_id, queryClient]);
+  }, [authState.user?.organization_id, queryClient]);
   
   const setSelectedBranch = useCallback((branch: Branch | null) => {
     if (branch) {
@@ -63,14 +63,14 @@ export const useBranches = () => {
     error,
     refetch
   } = useSupabaseQuery(
-    ['branches', authState.user?.gym_id],
+    ['branches', authState.user?.organization_id],
     async () => {
-      if (!authState.user?.gym_id) return [];
+      if (!authState.user?.organization_id) return [];
 
       const { data, error } = await supabase
         .from('branches')
         .select('*')
-        .eq('gym_id', authState.user.gym_id)
+        .filter('organization_id', 'eq', authState.user.organization_id)
         .order('name');
 
       if (error) throw error;
@@ -89,13 +89,13 @@ export const useBranches = () => {
       
       return data || [];
     },
-    { enabled: !!authState.user?.gym_id }
+    { enabled: !!authState.user?.organization_id }
   );
 
   // Create a new branch
   const createBranch = useSupabaseMutation(
-    async (branchData: Omit<Branch, 'id' | 'created_at' | 'updated_at' | 'gym_id'>) => {
-      if (!authState.user?.gym_id) {
+    async (branchData: Omit<Branch, 'id' | 'created_at' | 'updated_at' | 'organization_id'>) => {
+      if (!authState.user?.organization_id) {
         throw new Error('No organization selected');
       }
 
@@ -103,7 +103,7 @@ export const useBranches = () => {
         .from('branches')
         .insert([{
           ...branchData,
-          gym_id: authState.user.gym_id,
+          organization_id: authState.user.organization_id,
           status: 'active'
         }])
         .select()
@@ -114,7 +114,7 @@ export const useBranches = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.gym_id] });
+        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.organization_id] });
         toast({
           title: 'Branch created',
           description: 'The branch has been created successfully.',
@@ -145,7 +145,7 @@ export const useBranches = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.gym_id] });
+        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.organization_id] });
         toast({
           title: 'Branch updated',
           description: 'The branch has been updated successfully.',
@@ -179,7 +179,7 @@ export const useBranches = () => {
           setSelectedBranch(null);
         }
         
-        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.gym_id] });
+        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.organization_id] });
         toast({
           title: 'Branch deleted',
           description: 'The branch has been deleted successfully.',
@@ -205,8 +205,8 @@ export const useBranches = () => {
     createBranch: createBranch.mutateAsync,
     updateBranch: updateBranch.mutateAsync,
     deleteBranch: deleteBranch.mutateAsync,
-    isCreating: createBranch.isLoading,
-    isUpdating: updateBranch.isLoading,
-    isDeleting: deleteBranch.isLoading,
+    isCreating: createBranch.isPending,
+    isUpdating: updateBranch.isPending,
+    isDeleting: deleteBranch.isPending,
   };
 };

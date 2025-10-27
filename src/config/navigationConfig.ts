@@ -129,14 +129,6 @@ export const navigationConfig: NavigationGroup[] = [
     priority: 2,
     items: [
       {
-        id: 'gym-management',
-        title: 'Gym Management',
-        url: '/gyms',
-        icon: Building,
-        group: 'saas-management',
-        allowedRoles: ['super-admin'],
-      },
-      {
         id: 'admin-management',
         title: 'Admin Management',
         url: '/users/admin-management',
@@ -181,25 +173,17 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
-    id: 'gym-overview',
-    title: 'Gym Overview',
+    id: 'organization',
+    title: 'Organization',
     allowedRoles: ['admin'],
     priority: 4,
     items: [
       {
-        id: 'gym-dashboard',
-        title: 'Gym Dashboard',
-        url: '/gyms/dashboard',
-        icon: Building,
-        group: 'gym-overview',
-        allowedRoles: ['admin'],
-      },
-      {
         id: 'admin-branches',
-        title: 'All Branches',
+        title: 'Branches',
         url: '/branches',
         icon: MapPin,
-        group: 'gym-overview',
+        group: 'organization',
         allowedRoles: ['admin'],
         requiredPermissions: ['branches.view'],
       }

@@ -20,20 +20,24 @@ import {
   UserCheck,
   Star
 } from 'lucide-react';
-import { useBranchContext } from '@/hooks/useBranchContext';
+import { useOrganizationContext } from '@/hooks/useOrganizationContext';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { useBranches } from '@/hooks/useBranches';
 
 export const ModernAdminDashboard = () => {
-  const { currentBranchId, branches, setSelectedBranch } = useBranchContext();
+  const { organizationId, branchId } = useOrganizationContext();
+  const { branches, selectedBranch, setSelectedBranch } = useBranches();
   
   // If no branch is selected but branches exist, select the first one
   useEffect(() => {
-    if (branches?.length > 0 && !currentBranchId) {
+    if (branches?.length > 0 && !selectedBranch) {
       setSelectedBranch(branches[0]);
     }
-  }, [branches, currentBranchId, setSelectedBranch]);
+  }, [branches, selectedBranch, setSelectedBranch]);
+
+  const currentBranchId = branchId || selectedBranch?.id;
 
   // Fetch real dashboard data
   const { data: analyticsData } = useSupabaseQuery(
