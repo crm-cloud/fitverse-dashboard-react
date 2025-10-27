@@ -83,11 +83,11 @@ export const useBranches = () => {
           : data[0];
         
         if (branchToSelect) {
-          setSelectedBranch(branchToSelect);
+          setSelectedBranch(branchToSelect as any);
         }
       }
       
-      return data || [];
+      return (data as any[]) || [];
     },
     { enabled: !!authState.user?.organization_id }
   );
@@ -105,7 +105,7 @@ export const useBranches = () => {
           ...branchData,
           organization_id: authState.user.organization_id,
           status: 'active'
-        }])
+        } as any])
         .select()
         .single();
 

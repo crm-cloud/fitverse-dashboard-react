@@ -44,7 +44,7 @@ export const BranchSelector = () => {
             <div className="flex-1 min-w-0 text-left">
               <p className="text-sm font-medium truncate">{selectedBranch?.name}</p>
               <p className="text-xs text-muted-foreground truncate">
-                {selectedBranch?.address.city}
+                {typeof selectedBranch?.address === 'object' && selectedBranch?.address ? (selectedBranch.address as any).city : selectedBranch?.city}
               </p>
             </div>
             <ChevronDown className="w-4 h-4 text-muted-foreground ml-2 flex-shrink-0" />

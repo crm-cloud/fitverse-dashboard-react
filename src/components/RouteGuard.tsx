@@ -164,7 +164,7 @@ export const RouteGuard = ({
 
   // Auto-redirect to default route if access is denied and autoRedirect is true
   if (!hasAccess && autoRedirect) {
-    const defaultRoute = getDefaultRouteForUser(user.role, userPermissions);
+    const defaultRoute = getDefaultRouteForUser(user.role);
     if (defaultRoute && defaultRoute !== location.pathname) {
       return <Navigate to={defaultRoute} replace />;
     }

@@ -71,7 +71,7 @@ interface MemberFormProps {
 export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const { branches } = useBranches();
-  const { data: trainers } = useTrainers();
+  const { trainers } = useTrainers();
 
   const form = useForm<z.infer<typeof memberFormSchema>>({
     resolver: zodResolver(memberFormSchema),

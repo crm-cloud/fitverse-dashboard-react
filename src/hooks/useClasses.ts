@@ -304,10 +304,10 @@ export const useGymClasses = (filters: {
     getClassById,
     getUpcomingClasses,
     getClassesByStatus,
-    isCreating: createClass.isLoading,
-    isUpdating: updateClass.isLoading,
-    isCancelling: cancelClass.isLoading,
-    isDeleting: deleteClass.isLoading,
+    isCreating: createClass.isPending,
+    isUpdating: updateClass.isPending,
+    isCancelling: cancelClass.isPending,
+    isDeleting: deleteClass.isPending,
   };
 };
 

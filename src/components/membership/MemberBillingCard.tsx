@@ -95,7 +95,7 @@ export const MemberBillingCard = ({ memberId, branchId }: MemberBillingCardProps
   const { formatCurrency } = useCurrency();
 
   // Fetch invoices for this member
-  const { data: allInvoices = [], isLoading } = useInvoices({ customerId: memberId });
+  const { invoices: allInvoices = [], isLoading } = useInvoices({ customerId: memberId });
   const memberInvoices = allInvoices.filter(invoice => invoice.customerId === memberId);
 
   const handleRecordPayment = (invoice: Invoice) => {

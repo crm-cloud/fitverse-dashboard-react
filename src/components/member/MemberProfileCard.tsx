@@ -82,7 +82,7 @@ export const MemberProfileCard = ({ member }: MemberProfileCardProps) => {
   const [freezeDays, setFreezeDays] = useState<number | ''>('');
   
   const memberUserId = member.userId ?? null;
-  const { data: trainers } = useTrainers();
+  const { trainers } = useTrainers();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { authState } = useAuth();
