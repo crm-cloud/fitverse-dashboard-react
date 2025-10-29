@@ -79,15 +79,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
     }
   });
 
-  const gymForm = useForm<GymFormData>({
-    resolver: zodResolver(gymFormSchema),
-    defaultValues: {
-      gym_name: '',
-      subscription_plan_id: adminForm.watch('subscription_plan_id'),
-      max_branches: adminForm.watch('max_branches') || 1,
-      max_members: adminForm.watch('max_members') || 100,
-    },
-  });
+  // Gym form initialization moved below the admin form to ensure proper dependency order
   
   // Initialize mutations at the top level
   const createAdminMutation = useMutation({
@@ -427,41 +419,68 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       });
     }
   });
-
+  
   // Form handlers
   const onSubmitAdmin = (data: AdminFormData) => {
     createAdminAccount.mutate(data);
   };
 
-  const onSubmitGym = (data: GymFormData) => {
-    createGym.mutate(data);
-  };
+const onSubmitGym = (data: GymFormData) => {
+  createGym.mutate(data);
+};
 
-  const gymForm = useForm<GymFormData>({
-    resolver: zodResolver(gymFormSchema),
-    defaultValues: {
-      gym_name: '',
-      subscription_plan_id: form.watch('subscription_plan_id'),
-      max_branches: form.watch('max_branches') || 1,
-      max_members: form.watch('max_members') || 100,
-    },
-  });
+// Initialize mutations at the top level
+// for super admins
+if (isSuperAdmin) {
+  return (
+    <div className="max-w-7xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold">Super Admin Account Created</h2>
+        <p className="text-muted-foreground mt-2">
+          The admin account has been created successfully.
+        </p>
+      </div>
+      <Button onClick={onSuccess}>
+        Back to Admin List
+      </Button>
+    </div>
+  );
+}
 
-  // Don't show gym setup for super admins
-  if (isSuperAdmin) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold">Super Admin Account Created</h2>
-          <p className="text-muted-foreground mt-2">
-            The admin account has been created successfully.
-          </p>
-        </div>
+const gymForm = useForm<GymFormData>({
+  resolver: zodResolver(gymFormSchema),
+  defaultValues: {
+    gym_name: '',
+    subscription_plan_id: form.watch('subscription_plan_id'),
+    max_branches: form.watch('max_branches') || 1,
+    max_members: form.watch('max_members') || 100,
+  },
+});
+
+// Render the appropriate form based on the current step
+if (step === 'gym') {
+  return (
+    <div className="max-w-7xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold">Set Up Your Gym</h2>
+        <p className="text-muted-foreground mt-2">
+          The admin account has been created successfully.
+        </p>
+      </div>
+      <div className="flex gap-4">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={() => setStep('admin')}
+        >
+          Back to Admin Details
+        </Button>
         <Button onClick={onSuccess}>
           Back to Admin List
         </Button>
       </div>
-    );
+    </div>
+  );
   }
 
   // Render the appropriate form based on the current step
