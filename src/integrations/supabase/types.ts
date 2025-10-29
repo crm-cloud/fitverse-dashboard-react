@@ -4986,6 +4986,16 @@ export type Database = {
         }
         Returns: Json
       }
+      create_gym_for_admin: {
+        Args: {
+          p_admin_id: string
+          p_gym_name: string
+          p_max_branches?: number
+          p_max_members?: number
+          p_subscription_plan_id?: string
+        }
+        Returns: Json
+      }
       create_gym_with_branch: {
         Args: {
           p_admin_id: string
