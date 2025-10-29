@@ -51,10 +51,20 @@ const useAccessCheck = ({
   // Check if user has access to this route using centralized config
   const hasRouteAccess = isRouteAccessible(
     pathname,
-    user.role,
+    user?.role,  // Optional chaining to prevent errors
     userPermissions,
-    user.teamRole
+    user?.teamRole  // Optional chaining to prevent errors
   );
+  
+  // If user is not loaded yet, we can't determine access
+  if (!user) {
+    return {
+      hasAccess: false,
+      isLoading: true,
+      shouldRedirect: false,
+      redirectPath: ''
+    };
+  }
 
   // If route is not in navigation config, apply manual checks
   let hasManualAccess = true;
@@ -104,67 +114,77 @@ export const RouteGuard = ({
   silent = false,
   trackAccess = true
 }: RouteGuardProps) => {
+  // Hooks must be called unconditionally at the top level
   const { authState } = useAuth();
   const { hasAnyPermission, hasAllPermissions, getUserPermissions } = useRBAC();
   const location = useLocation();
   const [showUnauthorizedToast, setShowUnauthorizedToast] = useState(false);
   const prevPathnameRef = useRef(location.pathname);
   
-  // Get user and check access at the top level to maintain hook order
-  const user = authState.user;
-  const { hasAccess, userPermissions } = useAccessCheck({
+  // Call useAccessCheck unconditionally to maintain hook order
+  const { hasAccess, userPermissions, isLoading: isAccessCheckLoading } = useAccessCheck({
     allowedRoles,
     requiredPermissions,
     requireAll,
     teamRole,
     excludeTeamRoles,
     pathname: location.pathname,
-    user: user || undefined,
+    user: authState.user || undefined,
     hasAllPermissions,
     hasAnyPermission,
     getUserPermissions
   });
-
+  
+  const isLoading = authState.isLoading || isAccessCheckLoading;
+  
   // Track route access attempts for security audit
   useEffect(() => {
-    if (trackAccess && user) {
-      console.log(`Route access: ${location.pathname} by ${user.email} (${user.role})`);
+    if (trackAccess && authState.user && !isLoading) {
+      console.log(`Route access: ${location.pathname} by ${authState.user.email} (${authState.user.role})`);
     }
-  }, [location.pathname, user, trackAccess]);
+  }, [location.pathname, authState.user, trackAccess, isLoading]);
 
-  // Reset toast state when pathname changes
+  // Handle unauthorized access and path changes
   useEffect(() => {
+    // Reset toast state when pathname changes
     if (location.pathname !== prevPathnameRef.current) {
       setShowUnauthorizedToast(false);
       prevPathnameRef.current = location.pathname;
     }
-  }, [location.pathname]);
-
-  // Show loading state while checking authentication
-  if (authState.isLoading) {
-    return <PageLoadingState />;
-  }
-
-  // Redirect to login if not authenticated
-  if (!authState.isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // Handle unauthorized access
-  useEffect(() => {
-    if (!hasAccess && showUnauthorizedMessage && !silent) {
-      // Only show the toast once per access denial
+    
+    // Show unauthorized message if needed
+    if (!isLoading && !authState.isAuthenticated && !silent) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to access this page.',
+        variant: 'destructive',
+      });
+    }
+    
+    // Show access denied message if needed
+    if (!isLoading && authState.isAuthenticated && !hasAccess && showUnauthorizedMessage && !silent) {
+      setShowUnauthorizedToast(true);
       toast({
         title: 'Access Denied',
         description: 'You do not have permission to access this page.',
         variant: 'destructive',
       });
     }
-  }, [hasAccess, showUnauthorizedMessage, silent, location.pathname]);
+  }, [location.pathname, isLoading, authState.isAuthenticated, hasAccess, showUnauthorizedMessage, silent]);
+  
+  // Show loading state while auth or access check is in progress
+  if (isLoading) {
+    return <PageLoadingState />;
+  }
+  
+  // If user is not authenticated, redirect to login
+  if (!authState.isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
   // Auto-redirect to default route if access is denied and autoRedirect is true
   if (!hasAccess && autoRedirect) {
-    const defaultRoute = getDefaultRouteForUser(user.role);
+    const defaultRoute = getDefaultRouteForUser(authState.user.role);
     if (defaultRoute && defaultRoute !== location.pathname) {
       return <Navigate to={defaultRoute} replace />;
     }

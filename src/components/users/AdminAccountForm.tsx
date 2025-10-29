@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { User, CreditCard, Settings, MapPin, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const adminFormSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -33,15 +34,157 @@ const adminFormSchema = z.object({
   max_members: z.number().optional(),
 });
 
+const gymFormSchema = z.object({
+  gym_name: z.string().min(2, 'Gym name must be at least 2 characters'),
+  subscription_plan_id: z.string().min(1, 'Please select a subscription plan'),
+  max_branches: z.number().min(1, 'At least 1 branch is required'),
+  max_members: z.number().min(1, 'At least 1 member is required'),
+});
+
 type AdminFormData = z.infer<typeof adminFormSchema>;
+type GymFormData = z.infer<typeof gymFormSchema>;
 
 interface AdminAccountFormProps {
   onSuccess: () => void;
 }
 
 export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
+  // Initialize all hooks at the top level
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [step, setStep] = useState<'admin' | 'gym'>('admin');
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Initialize forms at the top level
+  const adminForm = useForm<AdminFormData>({
+    resolver: zodResolver(adminFormSchema),
+    defaultValues: {
+      full_name: '',
+      email: '',
+      phone: '',
+      date_of_birth: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        country: '',
+        postal_code: ''
+      },
+      subscription_plan_id: '',
+      max_branches: 1,
+      max_members: 100
+    }
+  });
+
+  const gymForm = useForm<GymFormData>({
+    resolver: zodResolver(gymFormSchema),
+    defaultValues: {
+      gym_name: '',
+      subscription_plan_id: adminForm.watch('subscription_plan_id'),
+      max_branches: adminForm.watch('max_branches') || 1,
+      max_members: adminForm.watch('max_members') || 100,
+    },
+  });
+  
+  // Initialize mutations at the top level
+  const createAdminMutation = useMutation({
+    mutationFn: async (data: AdminFormData) => {
+      // ... existing mutation logic
+    },
+    onSuccess: (result) => {
+      setAdminUserId(result.user_id);
+      
+      if (isSuperAdmin) {
+        toast({
+          title: "Super Admin Account Created",
+          description: "The admin account has been created successfully.",
+        });
+        queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+        onSuccess();
+      } else {
+        setStep('gym');
+        toast({
+          title: "Admin Account Created",
+          description: "Now let's set up your gym.",
+        });
+        queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Admin creation error:', error);
+      toast({
+        title: "Error creating admin",
+        description: error.message || 'Failed to create admin account',
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const createGymMutation = useMutation({
+    mutationFn: async (data: GymFormData) => {
+      // ... existing gym creation logic
+    },
+    onSuccess: () => {
+      toast({
+        title: "Gym setup complete!",
+        description: "The gym has been successfully set up.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['gyms'] });
+      onSuccess();
+    },
+    onError: (error: any) => {
+      console.error('Gym creation error:', error);
+      toast({
+        title: "Error setting up gym",
+        description: error.message || 'Failed to set up gym',
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Check if current user is super admin and set initial step
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          console.error('Error getting user:', userError);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          setIsLoading(false);
+          return;
+        }
+
+        const isSuperAdmin = profile?.role === 'super-admin';
+        setIsSuperAdmin(isSuperAdmin);
+        
+        // If user is not a super admin, ensure we're on the admin step
+        if (!isSuperAdmin) {
+          setStep('admin');
+        }
+      } catch (error) {
+        console.error('Error in role check:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkUserRole();
+  }, []);
 
   const form = useForm<AdminFormData>({
     resolver: zodResolver(adminFormSchema),
@@ -154,7 +297,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
         const { generateTempPassword } = await import('@/services/userManagement');
         const tempPassword = generateTempPassword();
         
-        // Call the new atomic RPC function directly
+        // Call the updated RPC function (without gym creation)
         const { data: result, error } = await supabase.rpc('create_admin_account_atomic', {
           p_email: data.email,
           p_password: tempPassword,
@@ -163,8 +306,8 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           p_date_of_birth: data.date_of_birth || null,
           p_address: data.address || null,
           p_subscription_plan_id: data.subscription_plan_id,
-          p_max_branches: data.max_branches || null,
-          p_max_members: data.max_members || null,
+          p_max_branches: data.max_branches || 1,
+          p_max_members: data.max_members || 100,
         }) as { data: any; error: any };
         
         if (error) {
@@ -183,7 +326,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
           success: true,
           user_id: adminResult.user_id,
           tempPassword: tempPassword,
-          message: 'Admin account created successfully'
+          message: 'Admin account created successfully. Please set up your gym.'
         };
         
       } catch (error: any) {
@@ -192,14 +335,28 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       }
     },
     onSuccess: (result) => {
+      setAdminUserId(result.user_id);
+      
+      // Skip gym setup for super admins
+      if (isSuperAdmin) {
+        toast({
+          title: "Super Admin Account Created",
+          description: "The admin account has been created successfully.",
+        });
+        queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+        onSuccess();
+        return;
+      }
+      
+      // For regular admins, proceed to gym setup
+      setStep('gym');
       toast({
         title: "Admin Account Created",
-        description: "Admin account created successfully. They can now login with their email and will need to reset their password on first login.",
+        description: "Now let's set up your gym.",
       });
+      
+      // Invalidate queries but don't reset form yet
       queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
-      queryClient.invalidateQueries({ queryKey: ['gyms-active'] });
-      form.reset();
-      onSuccess();
     },
     onError: (error: any) => {
       console.error('Admin creation error:', error);
@@ -229,14 +386,196 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
     }
   });
 
-  const onSubmit = (data: AdminFormData) => {
+  // Gym creation mutation
+  const createGym = useMutation({
+    mutationFn: async (data: GymFormData) => {
+      if (!adminUserId) {
+        throw new Error('Admin user ID is missing');
+      }
+      
+      const { data: result, error } = await supabase.rpc('create_gym_for_admin', {
+        p_admin_id: adminUserId,
+        p_gym_name: data.gym_name,
+        p_subscription_plan_id: data.subscription_plan_id,
+        p_max_branches: data.max_branches,
+        p_max_members: data.max_members,
+      });
+      
+      if (error) {
+        console.error('Gym creation error:', error);
+        throw new Error(error.message || 'Failed to create gym');
+      }
+      
+      return result;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Gym Setup Complete",
+        description: "Admin account and gym setup completed successfully!",
+      });
+      
+      // Invalidate queries and reset
+      queryClient.invalidateQueries({ queryKey: ['gyms-active'] });
+      form.reset();
+      onSuccess();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Gym Setup Failed",
+        description: error.message || 'Failed to set up gym. Please try again.',
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Form handlers
+  const onSubmitAdmin = (data: AdminFormData) => {
     createAdminAccount.mutate(data);
   };
 
+  const onSubmitGym = (data: GymFormData) => {
+    createGym.mutate(data);
+  };
+
+  const gymForm = useForm<GymFormData>({
+    resolver: zodResolver(gymFormSchema),
+    defaultValues: {
+      gym_name: '',
+      subscription_plan_id: form.watch('subscription_plan_id'),
+      max_branches: form.watch('max_branches') || 1,
+      max_members: form.watch('max_members') || 100,
+    },
+  });
+
+  // Don't show gym setup for super admins
+  if (isSuperAdmin) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold">Super Admin Account Created</h2>
+          <p className="text-muted-foreground mt-2">
+            The admin account has been created successfully.
+          </p>
+        </div>
+        <Button onClick={onSuccess}>
+          Back to Admin List
+        </Button>
+      </div>
+    );
+  }
+
+  // Render the appropriate form based on the current step
+  if (step === 'gym') {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold">Set Up Your Gym</h2>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => setStep('admin')}
+          >
+            Back to Admin Details
+          </Button>
+        </div>
+        
+        <Form {...gymForm}>
+          <form onSubmit={gymForm.handleSubmit(onSubmitGym)} className="space-y-6">
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-lg">Gym Information</CardTitle>
+                </div>
+                <CardDescription>
+                  Enter details about your gym
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={gymForm.control}
+                  name="gym_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gym Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter gym name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={gymForm.control}
+                  name="max_branches"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Branches *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={gymForm.control}
+                  name="max_members"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Members *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end gap-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  // Skip gym creation for now
+                  form.reset();
+                  onSuccess();
+                }}
+              >
+                Skip for Now
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={createGym.isPending}
+              >
+                {createGym.isPending ? 'Creating Gym...' : 'Complete Setup'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
+
+  // Admin form (default view)
   return (
     <div className="max-w-7xl mx-auto">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmitAdmin)} className="space-y-6">
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
