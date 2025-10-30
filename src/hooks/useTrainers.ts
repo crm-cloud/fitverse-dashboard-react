@@ -50,9 +50,9 @@ export const useTrainers = () => {
     error,
     refetch
   } = useSupabaseQuery(
-    ['trainers', authState.user?.organization_id],
+    ['trainers', authState.user?.gym_id],
     async () => {
-      if (!authState.user?.organization_id) return [];
+      if (!authState.user?.gym_id) return [];
 
       const { data, error } = await supabase
         .from('profiles')
@@ -62,14 +62,14 @@ export const useTrainers = () => {
             name
           )
         `)
-        .filter('organization_id', 'eq', authState.user.organization_id)
+        .eq('gym_id', authState.user.gym_id)
         .eq('role', 'trainer')
         .order('full_name');
 
       if (error) throw error;
       return data as Trainer[];
     },
-    { enabled: !!authState.user?.organization_id }
+    { enabled: !!authState.user?.gym_id }
   );
 
   // Get a single trainer by ID
@@ -77,17 +77,21 @@ export const useTrainers = () => {
     return trainers.find(trainer => trainer.user_id === trainerId);
   };
 
-  // Create a new trainer
+  // Create a new trainer (client-side)
   const createTrainer = useSupabaseMutation(
     async (trainerData: CreateTrainerData) => {
-      if (!authState.user?.organization_id) {
-        throw new Error('No organization selected');
+      if (!authState.user?.gym_id) {
+        throw new Error('Gym ID not found');
       }
+
+      // Generate temporary password if not provided
+      const { generateTempPassword } = await import('@/services/userManagement');
+      const password = trainerData.password || generateTempPassword();
 
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: trainerData.email,
-        password: trainerData.password,
+        password: password,
         options: {
           data: {
             full_name: trainerData.full_name,
@@ -99,30 +103,41 @@ export const useTrainers = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
 
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([{
+      // Wait for profile trigger
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Assign trainer role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
           user_id: authData.user.id,
-          email: trainerData.email,
-          full_name: trainerData.full_name,
-          phone: trainerData.phone,
           role: 'trainer',
           branch_id: trainerData.branch_id,
-          organization_id: authState.user.organization_id,
+        });
+
+      if (roleError) throw roleError;
+
+      // Update profile with gym and trainer-specific data
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          gym_id: authState.user.gym_id,
+          branch_id: trainerData.branch_id,
+          phone: trainerData.phone,
           specialties: trainerData.specialties || [],
           bio: trainerData.bio,
           profile_photo: trainerData.profile_photo,
           is_active: true
-        }]);
+        })
+        .eq('user_id', authData.user.id);
 
       if (profileError) throw profileError;
 
-      return authData.user.id;
+      return { userId: authData.user.id, tempPassword: password };
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.organization_id] });
+        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.gym_id] });
         toast({
           title: 'Trainer created',
           description: 'The trainer has been added successfully.',
@@ -151,7 +166,7 @@ export const useTrainers = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.organization_id] });
+        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.gym_id] });
         toast({
           title: 'Trainer updated',
           description: 'The trainer has been updated successfully.',
@@ -180,7 +195,7 @@ onError: (error: Error) => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.organization_id] });
+        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.gym_id] });
         toast({
           title: 'Trainer deactivated',
           description: 'The trainer has been deactivated successfully.',
@@ -209,7 +224,7 @@ onError: (error: Error) => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.organization_id] });
+        queryClient.invalidateQueries({ queryKey: ['trainers', authState.user?.gym_id] });
         toast({
           title: 'Trainer reactivated',
           description: 'The trainer has been reactivated successfully.',
@@ -255,32 +270,16 @@ export const useTrainerById = (trainerId: string) => {
   };
 };
 
+/**
+ * @deprecated Use the main useTrainers().createTrainer instead
+ * This hook is kept for backward compatibility only
+ */
 export const useCreateTrainer = () => {
-  return useSupabaseMutation(
-    async (data: CreateTrainerData & { is_active?: boolean }) => {
-      // Call the secure edge function to create trainer account
-      const { data: result, error } = await supabase.functions.invoke('create-trainer-account', {
-        body: {
-          full_name: data.full_name,
-          email: data.email,
-          phone: data.phone,
-          branch_id: data.branch_id,
-          specialties: data.specialties,
-          is_active: data.is_active ?? true,
-          profile_photo: data.profile_photo
-        }
-      });
-
-      if (error) throw error;
-      if (!result.success) throw new Error(result.error || 'Failed to create trainer');
-
-      return result.userId;
-    },
-    {
-      onSuccess: () => {
-        // Invalidate trainer queries to refetch
-      },
-      invalidateQueries: [['trainers']]
-    }
-  );
+  const { createTrainer } = useTrainers();
+  
+  return {
+    mutateAsync: createTrainer,
+    mutate: createTrainer,
+    isPending: false
+  };
 };
