@@ -4939,53 +4939,6 @@ export type Database = {
           total_referrals: number
         }[]
       }
-      create_admin_account_atomic: {
-        Args: {
-          p_address?: Json
-          p_date_of_birth?: string
-          p_email: string
-          p_full_name: string
-          p_max_branches?: number
-          p_max_members?: number
-          p_password: string
-          p_phone?: string
-          p_subscription_plan_id?: string
-        }
-        Returns: Json
-      }
-      create_admin_with_gym: {
-        Args: {
-          p_address?: Json
-          p_create_new_gym: boolean
-          p_email: string
-          p_existing_branch_id?: string
-          p_existing_gym_id?: string
-          p_full_name: string
-          p_gym_name?: string
-          p_phone: string
-          p_subscription_plan: string
-          p_user_id: string
-        }
-        Returns: {
-          gym_id: string
-          user_id: string
-        }[]
-      }
-      create_gym_admin_atomic: {
-        Args: {
-          p_address?: Json
-          p_date_of_birth?: string
-          p_email: string
-          p_existing_branch_id?: string
-          p_existing_gym_id?: string
-          p_full_name: string
-          p_gym_name: string
-          p_password: string
-          p_phone: string
-          p_subscription_plan: string
-        }
-        Returns: Json
-      }
       create_gym_for_admin: {
         Args: {
           p_admin_id: string

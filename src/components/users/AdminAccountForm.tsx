@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { createAdminAccount } from '@/services/adminManagement';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -64,51 +65,42 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
     }
   });
 
-  // Create admin account mutation
-  const createAdminAccount = useMutation({
+  // Create admin account mutation using client-side service
+  const createAdminMutation = useMutation({
     mutationFn: async (data: AdminFormData) => {
-      console.log('Creating admin account with data:', data);
-      
-      const { data: result, error } = await supabase.rpc(
-        'create_admin_account_atomic',
-        {
-          p_email: data.email,
-          p_password: data.password,
-          p_full_name: data.full_name,
-          p_phone: data.phone || null,
-          p_date_of_birth: data.date_of_birth || null,
-          p_address: data.address || null,
-          p_subscription_plan_id: data.subscription_plan_id || null,
-          p_max_branches: data.max_branches || null,
-          p_max_members: data.max_members || null,
-        }
-      );
+      const result = await createAdminAccount({
+        email: data.email,
+        password: data.password,
+        full_name: data.full_name,
+        phone: data.phone || undefined,
+        date_of_birth: data.date_of_birth || undefined,
+        address: data.address || undefined,
+        subscription_plan_id: data.subscription_plan_id,
+        max_branches: data.max_branches || undefined,
+        max_members: data.max_members || undefined,
+      });
 
-      if (error) {
-        console.error('RPC error:', error);
-        throw new Error(error.message);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create admin account');
       }
 
-      console.log('Admin account created successfully:', result);
       return result;
     },
-    onSuccess: (data) => {
-      console.log('Admin creation success:', data);
+    onSuccess: (result) => {
       toast({
-        title: "Success",
-        description: "Admin account created successfully.",
+        title: 'Admin Account Created',
+        description: `Admin can now log in and set up their gym. Max branches: ${result.max_branches}, Max members: ${result.max_members}`,
       });
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
-      onSuccess();
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      adminForm.reset();
+      onSuccess?.();
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error('Admin creation error:', error);
-      const errorMessage = error.message || 'Failed to create admin account';
-      
       toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create admin account',
+        variant: 'destructive',
       });
     },
   });
@@ -170,7 +162,7 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   };
 
   const onSubmit = (data: AdminFormData) => {
-    createAdminAccount.mutate(data);
+    createAdminMutation.mutate(data);
   };
 
   return (
@@ -505,9 +497,9 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
             </Button>
             <Button 
               type="submit" 
-              disabled={createAdminAccount.isPending}
+              disabled={createAdminMutation.isPending}
             >
-              {createAdminAccount.isPending ? 'Creating Admin...' : 'Create Admin Account'}
+              {createAdminMutation.isPending ? 'Creating Admin...' : 'Create Admin Account'}
             </Button>
           </div>
         </form>
