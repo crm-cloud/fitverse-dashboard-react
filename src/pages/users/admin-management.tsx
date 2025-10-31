@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AdminAccountForm } from '@/components/users/AdminAccountForm';
+import { AdminAccountWizard } from '@/components/users/AdminAccountWizard';
 import { SuperAdminAdvancedAnalytics } from '@/components/dashboards/SuperAdminAdvancedAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -119,23 +119,16 @@ export default function AdminManagement() {
           <h1 className="text-3xl font-bold">Admin Management</h1>
           <p className="text-muted-foreground">Create and manage gym admin accounts with advanced analytics</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Admin Account
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create Admin Account</DialogTitle>
-              <DialogDescription>
-                Create a new gym admin account with their personal details, address, and gym assignment. Location can be auto-fetched.
-              </DialogDescription>
-            </DialogHeader>
-            <AdminAccountForm onSuccess={() => setIsCreateDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Admin Account
+        </Button>
+
+        <AdminAccountWizard 
+          open={isCreateDialogOpen}
+          onClose={() => setIsCreateDialogOpen(false)}
+          onSuccess={() => setIsCreateDialogOpen(false)}
+        />
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">

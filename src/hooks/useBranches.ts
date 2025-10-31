@@ -34,7 +34,7 @@ export const useBranches = () => {
   useEffect(() => {
     const savedBranchId = localStorage.getItem(SELECTED_BRANCH_KEY);
     if (savedBranchId) {
-      const cachedBranches = queryClient.getQueryData<Branch[]>(['branches', authState.user?.organization_id]);
+      const cachedBranches = queryClient.getQueryData<Branch[]>(['branches', authState.user?.gym_id]);
       if (cachedBranches?.length) {
         const branch = cachedBranches.find(b => b.id === savedBranchId);
         if (branch) {
@@ -44,7 +44,7 @@ export const useBranches = () => {
         }
       }
     }
-  }, [authState.user?.organization_id, queryClient]);
+  }, [authState.user?.gym_id, queryClient]);
   
   const setSelectedBranch = useCallback((branch: Branch | null) => {
     if (branch) {
@@ -56,21 +56,22 @@ export const useBranches = () => {
     }
   }, []);
 
-  // Fetch branches for the current organization
+  // Fetch branches for the current gym
   const {
     data: branches = [],
     isLoading,
     error,
     refetch
   } = useSupabaseQuery(
-    ['branches', authState.user?.organization_id],
+    ['branches', authState.user?.gym_id],
     async () => {
-      if (!authState.user?.organization_id) return [];
+      if (!authState.user?.gym_id) return [];
 
       const { data, error } = await supabase
         .from('branches')
         .select('*')
-        .filter('organization_id', 'eq', authState.user.organization_id)
+        .eq('gym_id', authState.user.gym_id)
+        .eq('status', 'active')
         .order('name');
 
       if (error) throw error;
@@ -89,21 +90,21 @@ export const useBranches = () => {
       
       return (data as any[]) || [];
     },
-    { enabled: !!authState.user?.organization_id }
+    { enabled: !!authState.user?.gym_id }
   );
 
   // Create a new branch
   const createBranch = useSupabaseMutation(
     async (branchData: Omit<Branch, 'id' | 'created_at' | 'updated_at' | 'organization_id'>) => {
-      if (!authState.user?.organization_id) {
-        throw new Error('No organization selected');
+      if (!authState.user?.gym_id) {
+        throw new Error('No gym selected');
       }
 
       const { data, error } = await supabase
         .from('branches')
         .insert([{
           ...branchData,
-          organization_id: authState.user.organization_id,
+          gym_id: authState.user.gym_id,
           status: 'active'
         } as any])
         .select()
@@ -114,7 +115,7 @@ export const useBranches = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.organization_id] });
+        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.gym_id] });
         toast({
           title: 'Branch created',
           description: 'The branch has been created successfully.',
@@ -145,7 +146,7 @@ export const useBranches = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.organization_id] });
+        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.gym_id] });
         toast({
           title: 'Branch updated',
           description: 'The branch has been updated successfully.',
@@ -179,7 +180,7 @@ export const useBranches = () => {
           setSelectedBranch(null);
         }
         
-        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.organization_id] });
+        queryClient.invalidateQueries({ queryKey: ['branches', authState.user?.gym_id] });
         toast({
           title: 'Branch deleted',
           description: 'The branch has been deleted successfully.',

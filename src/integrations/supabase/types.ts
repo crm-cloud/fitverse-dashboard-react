@@ -1277,6 +1277,42 @@ export type Database = {
         }
         Relationships: []
       }
+      hierarchical_settings: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          key: string
+          scope: string
+          scope_id: string | null
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          key: string
+          scope: string
+          scope_id?: string | null
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          key?: string
+          scope?: string
+          scope_id?: string | null
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -4981,6 +5017,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { user_id: string }; Returns: boolean }
       is_admin_user: { Args: { user_uuid: string }; Returns: boolean }
       is_gym_admin:
         | { Args: { user_id: string }; Returns: boolean }
