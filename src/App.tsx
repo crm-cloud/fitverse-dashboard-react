@@ -224,7 +224,9 @@ const App = () => (
                         element={
                           <RouteGuard allowedRoles={['super-admin']}>
                             <DashboardLayout>
-                              <SystemSettings />
+                              <Suspense fallback={<PageLoadingState />}>
+                                <lazyRoutes.GlobalSettings />
+                              </Suspense>
                             </DashboardLayout>
                           </RouteGuard>
                         }
@@ -433,9 +435,11 @@ const App = () => (
                           path="/roles" 
                           element={
                             <RouteGuard allowedRoles={['super-admin', 'admin']}>
-                              <Suspense fallback={<PageLoadingState />}>
-                                <lazyRoutes.RoleManagement />
-                              </Suspense>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.RoleManagement />
+                                </Suspense>
+                              </DashboardLayout>
                             </RouteGuard>
                           } 
                         />
@@ -443,9 +447,11 @@ const App = () => (
                           path="/permissions" 
                           element={
                             <RouteGuard allowedRoles={['super-admin', 'admin']}>
-                              <Suspense fallback={<PageLoadingState />}>
-                                <lazyRoutes.RoleManagement />
-                              </Suspense>
+                              <DashboardLayout>
+                                <Suspense fallback={<PageLoadingState />}>
+                                  <lazyRoutes.RoleManagement />
+                                </Suspense>
+                              </DashboardLayout>
                             </RouteGuard>
                           } 
                         />

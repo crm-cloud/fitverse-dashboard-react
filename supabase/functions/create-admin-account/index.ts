@@ -17,6 +17,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const body = await req.json();
     const { 
       email, 
       password, 
@@ -27,9 +28,20 @@ serve(async (req) => {
       subscription_plan_id, 
       max_branches, 
       max_members 
-    } = await req.json();
+    } = body;
 
     console.log('Creating admin account for:', email);
+    
+    // Validate required fields
+    if (!email || !password || !full_name) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Missing required fields: email, password, and full_name are required' 
+        }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get subscription plan limits
     let finalMaxBranches = max_branches || 1;

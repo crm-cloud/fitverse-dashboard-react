@@ -30,6 +30,7 @@ export const lazyRoutes = {
   SubscriptionPlans: createLazyComponent(() => import('@/pages/subscription-plans/SubscriptionPlans').then(m => ({ default: m.default }))),
   AdminManagement: createLazyComponent(() => import('@/pages/users/admin-management').then(m => ({ default: m.default }))),
   PlatformAnalytics: createLazyComponent(() => import('@/pages/platform-analytics/index').then(m => ({ default: m.default }))),
+  GlobalSettings: createLazyComponent(() => import('@/pages/system/GlobalSettings').then(m => ({ default: m.default }))),
   PlatformReports: createLazyComponent(() => import('@/pages/platform-reports/index').then(m => ({ default: m.default }))),
   // Gym Management for Admins
   AdminGymDashboard: createLazyComponent(() => import('@/components/gyms/AdminGymDashboard').then(m => ({ default: m.AdminGymDashboard }))),
