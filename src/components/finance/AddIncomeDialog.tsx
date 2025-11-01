@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TransactionForm } from './TransactionForm';
 import { Transaction } from '@/types/finance';
 
@@ -19,9 +19,12 @@ export function AddIncomeDialog({ open, onOpenChange, onSubmit }: AddIncomeDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" aria-describedby="add-income-description">
         <DialogHeader>
           <DialogTitle>Add Income Transaction</DialogTitle>
+          <DialogDescription id="add-income-description">
+            Record a new income transaction for your business
+          </DialogDescription>
         </DialogHeader>
         <TransactionForm
           open={true}

@@ -31,24 +31,34 @@ interface AdminProfile {
 export default function AdminManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const { data: adminProfiles = [], isLoading } = useQuery({
+  const { data: adminProfiles = [], isLoading, refetch } = useQuery({
     queryKey: ['admin-profiles'],
     queryFn: async () => {
-      // First, get the basic admin profiles
+      // Query user_roles table for admins
+      const { data: adminRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+      
+      if (rolesError) throw rolesError;
+      if (!adminRoles || adminRoles.length === 0) return [];
+      
+      const adminUserIds = adminRoles.map(r => r.user_id);
+      
+      // Get profiles for these admins
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'admin')
+        .in('user_id', adminUserIds)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       if (!profiles) return [];
       
-      // Then, fetch organization and plan data separately to avoid complex joins
+      // Fetch gym data
       const adminProfiles = await Promise.all(profiles.map(async (profile) => {
         let organization = null;
-        let subscriptionPlan = null;
         
         if ((profile as any).gym_id) {
           const { data: orgData } = await supabase
@@ -59,8 +69,6 @@ export default function AdminManagement() {
             
           if (orgData) {
             organization = orgData;
-            
-            // Get subscription plan name if available - TODO: integrate with subscription_plans
           }
         }
         
@@ -73,7 +81,8 @@ export default function AdminManagement() {
       }));
       
       return adminProfiles as any;
-    }
+    },
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   const { data: stats } = useQuery({
@@ -127,7 +136,10 @@ export default function AdminManagement() {
         <AdminAccountWizard 
           open={isCreateDialogOpen}
           onClose={() => setIsCreateDialogOpen(false)}
-          onSuccess={() => setIsCreateDialogOpen(false)}
+          onSuccess={() => {
+            setIsCreateDialogOpen(false);
+            refetch(); // Refetch admin list after success
+          }}
         />
       </div>
 

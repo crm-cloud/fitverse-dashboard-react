@@ -564,7 +564,6 @@ export const navigationConfig: NavigationGroup[] = [
         icon: Settings,
         group: 'platform-settings',
         allowedRoles: ['super-admin'],
-        requiredPermissions: ['system.manage'],
       },
       {
         id: 'email-settings-global',
@@ -589,7 +588,6 @@ export const navigationConfig: NavigationGroup[] = [
         icon: Activity,
         group: 'platform-settings',
         allowedRoles: ['super-admin'],
-        requiredPermissions: ['system.view'],
       },
       {
         id: 'system-backup',
@@ -598,7 +596,6 @@ export const navigationConfig: NavigationGroup[] = [
         icon: Database,
         group: 'platform-settings',
         allowedRoles: ['super-admin'],
-        requiredPermissions: ['system.backup'],
       }
     ]
   },
