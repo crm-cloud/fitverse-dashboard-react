@@ -1,5 +1,6 @@
 
 import { MapPin, ChevronDown, Building2 } from 'lucide-react';
+import React from 'react';
 import {
   Select,
   SelectContent,
@@ -13,6 +14,13 @@ import { cn } from '@/lib/utils';
 
 export const BranchSelector = () => {
   const { branches, selectedBranch, setSelectedBranch } = useBranches();
+
+  // Auto-select first branch if none selected and only 1 branch exists
+  React.useEffect(() => {
+    if (!selectedBranch && branches.length === 1) {
+      setSelectedBranch(branches[0]);
+    }
+  }, [branches, selectedBranch, setSelectedBranch]);
 
   const handleBranchChange = (branchId: string) => {
     const branch = branches.find(b => b.id === branchId);

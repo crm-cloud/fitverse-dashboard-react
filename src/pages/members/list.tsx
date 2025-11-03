@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { MemberFiltersComponent } from '@/components/member/MemberFilters';
 import { MemberTable } from '@/components/member/MemberTable';
 import { Member, MemberFilters } from '@/types/member';
@@ -9,16 +10,51 @@ import { useRBAC } from '@/hooks/useRBAC';
 import { useBranchContext } from '@/hooks/useBranchContext';
 import { useMembers } from '@/hooks/useMembers';
 import { useBranches } from '@/hooks/useBranches';
+import { useAuth } from '@/hooks/useAuth';
 
 const ITEMS_PER_PAGE = 10;
 
 export const MemberListPage = () => {
   const navigate = useNavigate();
   const { hasPermission } = useRBAC();
+  const { authState } = useAuth();
   const { currentBranchId } = useBranchContext();
   const { branches } = useBranches();
   const [filters, setFilters] = useState<MemberFilters>({});
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Show onboarding if admin has no gym
+  if (authState.user?.role === 'admin' && !authState.user?.gym_id) {
+    return (
+      <Card className="p-6 max-w-2xl mx-auto mt-12">
+        <CardHeader>
+          <CardTitle>Complete Setup First</CardTitle>
+          <CardDescription>
+            Please set up your gym and create a branch before managing members.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button onClick={() => navigate('/dashboard')}>
+            Go to Dashboard
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  // Show branch selection if admin has gym but no branch selected
+  if (!currentBranchId && branches.length > 0) {
+    return (
+      <Card className="p-6 max-w-2xl mx-auto mt-12">
+        <CardHeader>
+          <CardTitle>Select a Branch</CardTitle>
+          <CardDescription>
+            Please select a branch from the header to view members.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   // Determine which branch to use for server-side filtering: explicit filter or current selected branch
   const effectiveBranchId = filters.branchId ?? currentBranchId ?? undefined;
@@ -93,16 +129,16 @@ export const MemberListPage = () => {
           <p className="text-muted-foreground">Manage gym members and their information</p>
         </div>
         {hasPermission('members.create') && (
-          <Button onClick={() => navigate('/members/create')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Member
-          </Button>
-        )}
-        {hasPermission('members.create') && (
-          <Button variant="outline" onClick={() => navigate('/membership/add')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add with Membership
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/members/create')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Member
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/membership/add')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add with Membership
+            </Button>
+          </div>
         )}
       </div>
 

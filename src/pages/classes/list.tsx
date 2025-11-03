@@ -7,19 +7,70 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { ClassCard } from '@/components/classes/ClassCard';
 import { ClassFilters } from '@/types/class';
-import { mockClasses, mockClassEnrollments, mockBranches, mockTrainers } from '@/utils/mockData';
 import { useRBAC } from '@/hooks/useRBAC';
 import { useToast } from '@/hooks/use-toast';
+import { useBranchContext } from '@/hooks/useBranchContext';
+import { useBranches } from '@/hooks/useBranches';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export const ClassListPage = () => {
   const navigate = useNavigate();
   const { hasPermission, currentUser } = useRBAC();
   const { toast } = useToast();
+  const { currentBranchId } = useBranchContext();
+  const { branches } = useBranches();
   const [filters, setFilters] = useState<ClassFilters>({});
   const [searchQuery, setSearchQuery] = useState('');
 
+  const effectiveBranchId = filters.branchId ?? currentBranchId ?? undefined;
+
+  // Fetch classes from database
+  const { data: classes = [], isLoading } = useQuery({
+    queryKey: ['classes', effectiveBranchId],
+    queryFn: async () => {
+      let query = supabase
+        .from('gym_classes')
+        .select(`
+          *,
+          branches:branch_id(name),
+          trainer_profiles:trainer_id(full_name)
+        `)
+        .order('start_time', { ascending: true });
+
+      if (effectiveBranchId) {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      return (data || []).map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        startTime: new Date(row.start_time),
+        endTime: new Date(row.end_time),
+        capacity: row.capacity,
+        enrolled: row.enrolled_count || 0,
+        enrolledCount: row.enrolled_count || 0,
+        trainerId: row.trainer_id,
+        trainerName: row.trainer_profiles?.full_name || 'Unassigned',
+        branchId: row.branch_id,
+        branchName: row.branches?.name || 'Unknown',
+        status: row.status,
+        tags: row.tags || [],
+        recurrence: row.recurrence || 'none',
+        createdBy: row.created_by,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+      }));
+    },
+    enabled: !!effectiveBranchId
+  });
+
   const filteredClasses = useMemo(() => {
-    return mockClasses.filter(gymClass => {
+    return classes.filter((gymClass: any) => {
       const matchesSearch = !searchQuery || 
         gymClass.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         gymClass.trainerName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -30,7 +81,7 @@ export const ClassListPage = () => {
       
       return matchesSearch && matchesBranch && matchesTrainer && matchesStatus;
     });
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, classes]);
 
   const handleEditClass = (classId: string) => {
     navigate(`/classes/${classId}/edit`);
@@ -94,7 +145,7 @@ export const ClassListPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Branches</SelectItem>
-                {mockBranches.map((branch) => (
+                {branches.map((branch) => (
                   <SelectItem key={branch.id} value={branch.id}>
                     {branch.name}
                   </SelectItem>
@@ -102,7 +153,7 @@ export const ClassListPage = () => {
               </SelectContent>
             </Select>
 
-            {/* Trainer Filter */}
+            {/* Trainer Filter - Placeholder for now */}
             <Select
               value={filters.trainerId || 'all'}
               onValueChange={(value) => updateFilter('trainerId', value === 'all' ? undefined : value)}
@@ -112,11 +163,6 @@ export const ClassListPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Trainers</SelectItem>
-                {mockTrainers.map((trainer) => (
-                  <SelectItem key={trainer.id} value={trainer.id}>
-                    {trainer.name}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
 

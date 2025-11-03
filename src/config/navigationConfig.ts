@@ -398,6 +398,23 @@ export const navigationConfig: NavigationGroup[] = [
     priority: 9,
     items: [
       {
+        id: 'leads',
+        title: 'Leads',
+        url: '/leads',
+        icon: UserPlus,
+        group: 'operations',
+        requiredPermissions: ['leads.view'],
+      },
+      {
+        id: 'tasks',
+        title: 'Task Manager',
+        url: '/tasks/management',
+        icon: CheckSquare,
+        group: 'operations',
+        allowedRoles: ['admin', 'team'],
+        requiredPermissions: ['tasks.view'],
+      },
+      {
         id: 'attendance',
         title: 'Attendance',
         url: '/attendance',

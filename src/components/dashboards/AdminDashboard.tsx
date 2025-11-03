@@ -1,23 +1,32 @@
 import { useBranches } from '@/hooks/useBranches';
 import { ModernAdminDashboard } from './ModernAdminDashboard';
-import { NoBranchesWelcome } from '@/components/onboarding';
+import { NoBranchesWelcome, AdminGymSetup } from '@/components/onboarding';
+import { useAuth } from '@/hooks/useAuth';
+import { LoadingState } from '@/components/LoadingState';
 
 export const AdminDashboard = () => {
+  const { authState } = useAuth();
   const { branches, isLoading } = useBranches();
+  const adminGymId = authState.user?.gym_id;
 
   // Show loading state while checking for branches
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
+        <LoadingState text="Loading dashboard..." />
       </div>
     );
   }
 
-  // Show welcome screen if admin has no branches
+  // CRITICAL: Check if admin has no gym assigned
+  if (!adminGymId) {
+    return <AdminGymSetup 
+      adminId={authState.user!.id} 
+      onComplete={() => window.location.reload()} 
+    />;
+  }
+
+  // Check if admin has gym but no branches
   if (!branches || branches.length === 0) {
     return <NoBranchesWelcome />;
   }

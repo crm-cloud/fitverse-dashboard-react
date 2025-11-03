@@ -69,8 +69,8 @@ export const AppHeader = () => {
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
           
-          {/* Branch Selector for Admin Users */}
-          {authState.user.role === 'admin' && (
+          {/* Branch Selector for Admin and Team Users */}
+          {['admin', 'team'].includes(authState.user.role) && authState.user.gym_id && (
             <BranchSelector />
           )}
         </div>
