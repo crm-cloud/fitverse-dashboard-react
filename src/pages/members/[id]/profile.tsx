@@ -36,37 +36,37 @@ export const MemberProfilePage = () => {
   }
 
   // Map DB row to Member type expected by the card
-  const branchNameFromList = branches.find(b => b.id === (row.branch_id ?? row.branchId))?.name;
-  const membershipPlan = row.membership_plan ?? row.membershipPlan;
-  let computedStatus = row.membership_status ?? row.membershipStatus;
+  const branchNameFromList = branches.find(b => b.id === row.branch_id)?.name;
+  const membershipPlan = row.membership_plan;
+  let computedStatus = row.membership_status;
   if (!membershipPlan) {
     computedStatus = 'not-assigned';
   }
 
   const member: Member = {
     id: row.id,
-    fullName: row.full_name ?? row.fullName ?? '',
+    fullName: row.full_name ?? '',
     phone: row.phone ?? '',
     email: row.email ?? '',
     dateOfBirth: row.date_of_birth ? new Date(row.date_of_birth) : new Date(),
     gender: row.gender,
-    address: row.address ?? { street: '', city: '', state: '', pincode: '' },
-    governmentId: row.government_id ?? row.governmentId,
-    measurements: row.measurements ?? {},
-    emergencyContact: row.emergency_contact ?? {},
-    profilePhoto: row.profile_photo ?? row.profilePhoto,
-    branchId: row.branch_id ?? row.branchId,
-    branchName: branchNameFromList ?? row.branchName ?? '—',
+    address: (row.address as any) ?? { street: '', city: '', state: '', pincode: '' },
+    governmentId: (row.government_id as any),
+    measurements: (row.measurements as any) ?? {},
+    emergencyContact: (row.emergency_contact as any) ?? {},
+    profilePhoto: row.profile_photo,
+    branchId: row.branch_id,
+    branchName: branchNameFromList ?? '—',
     membershipStatus: computedStatus ?? 'not-assigned',
     membershipPlan,
-    trainerId: row.trainer_id ?? row.trainerId,
-    trainerName: row.trainer_profiles?.name ?? row.trainerName,
+    trainerId: row.trainer_id,
+    trainerName: undefined,
     joinedDate: row.joined_date ? new Date(row.joined_date) : (row.created_at ? new Date(row.created_at) : new Date()),
     createdBy: row.created_by ?? '',
     createdAt: row.created_at ? new Date(row.created_at) : new Date(),
     updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
-    pointsBalance: typeof row.points_balance === 'number' ? row.points_balance : 0,
-    referralCodeUsed: row.referral_code_used ?? undefined,
+    pointsBalance: 0,
+    referralCodeUsed: undefined,
   };
 
   return (
