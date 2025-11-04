@@ -1260,6 +1260,23 @@ export const navigationConfig: NavigationGroup[] = [
         requiredPermissions: ['feedback.view'],
       }
     ]
+  },
+  {
+    id: 'settings',
+    title: 'Settings',
+    allowedRoles: ['admin', 'super-admin'],
+    priority: 16,
+    items: [
+      {
+        id: 'unified-settings',
+        title: 'Communication & Payments',
+        url: '/settings/unified',
+        icon: Settings,
+        group: 'settings',
+        allowedRoles: ['admin', 'super-admin'],
+        requiredPermissions: ['settings.view']
+      }
+    ]
   }
 ];
 

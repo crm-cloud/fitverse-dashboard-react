@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,90 +7,46 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckSquare, Plus, Clock, AlertCircle, User, Calendar, Filter } from 'lucide-react';
+import { CheckSquare, Plus, Clock, AlertCircle, User, Calendar, Filter, Loader2 } from 'lucide-react';
 import { PermissionGate } from '@/components/PermissionGate';
+import { useTasks, useUpdateTask } from '@/hooks/useTasks';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function StaffTasksPage() {
+  const { authState } = useAuth();
   const [filter, setFilter] = useState('all');
+  const { data: tasks = [], isLoading } = useTasks({ 
+    assignedTo: authState.user?.id 
+  });
+  const updateTask = useUpdateTask();
 
-  const tasks = [
-    {
-      id: 1,
-      title: 'Clean and sanitize cardio equipment',
-      description: 'Deep clean all treadmills, ellipticals, and stationary bikes',
-      priority: 'high',
-      status: 'pending',
-      assignedBy: 'Manager',
-      dueDate: '2024-01-15T18:00:00Z',
-      category: 'cleaning',
-      estimatedTime: 45,
-      completed: false
-    },
-    {
-      id: 2,
-      title: 'Restock towel dispensers',
-      description: 'Check and refill all towel dispensers throughout the facility',
-      priority: 'medium',
-      status: 'in-progress',
-      assignedBy: 'Manager',
-      dueDate: '2024-01-15T16:00:00Z',
-      category: 'maintenance',
-      estimatedTime: 20,
-      completed: false
-    },
-    {
-      id: 3,
-      title: 'Update member welcome packets',
-      description: 'Prepare new member welcome packets with updated class schedules',
-      priority: 'low',
-      status: 'completed',
-      assignedBy: 'Admin',
-      dueDate: '2024-01-15T12:00:00Z',
-      category: 'administrative',
-      estimatedTime: 30,
-      completed: true
-    },
-    {
-      id: 4,
-      title: 'Check locker room supplies',
-      description: 'Inventory and restock soap, paper towels, and toilet paper',
-      priority: 'medium',
-      status: 'pending',
-      assignedBy: 'Manager',
-      dueDate: '2024-01-15T20:00:00Z',
-      category: 'maintenance',
-      estimatedTime: 25,
-      completed: false
-    },
-    {
-      id: 5,
-      title: 'Orient new member - John Smith',
-      description: 'Conduct facility tour and equipment introduction for new member',
-      priority: 'high',
-      status: 'pending',
-      assignedBy: 'Manager',
-      dueDate: '2024-01-15T15:00:00Z',
-      category: 'member-service',
-      estimatedTime: 60,
-      completed: false
-    }
-  ];
-
-  const stats = {
+  const stats = useMemo(() => ({
     totalTasks: tasks.length,
     pending: tasks.filter(t => t.status === 'pending').length,
     inProgress: tasks.filter(t => t.status === 'in-progress').length,
     completed: tasks.filter(t => t.status === 'completed').length
-  };
+  }), [tasks]);
 
-  const filteredTasks = tasks.filter(task => {
-    if (filter === 'all') return true;
-    if (filter === 'pending') return task.status === 'pending';
-    if (filter === 'in-progress') return task.status === 'in-progress';
-    if (filter === 'completed') return task.status === 'completed';
-    if (filter === 'overdue') return new Date(task.dueDate) < new Date() && task.status !== 'completed';
-    return true;
-  });
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      if (filter === 'all') return true;
+      if (filter === 'pending') return task.status === 'pending';
+      if (filter === 'in-progress') return task.status === 'in-progress';
+      if (filter === 'completed') return task.status === 'completed';
+      if (filter === 'overdue') return new Date(task.due_date) < new Date() && task.status !== 'completed';
+      return true;
+    });
+  }, [tasks, filter]);
+
+  const handleUpdateStatus = (taskId: string, newStatus: string) => {
+    updateTask.mutate({
+      id: taskId,
+      updates: { 
+        status: newStatus as any,
+        completed_at: newStatus === 'completed' ? new Date().toISOString() : undefined
+      }
+    });
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -123,6 +79,14 @@ export default function StaffTasksPage() {
   const isOverdue = (dueDate: string, status: string) => {
     return new Date(dueDate) < new Date() && status !== 'completed';
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -235,12 +199,15 @@ export default function StaffTasksPage() {
 
           <div className="space-y-3">
             {filteredTasks.map((task) => (
-              <Card key={task.id} className={isOverdue(task.dueDate, task.status) ? 'border-red-200 bg-red-50/50' : ''}>
+              <Card key={task.id} className={isOverdue(task.due_date, task.status) ? 'border-red-200 bg-red-50/50' : ''}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <PermissionGate permission="tasks.edit">
                       <Checkbox 
-                        checked={task.completed}
+                        checked={task.status === 'completed'}
+                        onCheckedChange={(checked) => {
+                          handleUpdateStatus(task.id, checked ? 'completed' : 'pending');
+                        }}
                         className="mt-1"
                       />
                     </PermissionGate>
@@ -248,8 +215,8 @@ export default function StaffTasksPage() {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className={`font-medium ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                            {getCategoryIcon(task.category)} {task.title}
+                          <h4 className={`font-medium ${task.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>
+                            {getCategoryIcon(task.category || '')} {task.title}
                           </h4>
                           <p className="text-sm text-muted-foreground">{task.description}</p>
                         </div>
@@ -260,7 +227,7 @@ export default function StaffTasksPage() {
                           <Badge variant={getStatusColor(task.status)}>
                             {task.status}
                           </Badge>
-                          {isOverdue(task.dueDate, task.status) && (
+                          {isOverdue(task.due_date, task.status) && (
                             <Badge variant="destructive">
                               Overdue
                             </Badge>
@@ -272,34 +239,41 @@ export default function StaffTasksPage() {
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3" />
-                            <span>By {task.assignedBy}</span>
+                            <span>By {task.assigned_by_profile?.full_name || 'Admin'}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{task.estimatedTime} min</span>
-                          </div>
+                          {task.estimated_time && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              <span>{task.estimated_time} min</span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          <span>Due: {new Date(task.dueDate).toLocaleDateString()} at {new Date(task.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>Due: {new Date(task.due_date).toLocaleDateString()} at {new Date(task.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>
 
                       <PermissionGate permission="tasks.edit">
                         <div className="flex gap-2 pt-2">
                           {task.status === 'pending' && (
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleUpdateStatus(task.id, 'in-progress')}
+                            >
                               Start Task
                             </Button>
                           )}
                           {task.status === 'in-progress' && (
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleUpdateStatus(task.id, 'completed')}
+                            >
                               Mark Complete
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost">
-                            Edit
-                          </Button>
                         </div>
                       </PermissionGate>
                     </div>
@@ -387,7 +361,7 @@ export default function StaffTasksPage() {
                     <h4 className="font-medium text-lg border-b pb-2">{timeSlot}</h4>
                     <div className="space-y-2 ml-4">
                       {tasks.filter(task => {
-                        const hour = new Date(task.dueDate).getHours();
+                        const hour = new Date(task.due_date).getHours();
                         if (index === 0) return hour >= 6 && hour < 12;
                         if (index === 1) return hour >= 12 && hour < 18;
                         return hour >= 18 || hour < 6;
@@ -395,10 +369,10 @@ export default function StaffTasksPage() {
                         <div key={task.id} className="flex items-center justify-between p-2 border-l-4 border-primary/20 bg-muted/30 rounded-r-lg">
                           <div>
                             <p className="font-medium text-sm">{task.title}</p>
-                            <p className="text-xs text-muted-foreground">{task.estimatedTime} min • {task.category}</p>
+                            <p className="text-xs text-muted-foreground">{task.estimated_time} min • {task.category}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-medium">{new Date(task.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-sm font-medium">{new Date(task.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                             <Badge className={getPriorityColor(task.priority)}>
                               {task.priority}
                             </Badge>

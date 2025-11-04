@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,74 +20,22 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  Loader2
 } from 'lucide-react';
 import { useRBAC } from '@/hooks/useRBAC';
-import { useToast } from '@/hooks/use-toast';
 import { PermissionGate } from '@/components/PermissionGate';
 import { format } from 'date-fns';
-
-// Mock task data
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
-  assignedTo: string;
-  assignedBy: string;
-  dueDate: Date;
-  createdAt: Date;
-  category: string;
-  tags: string[];
-}
-
-const mockTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Equipment Maintenance Check',
-    description: 'Perform monthly maintenance check on all cardio equipment',
-    priority: 'high',
-    status: 'pending',
-    assignedTo: 'John Smith',
-    assignedBy: 'Admin',
-    dueDate: new Date('2024-12-25'),
-    createdAt: new Date('2024-12-15'),
-    category: 'maintenance',
-    tags: ['equipment', 'monthly']
-  },
-  {
-    id: '2',
-    title: 'New Member Orientation',
-    description: 'Conduct orientation session for new member Sarah Johnson',
-    priority: 'medium',
-    status: 'in-progress',
-    assignedTo: 'Jane Doe',
-    assignedBy: 'Manager',
-    dueDate: new Date('2024-12-22'),
-    createdAt: new Date('2024-12-20'),
-    category: 'member-service',
-    tags: ['orientation', 'new-member']
-  },
-  {
-    id: '3',
-    title: 'Monthly Financial Report',
-    description: 'Prepare and submit monthly financial summary',
-    priority: 'urgent',
-    status: 'completed',
-    assignedTo: 'Mike Wilson',
-    assignedBy: 'Admin',
-    dueDate: new Date('2024-12-15'),
-    createdAt: new Date('2024-12-01'),
-    category: 'finance',
-    tags: ['report', 'monthly']
-  }
-];
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/useTasks';
+import { useAuth } from '@/hooks/useAuth';
 
 export const TaskManagementPage = () => {
   const { hasPermission } = useRBAC();
-  const { toast } = useToast();
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const { authState } = useAuth();
+  const { data: tasks = [], isLoading } = useTasks();
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -103,51 +51,33 @@ export const TaskManagementPage = () => {
   });
 
   // Filter tasks
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.assignedTo.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-    const matchesCategory = categoryFilter === 'all' || task.category === categoryFilter;
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (task.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
+      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+      const matchesCategory = categoryFilter === 'all' || task.category === categoryFilter;
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
-  });
+      return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+    });
+  }, [tasks, searchTerm, statusFilter, priorityFilter, categoryFilter]);
 
   const handleCreateTask = () => {
-    if (!hasPermission('tasks.create')) {
-      toast({
-        title: 'Access Denied',
-        description: 'You do not have permission to create tasks.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     if (!newTask.title || !newTask.assignedTo || !newTask.dueDate) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive'
-      });
       return;
     }
 
-    const task: Task = {
-      id: Date.now().toString(),
+    createTask.mutate({
       title: newTask.title,
       description: newTask.description,
       priority: newTask.priority,
       status: 'pending',
-      assignedTo: newTask.assignedTo,
-      assignedBy: 'Current User',
-      dueDate: new Date(newTask.dueDate),
-      createdAt: new Date(),
-      category: newTask.category,
-      tags: []
-    };
+      assigned_to: newTask.assignedTo,
+      due_date: new Date(newTask.dueDate).toISOString(),
+      category: newTask.category
+    });
 
-    setTasks([task, ...tasks]);
     setNewTask({
       title: '',
       description: '',
@@ -157,49 +87,20 @@ export const TaskManagementPage = () => {
       category: ''
     });
     setShowCreateDialog(false);
-
-    toast({
-      title: 'Task Created',
-      description: 'New task has been assigned successfully.'
-    });
   };
 
-  const handleUpdateTaskStatus = (taskId: string, newStatus: Task['status']) => {
-    if (!hasPermission('tasks.edit')) {
-      toast({
-        title: 'Access Denied',
-        description: 'You do not have permission to update tasks.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, status: newStatus } : task
-    ));
-
-    toast({
-      title: 'Task Updated',
-      description: 'Task status has been updated successfully.'
+  const handleUpdateTaskStatus = (taskId: string, newStatus: string) => {
+    updateTask.mutate({
+      id: taskId,
+      updates: { 
+        status: newStatus as any,
+        completed_at: newStatus === 'completed' ? new Date().toISOString() : undefined
+      }
     });
   };
 
   const handleDeleteTask = (taskId: string) => {
-    if (!hasPermission('tasks.delete')) {
-      toast({
-        title: 'Access Denied',
-        description: 'You do not have permission to delete tasks.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setTasks(tasks.filter(task => task.id !== taskId));
-    
-    toast({
-      title: 'Task Deleted',
-      description: 'Task has been removed successfully.'
-    });
+    deleteTask.mutate(taskId);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -223,13 +124,21 @@ export const TaskManagementPage = () => {
   };
 
   // Statistics
-  const stats = {
+  const stats = useMemo(() => ({
     total: tasks.length,
     pending: tasks.filter(t => t.status === 'pending').length,
     inProgress: tasks.filter(t => t.status === 'in-progress').length,
     completed: tasks.filter(t => t.status === 'completed').length,
-    overdue: tasks.filter(t => t.status !== 'completed' && new Date(t.dueDate) < new Date()).length
-  };
+    overdue: tasks.filter(t => t.status !== 'completed' && new Date(t.due_date) < new Date()).length
+  }), [tasks]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -554,19 +463,19 @@ export const TaskManagementPage = () => {
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">{task.description}</p>
                   
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span>Assigned to: {task.assignedTo}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>Due: {format(task.dueDate, 'MMM dd, yyyy')}</span>
-                      {new Date(task.dueDate) < new Date() && task.status !== 'completed' && (
-                        <Badge variant="destructive" className="text-xs">Overdue</Badge>
-                      )}
-                    </div>
-                  </div>
+                   <div className="space-y-2 text-sm">
+                     <div className="flex items-center gap-2">
+                       <User className="w-4 h-4 text-muted-foreground" />
+                       <span>Assigned to: {task.assigned_to_profile?.full_name || 'Unassigned'}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <Calendar className="w-4 h-4 text-muted-foreground" />
+                       <span>Due: {format(new Date(task.due_date), 'MMM dd, yyyy')}</span>
+                       {new Date(task.due_date) < new Date() && task.status !== 'completed' && (
+                         <Badge variant="destructive" className="text-xs">Overdue</Badge>
+                       )}
+                     </div>
+                   </div>
 
                   <div className="flex justify-between items-center mt-4">
                     <div className="flex gap-2">
@@ -637,16 +546,16 @@ export const TaskManagementPage = () => {
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">{task.description}</p>
                   
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span>Assigned to: {task.assignedTo}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>Due: {format(task.dueDate, 'MMM dd, yyyy')}</span>
-                    </div>
-                  </div>
+                   <div className="space-y-2 text-sm">
+                     <div className="flex items-center gap-2">
+                       <User className="w-4 h-4 text-muted-foreground" />
+                       <span>Assigned to: {task.assigned_to_profile?.full_name || 'Unassigned'}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <Calendar className="w-4 h-4 text-muted-foreground" />
+                       <span>Due: {format(new Date(task.due_date), 'MMM dd, yyyy')}</span>
+                     </div>
+                   </div>
 
                   <div className="flex justify-end mt-4">
                     <PermissionGate permission="tasks.edit">
@@ -686,16 +595,16 @@ export const TaskManagementPage = () => {
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">{task.description}</p>
                   
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span>Assigned to: {task.assignedTo}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>Due: {format(task.dueDate, 'MMM dd, yyyy')}</span>
-                    </div>
-                  </div>
+                   <div className="space-y-2 text-sm">
+                     <div className="flex items-center gap-2">
+                       <User className="w-4 h-4 text-muted-foreground" />
+                       <span>Assigned to: {task.assigned_to_profile?.full_name || 'Unassigned'}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <Calendar className="w-4 h-4 text-muted-foreground" />
+                       <span>Due: {format(new Date(task.due_date), 'MMM dd, yyyy')}</span>
+                     </div>
+                   </div>
 
                   <div className="flex justify-end mt-4">
                     <PermissionGate permission="tasks.edit">
@@ -735,16 +644,16 @@ export const TaskManagementPage = () => {
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">{task.description}</p>
                   
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span>Assigned to: {task.assignedTo}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>Due: {format(task.dueDate, 'MMM dd, yyyy')}</span>
-                    </div>
-                  </div>
+                   <div className="space-y-2 text-sm">
+                     <div className="flex items-center gap-2">
+                       <User className="w-4 h-4 text-muted-foreground" />
+                       <span>Assigned to: {task.assigned_to_profile?.full_name || 'Unassigned'}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <Calendar className="w-4 h-4 text-muted-foreground" />
+                       <span>Due: {format(new Date(task.due_date), 'MMM dd, yyyy')}</span>
+                     </div>
+                   </div>
 
                   <div className="flex justify-end mt-4">
                     <div className="flex items-center gap-2 text-success">

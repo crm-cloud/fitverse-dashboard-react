@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Bell, X, Check, Clock, User, Calendar, DollarSign } from 'lucide-react';
+import { Bell, X, Check, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,69 +10,28 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'payment';
-  timestamp: Date;
-  read: boolean;
-  icon?: React.ComponentType<{ className?: string }>;
-}
-
-// Mock notifications data
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Payment Due',
-    message: 'Your monthly membership payment is due in 3 days',
-    type: 'payment',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    read: false,
-    icon: DollarSign,
-  },
-  {
-    id: '2',
-    title: 'Class Reminder',
-    message: 'Your Yoga class starts in 1 hour',
-    type: 'info',
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-    read: false,
-    icon: Calendar,
-  },
-  {
-    id: '3',
-    title: 'Profile Updated',
-    message: 'Your profile information has been successfully updated',
-    type: 'success',
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-    read: true,
-    icon: User,
-  },
-];
+import { useAdminNotifications } from '@/hooks/useAdminNotifications';
+import { useAuth } from '@/hooks/useAuth';
 
 export const NotificationCenter = () => {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const { authState } = useAuth();
+  const { 
+    notifications, 
+    markAsRead, 
+    markAllAsRead, 
+    removeNotification,
+    clearAll
+  } = useAdminNotifications();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Only show for admin/super-admin
+  if (!authState.user || !['admin', 'super-admin'].includes(authState.user.role)) {
+    return null;
+  }
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const getTypeColor = (type: Notification['type']) => {
+  const getTypeColor = (type: string) => {
     switch (type) {
       case 'success': return 'text-success';
       case 'warning': return 'text-warning';
@@ -114,16 +73,28 @@ export const NotificationCenter = () => {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Notifications</h3>
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                className="text-xs h-auto p-1"
-              >
-                Mark all read
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  className="text-xs h-auto p-1"
+                >
+                  Mark all read
+                </Button>
+              )}
+              {notifications.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAll}
+                  className="text-xs h-auto p-1 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
         

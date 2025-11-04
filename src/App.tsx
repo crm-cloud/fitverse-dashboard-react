@@ -92,6 +92,7 @@ import { UserCreatePage } from "./pages/users/create";
 import { RoleCreatePage } from "./pages/roles/create";
 import AttendanceDashboard from "./pages/attendance/dashboard";
 import AttendanceDevicesPage from "./pages/attendance/devices";
+import UnifiedSettings from "./pages/settings/UnifiedSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -218,6 +219,7 @@ const App = () => (
                         <Route path="/roles/create" element={<RoleCreatePage />} />
                         <Route path="/attendance/dashboard" element={<AttendanceDashboard />} />
                         <Route path="/attendance/devices" element={<AttendanceDevicesPage />} />
+                        <Route path="/settings/unified" element={<UnifiedSettings />} />
                       </Route>
                       <Route
                         path="/system/settings"
