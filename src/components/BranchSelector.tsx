@@ -13,7 +13,7 @@ import { useBranches } from '@/hooks/useBranches';
 import { cn } from '@/lib/utils';
 
 export const BranchSelector = () => {
-  const { branches, selectedBranch, setSelectedBranch } = useBranches();
+  const { branches, selectedBranch, setSelectedBranch, isLoading } = useBranches();
 
   // Auto-select first branch if none selected and only 1 branch exists
   React.useEffect(() => {
@@ -36,7 +36,8 @@ export const BranchSelector = () => {
     }
   };
 
-  if (!selectedBranch) return null;
+  // Don't show if loading or no branches
+  if (isLoading || !branches || branches.length === 0 || !selectedBranch) return null;
 
   return (
     <div className="relative group">

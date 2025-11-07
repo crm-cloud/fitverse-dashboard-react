@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingBag } from 'lucide-react';
-import { mockProducts } from '@/utils/mockData';
+import { Search, ShoppingBag, Loader2 } from 'lucide-react';
+import { fetchProducts } from '@/services/products';
 import { ProductCard } from '@/components/store/ProductCard';
 import { ShoppingCartSheet } from '@/components/store/ShoppingCart';
 import { CheckoutDialog } from '@/components/store/CheckoutDialog';
@@ -17,24 +18,40 @@ export const MemberStore = () => {
   
   const { getTotalItems } = useCart();
 
+  // Fetch products from database
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['store-products'],
+    queryFn: () => fetchProducts({ is_active: true })
+  });
+
   const categories = ['all', 'supplements', 'apparel', 'equipment', 'accessories', 'beverages', 'snacks'];
   
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter(product => {
+    return products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
+                           (product.description || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-      return matchesSearch && matchesCategory && product.isActive;
+      return matchesSearch && matchesCategory && product.is_active;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [products, searchTerm, selectedCategory]);
 
   const getCategoryStats = () => {
     const stats = categories.slice(1).map(category => {
-      const count = mockProducts.filter(p => p.category === category && p.isActive).length;
+      const count = products.filter(p => p.category === category && p.is_active).length;
       return { category, count };
     });
     return stats;
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -110,7 +127,18 @@ export const MemberStore = () => {
       {/* Products Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredProducts.map(product => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard 
+            key={product.id} 
+            product={{
+              ...product,
+              image: product.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=300&fit=crop',
+              stock: product.stock_quantity,
+              isActive: product.is_active,
+              createdAt: product.created_at || new Date().toISOString(),
+              updatedAt: product.updated_at || new Date().toISOString(),
+              sku: product.id?.substring(0, 8).toUpperCase() || ''
+            } as any} 
+          />
         ))}
       </div>
 

@@ -9,6 +9,21 @@ export const mockPlanAssignments: any[] = [];
 export const mockTransactionCategories: any[] = [];
 export const mockPaymentMethods: any[] = [];
 export const mockMembershipPlans: any[] = [];
+export const mockProducts: any[] = [];
+export const mockMembers: any[] = [];
+export const mockMeasurementHistory: any[] = [];
+export const mockAttendanceRecords: any[] = [];
+export const mockTrainerAssignments: any[] = [];
+export const mockTrainers: any[] = [];
+export const mockTrainerUtilization: any[] = [];
+export const enhancedTrainers: any[] = [];
+export const mockFeedbackStats: any = {};
+export const mockFinancialSummary: any = {};
+export const mockMonthlyData: any[] = [];
+export const mockTransactions: any[] = [];
+export const mockLeads: any[] = [];
+export const mockLeadStats: any = {};
+export const mockClassEnrollments: any[] = [];
 export const mockLockerSizes = [
   { id: 'small', name: 'Small', dimensions: '12" x 12" x 36"', monthlyFee: 20 },
   { id: 'medium', name: 'Medium', dimensions: '18" x 18" x 36"', monthlyFee: 30 },
@@ -108,27 +123,17 @@ export const mockLockers = [
     updatedAt: '2025-01-20T00:00:00Z',
   },
 ];
-export const mockMeasurementHistory: any[] = [];
-export const mockAttendanceRecords: any[] = [];
-export const mockProducts: any[] = [];
 export const mockTeamMembers: any[] = [];
-export const mockTrainerAssignments: any[] = [];
-export const mockTrainerUtilization: any[] = [];
-export const mockLeads: any[] = [];
-export const mockTransactions: any[] = [];
-export const mockMonthlyData: any[] = [];
 export const mockEnhancedTrainers: any[] = [];
 export const mockClasses: any[] = [];
 // Temporary mockInvoices for backward compatibility - other components will be updated later
 export const mockInvoices: any[] = [];
 export const mockBranches: any[] = [];
-export const mockTrainers: any[] = [];
 export const mockTeamRoles: any[] = [];
 export const mockPermissions: any[] = [];
 export const mockMembershipData: any = {};
 export const mockBillingHistory: any[] = [];
 export const mockBenefits: any[] = [];
-export const mockMembers: any[] = [];
 export const mockCategories: any[] = [];
 export const accessTypeLabels: any = {};
 export const feedbackCategories: any[] = [];
@@ -180,11 +185,11 @@ export const mockAttendanceData: any[] = [];
 // Add missing exports to mockData
 export const mockMembershipAssignments: any[] = [];
 export const mockOrders: any[] = [];
-export const mockClassEnrollments: any[] = [];
 export const mockMemberships: any[] = [];
 export const mockPaymentHistory: any[] = [];
 export const mockFinanceCategories: any[] = [];
-export const mockFinancialSummary = {
+
+export const mockFinancialSummaryData = {
   totalIncome: 125000,
   totalExpenses: 75000,
   netProfit: 50000,
@@ -244,7 +249,7 @@ export const getTeamMemberByEmail = (email: string): TeamMember | undefined => {
   return mockTeamMembers.find(member => member.email === email);
 };
 
-export const enhancedTrainers = mockEnhancedTrainers;
+export const enhancedTrainersData = mockEnhancedTrainers;
 
 // Export enums and types
 export enum FeedbackType {
@@ -306,8 +311,8 @@ export interface LockerSize {
 }
 
 // Add missing mock exports
-export const mockFeedbackStats: any = {};
-export const mockLeadStats: any = {};
+export const mockFeedbackStatsData: any = {};
+export const mockLeadStatsData: any = {};
 export const mockLockerSummary = {
   totalLockers: mockLockers.length,
   available: mockLockers.filter(l => l.status === 'available').length,

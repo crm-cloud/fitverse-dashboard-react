@@ -53,10 +53,16 @@ export function AdminGymSetup({ adminId, onComplete }: AdminGymSetupProps) {
   });
 
   const onSubmit = async (data: GymSetupFormData) => {
+    console.log('🏢 [Gym Setup] Starting gym creation...', {
+      adminId,
+      gymName: data.gym_name,
+      branchName: data.branch_name
+    });
     setIsLoading(true);
 
     try {
       // Call create_gym_with_branch function
+      console.log('📞 [Gym Setup] Calling RPC function...');
       const { data: result, error } = await supabase.rpc('create_gym_with_branch', {
         p_admin_id: adminId,
         p_gym_name: data.gym_name,
@@ -65,29 +71,46 @@ export function AdminGymSetup({ adminId, onComplete }: AdminGymSetupProps) {
         p_branch_details: data.address ? { address: data.address, phone: data.phone } : null,
       });
 
+      console.log('📊 [Gym Setup] RPC Response:', { result, error });
+
       if (error) {
+        console.error('❌ [Gym Setup] RPC Error:', error);
         throw error;
       }
 
-      if (!result) {
-        throw new Error('Failed to create gym');
+      if (!result || !(result as any).success) {
+        console.error('❌ [Gym Setup] Creation failed:', result);
+        throw new Error((result as any)?.message || 'Failed to create gym. Please try again.');
       }
 
+      console.log('✅ [Gym Setup] Gym created successfully:', {
+        gymId: (result as any).gym_id,
+        branchId: (result as any).branch_id
+      });
+
       toast({
-        title: 'Gym Created Successfully',
+        title: 'Gym Created Successfully! 🎉',
         description: 'Your gym and branch have been set up. Welcome to the platform!',
       });
 
       // Refresh auth to get updated profile
-      await supabase.auth.refreshSession();
+      console.log('🔄 [Gym Setup] Refreshing session...');
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('⚠️ [Gym Setup] Session refresh error:', refreshError);
+      }
 
+      // Small delay to ensure session is updated
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log('✅ [Gym Setup] Setup complete, redirecting...');
       onComplete();
       navigate('/dashboard');
     } catch (error: any) {
-      console.error('Gym setup error:', error);
+      console.error('❌ [Gym Setup] Fatal error:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create gym',
+        title: 'Setup Error',
+        description: error.message || 'Failed to create gym. Please contact support if the issue persists.',
         variant: 'destructive',
       });
     } finally {

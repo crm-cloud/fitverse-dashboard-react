@@ -1,5 +1,5 @@
 
-import { Bell, User, LogOut, Settings, Clock as ClockIcon } from 'lucide-react';
+import { Bell, User, LogOut, Settings, Clock as ClockIcon, AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { NotificationCenter } from '@/components/ui/notification-center';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { BranchSelector } from '@/components/BranchSelector';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
@@ -64,8 +65,27 @@ export const AppHeader = () => {
   };
 
   return (
-    <header className="h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="flex h-full items-center justify-between px-4">
+    <>
+      {/* Setup Warning Banner */}
+      {authState.user?.role === 'admin' && !authState.user?.gym_id && (
+        <Alert variant="default" className="rounded-none border-x-0 border-t-0 bg-orange-500/10 border-orange-500/20">
+          <AlertTriangle className="h-4 w-4 text-orange-500" />
+          <AlertTitle className="text-orange-500">Setup Required</AlertTitle>
+          <AlertDescription>
+            Complete your gym setup to access all features.
+            <Button 
+              variant="link" 
+              className="h-auto p-0 ml-2 text-orange-600 hover:text-orange-700"
+              onClick={() => navigate('/dashboard')}
+            >
+              Complete Setup Now →
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <header className="h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="flex h-full items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
           
@@ -160,5 +180,6 @@ export const AppHeader = () => {
         </div>
       </div>
     </header>
+    </>
   );
 };

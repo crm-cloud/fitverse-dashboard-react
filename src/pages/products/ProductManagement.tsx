@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,17 +10,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Search, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
-import { mockProducts } from '@/utils/mockData';
-import { Product, ProductCategory } from '@/types/product';
+import { Plus, Search, Edit, Trash2, Package, AlertTriangle, Loader2 } from 'lucide-react';
+import { fetchProducts, createProduct, updateProduct, deleteProduct } from '@/services/products';
+import type { Product as DBProduct } from '@/services/products';
 import { useToast } from '@/hooks/use-toast';
 
+type ProductCategory = 'supplements' | 'apparel' | 'equipment' | 'accessories' | 'beverages' | 'snacks';
+
 export const ProductManagement = () => {
-  const [products, setProducts] = useState(mockProducts);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<DBProduct | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -27,17 +30,84 @@ export const ProductManagement = () => {
     category: 'supplements' as ProductCategory,
     image: '',
     stock: '',
-    sku: '',
     isActive: true
   });
 
   const { toast } = useToast();
 
+  // Fetch products from database
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => fetchProducts()
+  });
+
+  // Create product mutation
+  const createMutation = useMutation({
+    mutationFn: createProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({
+        title: "Product Created",
+        description: "Product has been added successfully.",
+      });
+      setIsDialogOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create product",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update product mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<DBProduct> }) => 
+      updateProduct(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({
+        title: "Product Updated",
+        description: "Product has been updated successfully.",
+      });
+      setIsDialogOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update product",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete product mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({
+        title: "Product Deleted",
+        description: "Product has been deleted successfully.",
+        variant: "destructive"
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete product",
+        variant: "destructive"
+      });
+    }
+  });
+
   const categories = ['all', 'supplements', 'apparel', 'equipment', 'accessories', 'beverages', 'snacks'];
   
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -50,24 +120,22 @@ export const ProductManagement = () => {
       category: 'supplements',
       image: '',
       stock: '',
-      sku: '',
       isActive: true
     });
     setEditingProduct(null);
   };
 
-  const openDialog = (product?: Product) => {
+  const openDialog = (product?: DBProduct) => {
     if (product) {
       setEditingProduct(product);
       setFormData({
         name: product.name,
-        description: product.description,
+        description: product.description || '',
         price: product.price.toString(),
-        category: product.category,
-        image: product.image,
-        stock: product.stock.toString(),
-        sku: product.sku,
-        isActive: product.isActive
+        category: product.category as ProductCategory,
+        image: product.image_url || '',
+        stock: product.stock_quantity.toString(),
+        isActive: product.is_active
       });
     } else {
       resetForm();
@@ -76,45 +144,37 @@ export const ProductManagement = () => {
   };
 
   const handleSave = () => {
-    const productData: Product = {
-      id: editingProduct?.id || `${Date.now()}`,
+    if (!formData.name || !formData.price || !formData.stock) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const productData = {
       name: formData.name,
-      description: formData.description,
+      description: formData.description || null,
       price: parseFloat(formData.price),
+      member_price: null,
       category: formData.category,
-      image: formData.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=300&fit=crop',
-      stock: parseInt(formData.stock),
-      sku: formData.sku,
-      isActive: formData.isActive,
-      createdAt: editingProduct?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      image_url: formData.image || null,
+      stock_quantity: parseInt(formData.stock),
+      is_active: formData.isActive,
     };
 
     if (editingProduct) {
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? productData : p));
-      toast({
-        title: "Product Updated",
-        description: `${productData.name} has been updated successfully.`,
-      });
+      updateMutation.mutate({ id: editingProduct.id!, updates: productData });
     } else {
-      setProducts(prev => [...prev, productData]);
-      toast({
-        title: "Product Added",
-        description: `${productData.name} has been added successfully.`,
-      });
+      createMutation.mutate(productData);
     }
-
-    setIsDialogOpen(false);
-    resetForm();
   };
 
-  const handleDelete = (product: Product) => {
-    setProducts(prev => prev.filter(p => p.id !== product.id));
-    toast({
-      title: "Product Deleted",
-      description: `${product.name} has been deleted.`,
-      variant: "destructive"
-    });
+  const handleDelete = (product: DBProduct) => {
+    if (confirm(`Are you sure you want to delete ${product.name}?`)) {
+      deleteMutation.mutate(product.id!);
+    }
   };
 
   const getStockStatus = (stock: number) => {
@@ -122,6 +182,16 @@ export const ProductManagement = () => {
     if (stock <= 5) return { label: 'Low Stock', variant: 'secondary' as const };
     return { label: 'In Stock', variant: 'default' as const };
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -177,15 +247,6 @@ export const ProductManagement = () => {
                   />
                 </div>
                 
-                <div>
-                  <Label htmlFor="sku">SKU *</Label>
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                    placeholder="Enter SKU"
-                  />
-                </div>
                 
                 <div>
                   <Label htmlFor="price">Price *</Label>
@@ -261,10 +322,20 @@ export const ProductManagement = () => {
             </div>
             
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDialogOpen(false)}
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleSave}>
+              <Button 
+                onClick={handleSave}
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
+                {(createMutation.isPending || updateMutation.isPending) && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
                 {editingProduct ? 'Update Product' : 'Add Product'}
               </Button>
             </DialogFooter>
@@ -286,41 +357,41 @@ export const ProductManagement = () => {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Products</p>
-                <p className="text-2xl font-bold">{products.filter(p => p.isActive).length}</p>
-              </div>
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
-                <p className="text-2xl font-bold">{products.filter(p => p.stock <= 5).length}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Out of Stock</p>
-                <p className="text-2xl font-bold">{products.filter(p => p.stock === 0).length}</p>
-              </div>
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            </div>
-          </CardContent>
-        </Card>
+                 <Card>
+           <CardContent className="p-6">
+             <div className="flex items-center justify-between">
+               <div>
+                 <p className="text-sm font-medium text-muted-foreground">Active Products</p>
+                 <p className="text-2xl font-bold">{products.filter(p => p.is_active).length}</p>
+               </div>
+               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+             </div>
+           </CardContent>
+         </Card>
+         
+         <Card>
+           <CardContent className="p-6">
+             <div className="flex items-center justify-between">
+               <div>
+                 <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
+                 <p className="text-2xl font-bold">{products.filter(p => p.stock_quantity <= 5).length}</p>
+               </div>
+               <AlertTriangle className="w-8 h-8 text-orange-500" />
+             </div>
+           </CardContent>
+         </Card>
+         
+         <Card>
+           <CardContent className="p-6">
+             <div className="flex items-center justify-between">
+               <div>
+                 <p className="text-sm font-medium text-muted-foreground">Out of Stock</p>
+                 <p className="text-2xl font-bold">{products.filter(p => p.stock_quantity === 0).length}</p>
+               </div>
+               <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+             </div>
+           </CardContent>
+         </Card>
       </div>
 
       {/* Filters and Search */}
@@ -368,43 +439,45 @@ export const ProductManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => {
-                const stockStatus = getStockStatus(product.stock);
+               {filteredProducts.map((product) => {
+                 const stockStatus = getStockStatus(product.stock_quantity);
                 return (
                   <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
-                        <div>
-                          <p className="font-medium">{product.name}</p>
-                          <p className="text-sm text-muted-foreground line-clamp-1">
-                            {product.description}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={`text-white ${getCategoryColor(product.category)}`}>
-                        {product.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                    <TableCell className="font-semibold">${product.price.toFixed(2)}</TableCell>
-                    <TableCell>{product.stock}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <Badge variant={stockStatus.variant}>{stockStatus.label}</Badge>
-                        {product.isActive ? (
-                          <Badge variant="secondary">Active</Badge>
-                        ) : (
-                          <Badge variant="outline">Inactive</Badge>
-                        )}
-                      </div>
-                    </TableCell>
+                     <TableCell>
+                       <div className="flex items-center space-x-3">
+                         <img
+                           src={product.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=300&fit=crop'}
+                           alt={product.name}
+                           className="w-10 h-10 rounded-lg object-cover"
+                         />
+                         <div>
+                           <p className="font-medium">{product.name}</p>
+                           <p className="text-sm text-muted-foreground line-clamp-1">
+                             {product.description}
+                           </p>
+                         </div>
+                       </div>
+                     </TableCell>
+                     <TableCell>
+                       <Badge className={`text-white ${getCategoryColor(product.category)}`}>
+                         {product.category}
+                       </Badge>
+                     </TableCell>
+                     <TableCell className="font-mono text-sm">
+                       {product.id?.substring(0, 8).toUpperCase()}
+                     </TableCell>
+                     <TableCell className="font-semibold">₹{product.price.toFixed(2)}</TableCell>
+                     <TableCell>{product.stock_quantity}</TableCell>
+                     <TableCell>
+                       <div className="space-y-1">
+                         <Badge variant={stockStatus.variant}>{stockStatus.label}</Badge>
+                         {product.is_active ? (
+                           <Badge variant="secondary">Active</Badge>
+                         ) : (
+                           <Badge variant="outline">Inactive</Badge>
+                         )}
+                       </div>
+                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Button
