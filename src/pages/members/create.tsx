@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MemberForm } from '@/components/member/MemberForm';
 import { MemberFormData } from '@/types/member';
@@ -8,12 +8,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { enableMemberLogin } from '@/hooks/useMembers';
+import { useBranches } from '@/hooks/useBranches';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const MemberCreatePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { authState } = useAuth();
   const queryClient = useQueryClient();
+  const { branches, isLoading: branchesLoading } = useBranches();
 
   const handleSubmit = async (data: MemberFormData) => {
     try {
@@ -97,6 +100,23 @@ export const MemberCreatePage = () => {
           <p className="text-muted-foreground">Fill in the details to create a new member profile</p>
         </div>
       </div>
+
+      {!branchesLoading && (!branches || branches.length === 0) && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>No Branches Found</AlertTitle>
+          <AlertDescription>
+            You need to create at least one branch before adding members.{' '}
+            <Button 
+              variant="link" 
+              className="p-0 h-auto font-semibold" 
+              onClick={() => navigate('/branches/create')}
+            >
+              Create your first branch now
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <MemberForm onSubmit={handleSubmit} />
     </div>

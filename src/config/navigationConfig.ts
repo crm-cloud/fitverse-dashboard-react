@@ -181,7 +181,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'admin-branches',
         title: 'Branches',
-        url: '/branches',
+        url: '/branches/management',
         icon: MapPin,
         group: 'organization',
         allowedRoles: ['admin'],
@@ -199,7 +199,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'branches',
         title: 'Branches',
-        url: '/branches',
+        url: '/branches/management',
         icon: Building,
         group: 'branch-management',
         allowedRoles: ['admin', 'team'],
@@ -213,7 +213,6 @@ export const navigationConfig: NavigationGroup[] = [
         icon: Building,
         group: 'branch-management',
         allowedRoles: ['admin', 'team'],
-        teamRole: 'manager',
         requiredPermissions: ['branches.create'],
       }
     ]
@@ -319,7 +318,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'announcements',
         title: 'Announcements',
-        url: '/announcements',
+        url: '/announcements/announcement-management',
         icon: Megaphone,
         group: 'communication',
         requiredPermissions: ['notifications.view'],
@@ -343,7 +342,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'referrals',
         title: 'Referrals',
-        url: '/referrals',
+        url: '/referrals/referral-management',
         icon: Share2,
         group: 'marketing',
         requiredPermissions: ['referrals.view'],
@@ -417,7 +416,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'attendance',
         title: 'Attendance',
-        url: '/attendance',
+        url: '/attendance/dashboard',
         icon: UserCheck,
         group: 'operations',
         requiredPermissions: ['attendance.view'],
@@ -434,7 +433,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'lockers',
         title: 'Lockers',
-        url: '/lockers',
+        url: '/lockers/management',
         icon: Package,
         group: 'operations',
         requiredPermissions: ['lockers.view'],
@@ -442,7 +441,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'equipment',
         title: 'Equipment',
-        url: '/equipment',
+        url: '/equipment/list',
         icon: Wrench,
         group: 'operations',
         requiredPermissions: ['equipment.view'],
@@ -458,7 +457,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'store',
         title: 'Store',
-        url: '/store',
+        url: '/store/member-store',
         icon: ShoppingBag,
         group: 'store',
         memberOnly: true,
@@ -466,7 +465,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'products',
         title: 'Products',
-        url: '/products',
+        url: '/products/product-management',
         icon: Package,
         group: 'store',
         requiredPermissions: ['products.view'],
@@ -481,7 +480,7 @@ export const navigationConfig: NavigationGroup[] = [
       {
         id: 'feedback',
         title: 'Feedback',
-        url: '/feedback',
+        url: '/feedback/management',
         icon: MessageSquare,
         group: 'support',
         requiredPermissions: ['feedback.view'],

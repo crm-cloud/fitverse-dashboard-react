@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface BranchFormData {
@@ -62,47 +64,55 @@ export function BranchForm({ branch, onSuccess }: BranchFormProps) {
   const { authState } = useAuth();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Get available managers (staff members in the organization)
+  // Get available managers (staff members in the gym)
   const { data: managers = [] } = useQuery({
-    queryKey: ['managers', authState.user?.organization_id],
+    queryKey: ['managers', authState.user?.gym_id],
     queryFn: async () => {
-      if (!authState.user?.organization_id) return [];
+      if (!authState.user?.gym_id) return [];
       
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, full_name')
-        .filter('organization_id', 'eq', authState.user.organization_id as string)
+        .eq('gym_id', authState.user.gym_id)
         .in('role', ['admin', 'manager', 'staff'])
         .eq('is_active', true);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!authState.user?.organization_id,
+    enabled: !!authState.user?.gym_id,
   });
 
   const createBranch = useMutation({
     mutationFn: async (data: BranchFormData) => {
+      // Check if admin has gym_id
+      if (!authState.user?.gym_id) {
+        throw new Error('Please complete gym setup first before creating branches');
+      }
+
       // Check subscription limits before creating new branch
-      if (!branch && authState.user?.organization_id) {
+      if (!branch) {
         const { data: planAssignment, error: planError } = await supabase
           .from('admin_plan_assignments')
           .select('max_branches')
           .eq('user_id', authState.user.id)
           .single();
 
-        if (planError) throw planError;
+        if (planError) {
+          console.warn('Could not fetch plan limits:', planError);
+          // Continue without limit check if plan not found
+        } else {
+          const { data: existingBranches, error: branchError } = await supabase
+            .from('branches')
+            .select('id')
+            .eq('gym_id', authState.user.gym_id)
+            .eq('status', 'active');
 
-        const { data: existingBranches, error: branchError } = await supabase
-          .from('branches')
-          .select('id')
-          .filter('organization_id', 'eq', authState.user.organization_id as string)
-          .eq('status', 'active');
+          if (branchError) throw branchError;
 
-        if (branchError) throw branchError;
-
-        if (existingBranches.length >= planAssignment.max_branches) {
-          throw new Error(`Cannot create more branches. Your subscription allows a maximum of ${planAssignment.max_branches} branches. Please upgrade your subscription to add more branches.`);
+          if (existingBranches.length >= planAssignment.max_branches) {
+            throw new Error(`Cannot create more branches. Your subscription allows a maximum of ${planAssignment.max_branches} branches. Please upgrade your subscription to add more branches.`);
+          }
         }
       }
 
@@ -120,8 +130,7 @@ export function BranchForm({ branch, onSuccess }: BranchFormProps) {
         },
         capacity: data.capacity,
         manager_id: data.managerId || null,
-        organization_id: authState.user?.organization_id,
-        gym_id: authState.user?.gym_id || authState.user?.organization_id, // Backwards compatibility
+        gym_id: authState.user.gym_id,
         hours: {},
         status: 'active'
       };
@@ -133,10 +142,10 @@ export function BranchForm({ branch, onSuccess }: BranchFormProps) {
           .eq('id', branch.id);
         
         if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from('branches')
-            .insert(branchData);
+      } else {
+        const { error } = await supabase
+          .from('branches')
+          .insert(branchData);
         
         if (error) throw error;
       }
@@ -206,6 +215,16 @@ export function BranchForm({ branch, onSuccess }: BranchFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {!authState.user?.gym_id && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Gym Setup Required</AlertTitle>
+          <AlertDescription>
+            You need to complete your gym setup before creating branches. Please go back to the dashboard to set up your gym first.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">Branch Name *</Label>

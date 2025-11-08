@@ -18,6 +18,8 @@ import { MemberFormData, Gender, GovernmentIdType } from '@/types/member';
 import { useBranches } from '@/hooks/useBranches';
 import { useTrainers } from '@/hooks/useTrainers';
 import { validateGovernmentId, getIdValidationMessage } from '@/utils/idValidation';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const memberFormSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -676,6 +678,15 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
             <CardTitle>Assignment</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {(!branches || branches.length === 0) && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>No Branches Available</AlertTitle>
+                <AlertDescription>
+                  Please create a branch first before adding members. Branch assignment is required.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -683,14 +694,14 @@ export const MemberForm = ({ onSubmit, isLoading = false }: MemberFormProps) => 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Branch *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!branches || branches.length === 0}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select branch" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {branches.map((branch) => (
+                        {branches?.map((branch) => (
                           <SelectItem key={branch.id} value={branch.id}>
                             {branch.name}
                           </SelectItem>

@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Plus,
   Search,
@@ -48,6 +50,26 @@ export const TaskManagementPage = () => {
     assignedTo: '',
     dueDate: '',
     category: ''
+  });
+
+  // Fetch available staff for assignment
+  const { data: staffMembers = [] } = useQuery({
+    queryKey: ['staff-for-tasks', authState.user?.gym_id],
+    queryFn: async () => {
+      if (!authState.user?.gym_id) return [];
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, role')
+        .eq('gym_id', authState.user.gym_id)
+        .in('role', ['admin', 'manager', 'staff', 'trainer'])
+        .eq('is_active', true)
+        .order('full_name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!authState.user?.gym_id,
   });
 
   // Filter tasks
@@ -216,12 +238,18 @@ export const TaskManagementPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="assignedTo">Assign To *</Label>
-                      <Input
-                        id="assignedTo"
-                        value={newTask.assignedTo}
-                        onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
-                        placeholder="Team member name"
-                      />
+                      <Select value={newTask.assignedTo} onValueChange={(value) => setNewTask({...newTask, assignedTo: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select team member" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {staffMembers.map((staff) => (
+                            <SelectItem key={staff.user_id} value={staff.user_id}>
+                              {staff.full_name} ({staff.role})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="dueDate">Due Date *</Label>

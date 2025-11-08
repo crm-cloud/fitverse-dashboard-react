@@ -42,17 +42,27 @@ export const useTasks = (filters?: {
   const { currentBranchId } = useBranchContext();
 
   return useQuery({
-    queryKey: ['tasks', filters, currentBranchId],
+    queryKey: ['tasks', filters, currentBranchId, authState.user?.gym_id],
     queryFn: async () => {
       let query = supabase
         .from('tasks')
         .select('*')
         .order('due_date', { ascending: true });
 
-      // Apply branch filter
-      const effectiveBranchId = filters?.branchId || currentBranchId;
-      if (effectiveBranchId && authState.user?.role !== 'super-admin') {
-        query = query.eq('branch_id', effectiveBranchId);
+      // Apply branch or gym filter based on user role
+      if (authState.user?.role === 'super-admin') {
+        // Super admin sees all tasks (no filter)
+      } else if (authState.user?.role === 'admin') {
+        // Admin sees all tasks in their gym
+        if (authState.user.gym_id) {
+          query = query.eq('gym_id', authState.user.gym_id);
+        }
+      } else {
+        // Other roles see branch-specific tasks
+        const effectiveBranchId = filters?.branchId || currentBranchId;
+        if (effectiveBranchId) {
+          query = query.eq('branch_id', effectiveBranchId);
+        }
       }
 
       // Apply other filters
