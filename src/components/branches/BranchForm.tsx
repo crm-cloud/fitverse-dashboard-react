@@ -198,10 +198,30 @@ export function BranchForm({ branch, onSuccess }: BranchFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🏢 [BranchForm] Submit triggered', {
+      hasGymId: !!authState.user?.gym_id,
+      gymId: authState.user?.gym_id,
+      branchName: formData.name,
+      isEdit: !!branch
+    });
+    
     if (!validateForm()) {
+      console.warn('⚠️ [BranchForm] Validation failed');
       return;
     }
 
+    if (!authState.user?.gym_id) {
+      console.error('❌ [BranchForm] No gym_id found, cannot create branch');
+      toast({
+        title: "Gym Setup Required",
+        description: "Please complete your gym setup first before creating branches.",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
+      return;
+    }
+
+    console.log('✅ [BranchForm] Validation passed, creating branch...');
     createBranch.mutate(formData);
   };
 

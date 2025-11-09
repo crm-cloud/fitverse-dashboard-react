@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,6 +35,7 @@ interface AdminGymSetupProps {
 export function AdminGymSetup({ adminId, onComplete }: AdminGymSetupProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { authState } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<GymSetupFormData>({
@@ -53,16 +55,17 @@ export function AdminGymSetup({ adminId, onComplete }: AdminGymSetupProps) {
   });
 
   const onSubmit = async (data: GymSetupFormData) => {
-    console.log('🏢 [Gym Setup] Starting gym creation...', {
+    console.log('🏢 [AdminGymSetup] Starting gym creation...', {
       adminId,
       gymName: data.gym_name,
-      branchName: data.branch_name
+      branchName: data.branch_name,
+      hasGymId: !!authState.user?.gym_id
     });
     setIsLoading(true);
 
     try {
       // Call create_gym_with_branch function
-      console.log('📞 [Gym Setup] Calling RPC function...');
+      console.log('📞 [AdminGymSetup] Calling RPC function...');
       const { data: result, error } = await supabase.rpc('create_gym_with_branch', {
         p_admin_id: adminId,
         p_gym_name: data.gym_name,
@@ -71,46 +74,75 @@ export function AdminGymSetup({ adminId, onComplete }: AdminGymSetupProps) {
         p_branch_details: data.address ? { address: data.address, phone: data.phone } : null,
       });
 
-      console.log('📊 [Gym Setup] RPC Response:', { result, error });
+      console.log('📊 [AdminGymSetup] RPC Response:', { 
+        result, 
+        error,
+        errorCode: error?.code,
+        errorMessage: error?.message,
+        errorDetails: error?.details,
+        errorHint: error?.hint
+      });
 
       if (error) {
-        console.error('❌ [Gym Setup] RPC Error:', error);
+        console.error('❌ [AdminGymSetup] RPC Error Details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        // Provide specific error messages
+        if (error.message?.includes('admin_plan_assignments')) {
+          toast({
+            title: 'Setup Configuration Missing',
+            description: 'Your admin account needs to be configured with a subscription plan. The system has created a default setup for you. Please refresh the page.',
+            variant: 'destructive',
+          });
+          // Force page reload after short delay
+          setTimeout(() => window.location.reload(), 2000);
+          return;
+        }
+        
         throw error;
       }
 
       if (!result || !(result as any).success) {
-        console.error('❌ [Gym Setup] Creation failed:', result);
+        console.error('❌ [AdminGymSetup] Creation failed:', result);
         throw new Error((result as any)?.message || 'Failed to create gym. Please try again.');
       }
 
-      console.log('✅ [Gym Setup] Gym created successfully:', {
+      console.log('✅ [AdminGymSetup] Gym created successfully:', {
         gymId: (result as any).gym_id,
         branchId: (result as any).branch_id
       });
 
       toast({
         title: 'Gym Created Successfully! 🎉',
-        description: 'Your gym and branch have been set up. Welcome to the platform!',
+        description: 'Your gym and branch have been set up. Refreshing dashboard...',
       });
 
       // Refresh auth to get updated profile
-      console.log('🔄 [Gym Setup] Refreshing session...');
+      console.log('🔄 [AdminGymSetup] Refreshing session...');
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
-        console.error('⚠️ [Gym Setup] Session refresh error:', refreshError);
+        console.error('⚠️ [AdminGymSetup] Session refresh error:', refreshError);
       }
 
       // Small delay to ensure session is updated
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      console.log('✅ [Gym Setup] Setup complete, redirecting...');
+      console.log('✅ [AdminGymSetup] Setup complete, reloading page...');
       onComplete();
-      navigate('/dashboard');
+      window.location.reload(); // Force full reload to update all state
     } catch (error: any) {
-      console.error('❌ [Gym Setup] Fatal error:', error);
+      console.error('❌ [AdminGymSetup] Fatal error:', {
+        message: error.message,
+        stack: error.stack,
+        error
+      });
       toast({
         title: 'Setup Error',
-        description: error.message || 'Failed to create gym. Please contact support if the issue persists.',
+        description: error.message || 'Failed to create gym. Please refresh the page and try again.',
         variant: 'destructive',
       });
     } finally {
