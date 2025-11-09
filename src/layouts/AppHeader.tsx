@@ -71,12 +71,15 @@ export const AppHeader = () => {
         <Alert variant="default" className="rounded-none border-x-0 border-t-0 bg-orange-500/10 border-orange-500/20">
           <AlertTriangle className="h-4 w-4 text-orange-500" />
           <AlertTitle className="text-orange-500">Setup Required</AlertTitle>
-          <AlertDescription>
-            Complete your gym setup to access all features.
+          <AlertDescription className="flex items-center gap-2">
+            <span>Complete your gym setup to access all features.</span>
             <Button 
               variant="link" 
-              className="h-auto p-0 ml-2 text-orange-600 hover:text-orange-700"
-              onClick={() => navigate('/dashboard')}
+              className="h-auto p-0 text-orange-600 hover:text-orange-700 underline"
+              onClick={() => {
+                console.log('🏢 [AppHeader] Navigating to dashboard for gym setup');
+                navigate('/dashboard');
+              }}
             >
               Complete Setup Now →
             </Button>

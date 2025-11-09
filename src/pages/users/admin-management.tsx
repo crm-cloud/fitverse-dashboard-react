@@ -95,7 +95,7 @@ export default function AdminManagement() {
 
       const { data: branches, error: branchesError } = await supabase
         .from('branches')
-        .select('id, organization_id')
+        .select('id, gym_id')
         .eq('status', 'active');
 
       if (gymsError || branchesError) throw gymsError || branchesError;
