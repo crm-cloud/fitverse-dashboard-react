@@ -83,10 +83,11 @@ serve(async (req) => {
         .single();
 
       if (existingRole) {
+        console.log('User already has admin role');
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'This user is already registered as an admin' 
+            error: `An admin account with email "${email}" already exists. Please use a different email address or manage the existing admin account.` 
           }), 
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );

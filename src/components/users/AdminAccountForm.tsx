@@ -68,6 +68,8 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
   // Create admin account mutation using client-side service
   const createAdminMutation = useMutation({
     mutationFn: async (data: AdminFormData) => {
+      console.log('🔄 [AdminForm] Creating admin account...');
+      
       const result = await createAdminAccount({
         email: data.email,
         password: data.password,
@@ -87,20 +89,22 @@ export function AdminAccountForm({ onSuccess }: AdminAccountFormProps) {
       return result;
     },
     onSuccess: (result) => {
+      console.log('✅ [AdminForm] Admin created successfully');
       toast({
-        title: 'Admin Account Created',
-        description: `Admin can now log in and set up their gym. Max branches: ${result.max_branches}, Max members: ${result.max_members}`,
+        title: 'Admin Account Created Successfully',
+        description: `${adminForm.getValues('full_name')} can now log in and set up their gym. Max branches: ${result.max_branches}, Max members: ${result.max_members}`,
       });
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
       adminForm.reset();
       onSuccess?.();
     },
     onError: (error: any) => {
-      console.error('Admin creation error:', error);
+      console.error('❌ [AdminForm] Failed to create admin:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create admin account',
         variant: 'destructive',
+        title: 'Failed to Create Admin Account',
+        description: error.message || 'An unexpected error occurred. Please try again.',
       });
     },
   });

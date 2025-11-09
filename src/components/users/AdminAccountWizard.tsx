@@ -71,23 +71,35 @@ export const AdminAccountWizard = ({ open, onClose, onSuccess }: AdminAccountWiz
   });
 
   const createAdminMutation = useMutation({
-    mutationFn: createAdminAccount,
-    onSuccess: () => {
+    mutationFn: async (data: any) => {
+      console.log('🔄 [AdminWizard] Submitting admin creation...');
+      const result = await createAdminAccount(data);
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      
+      return result;
+    },
+    onSuccess: (result) => {
+      console.log('✅ [AdminWizard] Admin created successfully');
       toast({
-        title: 'Success',
-        description: 'Admin account created successfully',
+        title: 'Admin Account Created Successfully',
+        description: `${form.getValues('full_name')} can now log in and set up their gym. Max branches: ${result.max_branches}, Max members: ${result.max_members}`,
       });
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
       form.reset();
       setCurrentStep(1);
       onSuccess?.();
       onClose();
     },
     onError: (error: any) => {
+      console.error('❌ [AdminWizard] Failed to create admin:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to create admin account',
+        title: 'Failed to Create Admin Account',
+        description: error.message || 'An unexpected error occurred. Please try again.',
       });
     },
   });
